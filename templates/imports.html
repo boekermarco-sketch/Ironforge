@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% block title %}Import{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Daten-Import</h1>
+
+{% if msg %}
+<div class="alert alert-success" style="font-size:.9rem;white-space:pre-wrap">✅ {{ msg }}</div>
+{% endif %}
+
+<!-- ALLES AUF EINMAL -->
+<div class="card" style="margin-bottom:1.5rem;border-left:4px solid var(--green-500)">
+  <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+    <div style="flex:1">
+      <div class="section-title">Alles auf einmal importieren</div>
+      <div style="font-size:.85rem;color:var(--gray-500);margin-top:.3rem">
+        Importiert automatisch Withings + Garmin + MyFitnessPal aus den vorhandenen Ordnern.<br>
+        Bereits importierte Daten werden nicht doppelt eingefügt – sicher wiederholbar.
+      </div>
+      <div style="margin-top:.6rem;font-size:.8rem">
+        Aktuell in Datenbank: <strong>{{ total_logs }}</strong> Tages-Logs
+      </div>
+    </div>
+    <form action="/import/alles" method="post">
+      <button class="btn btn-primary" style="font-size:1rem;padding:.75rem 1.5rem">
+        🚀 Alles jetzt importieren
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- Status der Ordner -->
+<div class="grid-3" style="margin-bottom:1.5rem">
+
+  <!-- Withings -->
+  <div class="card">
+    <div class="section-header">
+      <div class="section-title">
+        {% if withings_ok %}
+          <span class="badge badge-ok">✓ Ordner gefunden</span>
+        {% else %}
+          <span class="badge badge-danger">✗ Ordner fehlt</span>
+        {% endif %}
+        Withings
+      </div>
+    </div>
+    <div style="font-size:.78rem;color:var(--gray-500);margin-bottom:.75rem;word-break:break-all">
+      {{ withings_dir }}
+    </div>
+    {% if withings_ok %}
+      <div style="font-size:.8rem;color:var(--green-700);margin-bottom:.75rem">
+        Wird importiert: Gewicht, Körperfett, Muskelmasse
+      </div>
+      <form action="/import/withings-bulk" method="post">
+        <button class="btn btn-secondary btn-sm">Nur Withings importieren</button>
+      </form>
+    {% else %}
+      <div style="font-size:.78rem;color:var(--gray-500)">
+        Extrahiertes Withings-ZIP in diesen Ordner legen.
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Garmin -->
+  <div class="card">
+    <div class="section-header">
+      <div class="section-title">
+        {% if garmin_ok %}
+          <span class="badge badge-ok">✓ Ordner gefunden</span>
+        {% else %}
+          <span class="badge badge-danger">✗ Ordner fehlt</span>
+        {% endif %}
+        Garmin
+      </div>
+    </div>
+    <div style="font-size:.78rem;color:var(--gray-500);margin-bottom:.75rem;word-break:break-all">
+      {{ garmin_dir }}
+    </div>
+    {% if garmin_ok %}
+      <div style="font-size:.8rem;color:var(--green-700);margin-bottom:.75rem">
+        Wird importiert: HRV, Herzfrequenz, Schlaf-Score, Tiefschlaf, REM, Atemfrequenz
+      </div>
+      <form action="/import/garmin-bulk" method="post">
+        <button class="btn btn-secondary btn-sm">Nur Garmin importieren</button>
+      </form>
+    {% else %}
+      <div style="font-size:.78rem;color:var(--gray-500)">
+        Extrahiertes Garmin-ZIP → DI_CONNECT/DI-Connect-Wellness muss vorhanden sein.
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- MyFitnessPal -->
+  <div class="card">
+    <div class="section-header">
+      <div class="section-title">
+        {% if mfp_ok %}
+          <span class="badge badge-ok">✓ Ordner gefunden</span>
+        {% else %}
+          <span class="badge badge-danger">✗ Ordner fehlt</span>
+        {% endif %}
+        MyFitnessPal
+      </div>
+    </div>
+    <div style="font-size:.78rem;color:var(--gray-500);margin-bottom:.75rem;word-break:break-all">
+      {{ mfp_dir }}
+    </div>
+    {% if mfp_ok %}
+      <div style="font-size:.8rem;color:var(--green-700);margin-bottom:.75rem">
+        Wird importiert: Kalorien, Protein, Kohlenhydrate, Fett (täglich summiert)
+      </div>
+      <form action="/import/mfp-bulk" method="post">
+        <button class="btn btn-secondary btn-sm">Nur MFP importieren</button>
+      </form>
+    {% else %}
+      <div style="font-size:.78rem;color:var(--gray-500)">
+        MFP-Export-Ordner hier ablegen.
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Blutbilder -->
+<div class="card" style="margin-bottom:1.5rem">
+  <div class="section-header">
+    <div class="section-title">Blutbild-PDFs</div>
+    <form action="/import/blutbilder-scan" method="post">
+      <button class="btn btn-primary btn-sm">🔍 Ordner scannen</button>
+    </form>
+  </div>
+  <div style="font-size:.85rem;color:var(--gray-500)">
+    PDFs in <code>data/Blutbilder/</code> legen → Scanner erkennt Markernamen + Werte automatisch.
+    Alternativ direkt auf der <a href="/blutbilder/">Blutbilder-Seite</a> hochladen.
+  </div>
+</div>
+
+<!-- Wo sind die Ordner? Anleitung -->
+<div class="card">
+  <div class="section-title" style="margin-bottom:.75rem">Wo müssen die Dateien liegen?</div>
+  <div class="grid-3">
+
+    <div>
+      <div style="font-weight:700;color:var(--green-700);margin-bottom:.5rem">Withings</div>
+      <ol style="font-size:.8rem;line-height:2;color:var(--gray-700);padding-left:1.2rem">
+        <li>ZIP-Ordner entpacken</li>
+        <li>Alle Dateien in Ordner:<br>
+          <code style="font-size:.75rem">Imports\Withings\</code></li>
+        <li>Button "Alles importieren"</li>
+      </ol>
+      <div style="font-size:.75rem;color:var(--gray-500);margin-top:.4rem">
+        Wichtigste Datei: <code>weight.csv</code>
+      </div>
+    </div>
+
+    <div>
+      <div style="font-weight:700;color:var(--green-700);margin-bottom:.5rem">Garmin</div>
+      <ol style="font-size:.8rem;line-height:2;color:var(--gray-700);padding-left:1.2rem">
+        <li>ZIP-Ordner entpacken</li>
+        <li>Gesamten Inhalt in:<br>
+          <code style="font-size:.75rem">Imports\Garmin\</code></li>
+        <li>Struktur muss erhalten bleiben:<br>
+          <code style="font-size:.75rem">DI_CONNECT\DI-Connect-Wellness\</code></li>
+        <li>Button "Alles importieren"</li>
+      </ol>
+    </div>
+
+    <div>
+      <div style="font-weight:700;color:var(--green-700);margin-bottom:.5rem">MyFitnessPal</div>
+      <ol style="font-size:.8rem;line-height:2;color:var(--gray-700);padding-left:1.2rem">
+        <li>MFP-Export-ZIP entpacken</li>
+        <li>Alle Dateien in:<br>
+          <code style="font-size:.75rem">Imports\Myfitnesspal\</code></li>
+        <li>Button "Alles importieren"</li>
+      </ol>
+      <div style="font-size:.75rem;color:var(--gray-500);margin-top:.4rem">
+        Datei: <code>Nährwerte-Übersicht-*.csv</code>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="margin-top:1rem;padding:.75rem;background:var(--green-50);border-radius:var(--radius-sm);font-size:.8rem;color:var(--green-900)">
+    <strong>Hinweis:</strong> Der Import ist idempotent – du kannst ihn beliebig oft starten.
+    Bereits vorhandene Einträge werden nicht doppelt angelegt, sondern mit neuen Werten ergänzt.
+    Manuell eingetragene Werte (z.B. subjektive Scores) bleiben erhalten.
+  </div>
+</div>
+{% endblock %}

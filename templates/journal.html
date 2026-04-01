@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}Journal{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Konsultations-Journal</h1>
+<p style="color:var(--gray-500);margin-bottom:1.25rem;font-size:.875rem">
+  Alle Analysen, Fortschrittsfotos und Gesprächsergebnisse – chronologisch, dauerhaft gespeichert.
+</p>
+
+<!-- Filter + Neuer Eintrag -->
+<div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center;margin-bottom:1.25rem">
+  <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+    <a href="/journal/" class="btn {% if not active_filter %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">Alle</a>
+    {% for t in entry_types %}
+      <a href="/journal/?entry_type={{ t }}" class="btn {% if active_filter == t %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">{{ t }}</a>
+    {% endfor %}
+  </div>
+  <button class="btn btn-primary" onclick="document.getElementById('modalNeu').classList.add('open')" style="margin-left:auto">
+    + Neuer Eintrag
+  </button>
+</div>
+
+<!-- Timeline -->
+{% if entries %}
+<div class="timeline">
+  {% for entry in entries %}
+  <div class="timeline-item">
+    <div class="timeline-dot"></div>
+    <div class="timeline-date">
+      {{ entry.date.strftime("%d.%m.%Y") }}
+      {% if entry.time %} · {{ entry.time }}{% endif %}
+      · <span class="badge badge-info">{{ entry.entry_type }}</span>
+      {% if entry.weight_at_time %}
+        · <span style="font-size:.75rem">{{ entry.weight_at_time }} kg</span>
+      {% endif %}
+      {% if entry.body_fat_at_time %}
+        <span style="font-size:.75rem">/ {{ entry.body_fat_at_time }}% KFA</span>
+      {% endif %}
+    </div>
+    <div class="timeline-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem">
+        <div style="font-weight:700;font-size:.95rem">{{ entry.title }}</div>
+        <form action="/journal/{{ entry.id }}/loeschen" method="post" onsubmit="return confirm('Eintrag löschen?')">
+          <button class="btn btn-danger btn-sm">✕</button>
+        </form>
+      </div>
+
+      {% if entry.image_path %}
+        <div style="margin-top:.75rem">
+          {% if entry.image_path.endswith('.pdf') %}
+            <a href="/data/{{ entry.image_path }}" target="_blank" class="btn btn-secondary btn-sm">📄 PDF öffnen</a>
+          {% else %}
+            <img src="/data/{{ entry.image_path }}" alt="{{ entry.title }}" class="timeline-image">
+          {% endif %}
+        </div>
+      {% endif %}
+
+      {% if entry.analysis_text %}
+        <div style="margin-top:.75rem;font-size:.875rem;line-height:1.6;white-space:pre-wrap;background:var(--green-50);padding:.75rem;border-radius:var(--radius-sm);border-left:3px solid var(--green-400)">{{ entry.analysis_text }}</div>
+      {% endif %}
+
+      {% if entry.notes %}
+        <div style="margin-top:.5rem;font-size:.8rem;color:var(--gray-500)">{{ entry.notes }}</div>
+      {% endif %}
+
+      {% if entry.tags %}
+        <div style="margin-top:.5rem">
+          {% for tag in entry.tags.split(',') %}
+            <span class="badge badge-gray" style="margin-right:.25rem">{{ tag.strip() }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card">
+  <p style="color:var(--gray-500)">Noch keine Journal-Einträge.
+    Füge deinen ersten Eintrag hinzu – z.B. ein Fortschrittsfoto oder die Zusammenfassung deines letzten Claude-Gesprächs.
+  </p>
+</div>
+{% endif %}
+
+<!-- Modal: Neuer Eintrag -->
+<div class="modal-overlay" id="modalNeu">
+  <div class="modal">
+    <div class="modal-title">
+      Neuer Journal-Eintrag
+      <button class="modal-close" onclick="document.getElementById('modalNeu').classList.remove('open')">×</button>
+    </div>
+    <form action="/journal/neu" method="post" enctype="multipart/form-data">
+      <div class="form-group">
+        <label>Datum</label>
+        <input type="date" name="entry_date" value="{{ today.isoformat() }}">
+      </div>
+      <div class="form-group">
+        <label>Uhrzeit (optional)</label>
+        <input type="time" name="entry_time">
+      </div>
+      <div class="form-group">
+        <label>Titel *</label>
+        <input type="text" name="title" required placeholder="z.B. Freitag Check-in KW14 oder Fortschrittsfoto Woche 6">
+      </div>
+      <div class="form-group">
+        <label>Typ</label>
+        <select name="entry_type">
+          {% for t in entry_types %}<option>{{ t }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Bild oder PDF (optional)</label>
+        <input type="file" name="image" accept=".jpg,.jpeg,.png,.gif,.webp,.pdf" style="width:auto">
+      </div>
+      <div class="form-group">
+        <label>Analyse / KI-Meinung</label>
+        <textarea name="analysis_text" rows="5" placeholder="Hier die Claude-Analyse oder eigene Auswertung einfügen..."></textarea>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Gewicht zu diesem Zeitpunkt (kg)</label>
+          <input type="number" name="weight_at_time" step=".1">
+        </div>
+        <div class="form-group">
+          <label>KFA % zu diesem Zeitpunkt</label>
+          <input type="number" name="body_fat_at_time" step=".1">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Tags (kommagetrennt)</label>
+        <input type="text" name="tags" placeholder="Blutbild, Aderlass, Check-in">
+      </div>
+      <div class="form-group">
+        <label>Weitere Notizen</label>
+        <textarea name="notes" rows="2"></textarea>
+      </div>
+      <button class="btn btn-primary">Eintrag speichern</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById("modalNeu").addEventListener("click", function(e) {
+  if (e.target === this) this.classList.remove("open");
+});
+</script>
+{% endblock %}

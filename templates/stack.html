@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% block title %}Stack{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Stack & Substanzen</h1>
+
+{% if active_stack %}
+<!-- Aktiver Stack Header -->
+<div class="card" style="margin-bottom:1.25rem;border-left:4px solid var(--green-500)">
+  <div style="display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap">
+    <div style="flex:1">
+      <div style="font-weight:700;font-size:1.1rem">{{ active_stack.name }}</div>
+      <div style="color:var(--gray-500);font-size:.85rem;margin-top:.25rem">
+        Ziel: {{ active_stack.goal }} ·
+        {{ active_stack.start_date.strftime("%d.%m.%Y") }} →
+        {{ active_stack.end_date.strftime("%d.%m.%Y") if active_stack.end_date else "offen" }}
+      </div>
+      {% if active_stack.notes %}
+        <div style="font-size:.8rem;color:var(--gray-600);margin-top:.4rem">{{ active_stack.notes }}</div>
+      {% endif %}
+    </div>
+    <span class="badge badge-ok">Aktiv</span>
+  </div>
+</div>
+
+<!-- Dosierungen nach Kategorie -->
+{% for category, items in active_doses.items() %}
+<div class="card" style="margin-bottom:1rem">
+  <div class="section-header">
+    <div class="section-title">
+      <span class="badge badge cat-{{ category.lower() }}">{{ category }}</span>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Substanz</th>
+          <th>Dosis</th>
+          <th>Frequenz</th>
+          <th>Timing</th>
+          <th>Seit</th>
+          <th>Notizen</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+        <tr>
+          <td><strong>{{ item.substance.name }}</strong></td>
+          <td><strong>{{ item.dose.dose_amount }} {{ item.dose.dose_unit }}</strong></td>
+          <td>{{ item.dose.frequency or "–" }}</td>
+          <td style="font-size:.8rem;color:var(--gray-500)">{{ item.dose.timing or "–" }}</td>
+          <td style="font-size:.8rem">{{ item.dose.start_date.strftime("%d.%m.%y") }}</td>
+          <td style="font-size:.8rem;color:var(--gray-500);max-width:200px">{{ item.dose.notes or "" }}</td>
+          <td>
+            <form action="/stack/dosis/{{ item.dose.id }}/abschliessen" method="post" style="display:inline">
+              <button class="btn btn-danger btn-sm" onclick="return confirm('Dosis als beendet markieren?')">✕</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endfor %}
+
+{% else %}
+<div class="card"><div class="badge badge-gray">Kein aktiver Stack</div></div>
+{% endif %}
+
+<!-- Neue Dosis hinzufügen -->
+<div class="card" style="margin-bottom:1.25rem">
+  <div class="section-title" style="margin-bottom:.75rem">+ Dosierung hinzufügen</div>
+  <form action="/stack/dosis/neu" method="post">
+    <div class="grid-3">
+      <div class="form-group">
+        <label>Substanz</label>
+        <select name="substance_id" required>
+          {% for s in substances %}
+            <option value="{{ s.id }}">{{ s.name }} ({{ s.category }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Stack</label>
+        <select name="stack_id" required>
+          {% for st in stacks %}
+            <option value="{{ st.id }}" {% if active_stack and st.id == active_stack.id %}selected{% endif %}>{{ st.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Start-Datum</label>
+        <input type="date" name="start_date" value="{{ today.isoformat() }}" required>
+      </div>
+      <div class="form-group">
+        <label>Dosis</label>
+        <input type="number" name="dose_amount" step="any" placeholder="z.B. 500" required>
+      </div>
+      <div class="form-group">
+        <label>Einheit</label>
+        <input type="text" name="dose_unit" placeholder="mg / mcg / IU" value="mg">
+      </div>
+      <div class="form-group">
+        <label>Frequenz</label>
+        <input type="text" name="frequency" placeholder="täglich / 2x/Woche">
+      </div>
+      <div class="form-group">
+        <label>Timing</label>
+        <input type="text" name="timing" placeholder="07:00 nüchtern / 21-22 Uhr">
+      </div>
+      <div class="form-group">
+        <label>Grund (optional)</label>
+        <input type="text" name="change_reason" placeholder="Dosiserhöhung nach Blutbild">
+      </div>
+      <div class="form-group">
+        <label>Notiz</label>
+        <input type="text" name="notes">
+      </div>
+    </div>
+    <button class="btn btn-primary">Dosierung speichern</button>
+  </form>
+</div>
+
+<!-- Neue Substanz -->
+<div class="card">
+  <div class="section-title" style="margin-bottom:.75rem">+ Neue Substanz anlegen</div>
+  <form action="/stack/substanz/neu" method="post">
+    <div class="grid-3">
+      <div class="form-group">
+        <label>Name</label>
+        <input type="text" name="name" required>
+      </div>
+      <div class="form-group">
+        <label>Kategorie</label>
+        <select name="category">
+          <option>Supplement</option>
+          <option>Medikament</option>
+          <option>Steroid</option>
+          <option>Peptid</option>
+          <option>Hormon</option>
+          <option>Sonstiges</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Route</label>
+        <select name="route">
+          <option value="oral">oral</option>
+          <option value="subkutan">subkutan</option>
+          <option value="intramuskulaer">intramuskulär</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Standard-Einheit</label>
+        <input type="text" name="default_unit" value="mg">
+      </div>
+      <div class="form-group" style="grid-column:span 2">
+        <label>Beschreibung</label>
+        <input type="text" name="description">
+      </div>
+    </div>
+    <button class="btn btn-primary">Substanz anlegen</button>
+  </form>
+</div>
+{% endblock %}

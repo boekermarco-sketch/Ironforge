@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Blutbild {{ panel.date.strftime("%d.%m.%Y") }}{% endblock %}
+
+{% block content %}
+<div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem;flex-wrap:wrap">
+  <a href="/blutbilder/" class="btn btn-secondary btn-sm">← Zurück</a>
+  <h1 class="page-title" style="margin:0">
+    Blutbild – {{ panel.date.strftime("%d.%m.%Y") }}
+    {% if panel.lab %}<span class="badge badge-gray" style="margin-left:.5rem">{{ panel.lab }}</span>{% endif %}
+  </h1>
+</div>
+
+{% if panel.notes %}
+<div class="alert alert-success" style="margin-bottom:1rem">{{ panel.notes }}</div>
+{% endif %}
+
+{% if prev_panel %}
+<div style="font-size:.8rem;color:var(--gray-500);margin-bottom:1rem">
+  Vergleich mit: {{ prev_panel.date.strftime("%d.%m.%Y") }}
+</div>
+{% endif %}
+
+<!-- Werte nach Kategorie -->
+{% for category, items in grouped.items() %}
+<div class="card" style="margin-bottom:1rem">
+  <div class="section-title" style="margin-bottom:.75rem">{{ category }}</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Marker</th>
+          <th>Wert</th>
+          <th>Einheit</th>
+          <th>Referenz</th>
+          <th>Status</th>
+          {% if prev_panel %}<th>Vorher</th>{% endif %}
+          <th>Trend</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+        {% set bv = item.bv %}
+        {% set bm = item.bm %}
+        {% set st = item.status %}
+        <tr class="blood-row-{{ st }}">
+          <td><strong>{{ bm.name }}</strong></td>
+          <td style="font-size:1rem;font-weight:700">{{ bv.value }}</td>
+          <td style="color:var(--gray-500)">{{ bv.unit or bm.unit or "" }}</td>
+          <td style="font-size:.8rem;color:var(--gray-500)">
+            {% if bv.ref_min or bv.ref_max %}
+              {{ bv.ref_min or "–" }} – {{ bv.ref_max or "–" }}
+            {% elif bm.ref_min or bm.ref_max %}
+              {{ bm.ref_min or "–" }} – {{ bm.ref_max or "–" }}
+            {% else %}
+              –
+            {% endif %}
+          </td>
+          <td>
+            {% if st == "kritisch" %}<span class="badge badge-danger">⚠️ Kritisch</span>
+            {% elif st == "warnung" %}<span class="badge badge-warn">~ Grenzwertig</span>
+            {% elif st == "optimal" %}<span class="badge badge-ok">✓ Optimal</span>
+            {% else %}<span class="badge badge-ok">✓ Normal</span>
+            {% endif %}
+          </td>
+          {% if prev_panel %}
+          <td style="font-size:.85rem;color:var(--gray-500)">
+            {% if prev_values.get(bm.id) is not none %}
+              {{ prev_values[bm.id] }}
+            {% else %}–{% endif %}
+          </td>
+          {% endif %}
+          <td style="font-size:.9rem">
+            {% if prev_values and prev_values.get(bm.id) is not none %}
+              {% set prev = prev_values[bm.id] %}
+              {% if bv.value > prev %}
+                <span style="color:var(--red-500)">↑ +{{ "%.1f"|format(bv.value - prev) }}</span>
+              {% elif bv.value < prev %}
+                <span style="color:var(--blue-500)">↓ {{ "%.1f"|format(bv.value - prev) }}</span>
+              {% else %}
+                <span style="color:var(--gray-400)">→</span>
+              {% endif %}
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endfor %}
+
+<!-- Einzelwert manuell hinzufügen -->
+<div class="card" style="margin-top:1.5rem">
+  <div class="section-title" style="margin-bottom:.75rem">+ Wert manuell hinzufügen</div>
+  <form action="/blutbilder/{{ panel.id }}/wert" method="post">
+    <div class="grid-4">
+      <div class="form-group">
+        <label>Marker</label>
+        <select name="biomarker_id" required>
+          {% for cat, items in grouped.items() %}
+            {% for item in items %}
+              {# skip already existing #}
+            {% endfor %}
+          {% endfor %}
+          <!-- Alle Biomarker laden via JS wenn nötig -->
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Wert</label>
+        <input type="number" name="value" step="any" required>
+      </div>
+      <div class="form-group">
+        <label>Einheit</label>
+        <input type="text" name="unit">
+      </div>
+      <div class="form-group">
+        <label>Ref-Min</label>
+        <input type="number" name="ref_min" step="any">
+      </div>
+      <div class="form-group">
+        <label>Ref-Max</label>
+        <input type="number" name="ref_max" step="any">
+      </div>
+      <div class="form-group">
+        <label>Notiz</label>
+        <input type="text" name="notes">
+      </div>
+    </div>
+    <button class="btn btn-primary">Wert speichern</button>
+  </form>
+</div>
+{% endblock %}

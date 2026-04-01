@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% block title %}Tageslog{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Tageslog</h1>
+
+<div class="grid-2" style="margin-bottom:1.25rem">
+
+  <!-- Eingabe-Formular (Freitag Check-in kompatibel) -->
+  <div class="card">
+    <div class="section-title" style="margin-bottom:.75rem">Neuer Eintrag (Freitag Check-in)</div>
+    <form action="/tageslog/eintragen" method="post">
+      <div class="form-group">
+        <label>Datum</label>
+        <input type="date" name="log_date" value="{{ today.isoformat() }}">
+      </div>
+
+      <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;color:var(--green-700);margin:.75rem 0 .4rem">Garmin</div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>HRV (ms)</label>
+          <input type="number" name="hrv" step=".1" placeholder="z.B. 32" {% if today_log and today_log.hrv %}value="{{ today_log.hrv }}"{% endif %}>
+        </div>
+        <div class="form-group">
+          <label>HF Nacht (bpm)</label>
+          <input type="number" name="heart_rate_night" step=".1" placeholder="z.B. 63" {% if today_log and today_log.heart_rate_night %}value="{{ today_log.heart_rate_night }}"{% endif %}>
+        </div>
+        <div class="form-group">
+          <label>Schlaf-Score</label>
+          <input type="number" name="sleep_score" placeholder="0-100" {% if today_log and today_log.sleep_score %}value="{{ today_log.sleep_score }}"{% endif %}>
+        </div>
+        <div class="form-group">
+          <label>Tiefschlaf (Min)</label>
+          <input type="number" name="deep_sleep_min" {% if today_log and today_log.deep_sleep_min %}value="{{ today_log.deep_sleep_min }}"{% endif %}>
+        </div>
+        <div class="form-group">
+          <label>REM (Min)</label>
+          <input type="number" name="rem_sleep_min" {% if today_log and today_log.rem_sleep_min %}value="{{ today_log.rem_sleep_min }}"{% endif %}>
+        </div>
+        <div class="form-group">
+          <label>Gesamtschlaf (Min)</label>
+          <input type="number" name="total_sleep_min" {% if today_log and today_log.total_sleep_min %}value="{{ today_log.total_sleep_min }}"{% endif %}>
+        </div>
+        <div class="form-group">
+          <label>Body Battery</label>
+          <input type="number" name="body_battery" {% if today_log and today_log.body_battery %}value="{{ today_log.body_battery }}"{% endif %}>
+        </div>
+        <div class="form-group">
+          <label>Atemfrequenz (brpm)</label>
+          <input type="number" name="breath_rate" step=".1" {% if today_log and today_log.breath_rate %}value="{{ today_log.breath_rate }}"{% endif %}>
+        </div>
+      </div>
+
+      <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;color:var(--green-700);margin:.75rem 0 .4rem">Körper (Withings/manuell)</div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Gewicht (kg)</label>
+          <input type="number" name="weight" step=".1" placeholder="nüchtern, nach Toilette" {% if today_log and today_log.weight %}value="{{ today_log.weight }}"{% endif %}>
+        </div>
+        <div class="form-group">
+          <label>KFA % (Waage)</label>
+          <input type="number" name="body_fat" step=".1" {% if today_log and today_log.body_fat %}value="{{ today_log.body_fat }}"{% endif %}>
+        </div>
+      </div>
+
+      <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;color:var(--green-700);margin:.75rem 0 .4rem">Subjektiv (1-10)</div>
+      <div class="grid-3">
+        <div class="form-group">
+          <label>Energie</label>
+          <input type="number" name="energy_level" min="1" max="10" {% if today_log and today_log.energy_level %}value="{{ today_log.energy_level }}"{% endif %}>
+        </div>
+        <div class="form-group">
+          <label>Libido</label>
+          <input type="number" name="libido" min="1" max="10" {% if today_log and today_log.libido %}value="{{ today_log.libido }}"{% endif %}>
+        </div>
+        <div class="form-group">
+          <label>Stimmung</label>
+          <input type="number" name="mood" min="1" max="10" {% if today_log and today_log.mood %}value="{{ today_log.mood }}"{% endif %}>
+        </div>
+        <div class="form-group">
+          <label>Training-Gefühl</label>
+          <input type="number" name="training_feel" min="1" max="10" {% if today_log and today_log.training_feel %}value="{{ today_log.training_feel }}"{% endif %}>
+        </div>
+        <div class="form-group">
+          <label>Wasserretention (1-5)</label>
+          <input type="number" name="water_retention" min="1" max="5" {% if today_log and today_log.water_retention %}value="{{ today_log.water_retention }}"{% endif %}>
+        </div>
+        <div class="form-group">
+          <label>Akne (1-5)</label>
+          <input type="number" name="acne" min="1" max="5" {% if today_log and today_log.acne %}value="{{ today_log.acne }}"{% endif %}>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Nachtschweiß</label>
+          <select name="night_sweat">
+            <option value="">–</option>
+            <option value="nein" {% if today_log and today_log.night_sweat == "nein" %}selected{% endif %}>Nein</option>
+            <option value="weniger" {% if today_log and today_log.night_sweat == "weniger" %}selected{% endif %}>Weniger</option>
+            <option value="ja" {% if today_log and today_log.night_sweat == "ja" %}selected{% endif %}>Ja</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Trainings-Einheiten</label>
+          <input type="number" name="training_sessions" min="0" max="7" {% if today_log and today_log.training_sessions %}value="{{ today_log.training_sessions }}"{% endif %}>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Notizen / Besonderheiten</label>
+        <textarea name="notes" rows="2">{% if today_log and today_log.notes %}{{ today_log.notes }}{% endif %}</textarea>
+      </div>
+
+      <button class="btn btn-primary">Eintrag speichern</button>
+    </form>
+  </div>
+
+  <!-- Chart: HRV letzte 30 Tage -->
+  <div>
+    <div class="card" style="margin-bottom:1rem">
+      <div class="section-title" style="margin-bottom:.5rem">HRV – letzte 30 Tage</div>
+      <div class="chart-container" style="height:160px"><canvas id="hrvChart"></canvas></div>
+    </div>
+    <div class="card" style="margin-bottom:1rem">
+      <div class="section-title" style="margin-bottom:.5rem">Gewicht</div>
+      <div class="chart-container" style="height:160px"><canvas id="weightChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="section-title" style="margin-bottom:.5rem">Schlaf-Score</div>
+      <div class="chart-container" style="height:160px"><canvas id="sleepChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- Log-Tabelle -->
+<div class="card">
+  <div class="section-title" style="margin-bottom:.75rem">Verlauf (letzte 30 Einträge)</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Datum</th>
+          <th>HRV</th>
+          <th>HF Nacht</th>
+          <th>Schlaf</th>
+          <th>Body B.</th>
+          <th>Gewicht</th>
+          <th>KFA%</th>
+          <th>Energie</th>
+          <th>Schweiß</th>
+          <th>Notizen</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td>{{ log.date.strftime("%d.%m.%Y") }}</td>
+          <td>{% if log.hrv %}<strong>{{ log.hrv }}</strong> ms{% else %}–{% endif %}</td>
+          <td>{{ log.heart_rate_night or "–" }}</td>
+          <td>{{ log.sleep_score or "–" }}</td>
+          <td>{{ log.body_battery or "–" }}</td>
+          <td>{{ log.weight or "–" }}</td>
+          <td>{{ log.body_fat or "–" }}</td>
+          <td>{{ log.energy_level or "–" }}</td>
+          <td>{{ log.night_sweat or "–" }}</td>
+          <td style="font-size:.75rem;color:var(--gray-500);max-width:180px">{{ log.notes or "" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+fetch("/tageslog/api/chart?days=30").then(r => r.json()).then(data => {
+  const makeChart = (id, label, key, color) => {
+    const ctx = document.getElementById(id).getContext("2d");
+    new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: data.dates,
+        datasets: [{
+          label, data: data[key],
+          borderColor: color,
+          backgroundColor: color + "20",
+          tension: .3, pointRadius: 3, fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: false } }
+      }
+    });
+  };
+  makeChart("hrvChart",    "HRV (ms)",    "hrv",         "#22c55e");
+  makeChart("weightChart", "Gewicht (kg)","weight",      "#3b82f6");
+  makeChart("sleepChart",  "Schlaf-Score","sleep_score", "#a855f7");
+});
+</script>
+{% endblock %}

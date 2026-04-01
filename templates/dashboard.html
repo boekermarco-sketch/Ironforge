@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Dashboard – {{ today.strftime("%d.%m.%Y") }}</h1>
+
+<!-- KPI-Karten -->
+<div class="grid-4" style="margin-bottom:1.25rem">
+
+  <!-- Gewicht -->
+  <div class="card">
+    <div class="card-title">Gewicht</div>
+    <div class="card-value">{{ last_log.weight if last_log and last_log.weight else "–" }}</div>
+    <div class="card-unit">kg</div>
+    <div class="card-sub">Stand: {{ last_log.date.strftime("%d.%m.%Y") if last_log else "kein Eintrag" }}</div>
+  </div>
+
+  <!-- HRV -->
+  <div class="card">
+    <div class="card-title">HRV</div>
+    <div class="card-value">{{ last_log.hrv if last_log and last_log.hrv else "–" }}</div>
+    <div class="card-unit">ms</div>
+    {% if last_log and last_log.hrv %}
+      {% if last_log.hrv >= 32 %}
+        <div class="card-sub" style="color:var(--green-600)">✅ Ziel >35ms fast erreicht</div>
+      {% elif last_log.hrv >= 28 %}
+        <div class="card-sub" style="color:var(--yellow-700)">⚡ Gut – Clen 40mcg möglich</div>
+      {% else %}
+        <div class="card-sub" style="color:var(--red-500)">⚠️ Unter Zielbereich</div>
+      {% endif %}
+    {% endif %}
+  </div>
+
+  <!-- Schlaf -->
+  <div class="card">
+    <div class="card-title">Schlaf-Score</div>
+    <div class="card-value">{{ last_log.sleep_score if last_log and last_log.sleep_score else "–" }}</div>
+    <div class="card-unit">Punkte (Ziel: >75)</div>
+    {% if last_log and last_log.deep_sleep_min %}
+      <div class="card-sub">Tiefschlaf: {{ last_log.deep_sleep_min }} Min</div>
+    {% endif %}
+  </div>
+
+  <!-- Body Battery -->
+  <div class="card">
+    <div class="card-title">Body Battery</div>
+    <div class="card-value">{{ last_log.body_battery if last_log and last_log.body_battery else "–" }}</div>
+    <div class="card-unit">Punkte (Ziel: >55)</div>
+    {% if last_log and last_log.heart_rate_night %}
+      <div class="card-sub">HF Nacht: {{ last_log.heart_rate_night }} bpm</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Stack-Fortschritt + letztes Blutbild -->
+<div class="grid-2" style="margin-bottom:1.25rem">
+
+  <!-- Aktiver Stack -->
+  <div class="card">
+    <div class="section-header">
+      <div class="section-title">Aktiver Stack</div>
+      <a href="/stack/" class="btn btn-secondary btn-sm">Details →</a>
+    </div>
+    {% if active_stack %}
+      <div style="font-weight:600;font-size:1rem;margin-bottom:.5rem">{{ active_stack.name }}</div>
+      <div style="font-size:.85rem;color:var(--gray-500);margin-bottom:.75rem">
+        Start: {{ active_stack.start_date.strftime("%d.%m.%Y") }}
+        {% if active_stack.end_date %}→ Ende: {{ active_stack.end_date.strftime("%d.%m.%Y") }}{% endif %}
+      </div>
+      {% if stack_progress is not none %}
+      <div style="font-size:.8rem;color:var(--gray-500);margin-bottom:.3rem">
+        Woche {{ ((stack_days_done) // 7) + 1 }} von {{ stack_days_total // 7 }}
+        ({{ stack_progress }}%)
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" style="width:{{ stack_progress }}%"></div>
+      </div>
+      {% endif %}
+      {% if critical_values %}
+      <div style="margin-top:.75rem">
+        <div class="card-title" style="margin-bottom:.4rem">⚠️ Kritische Werte (letztes Blutbild)</div>
+        {% for cv in critical_values %}
+          <span class="badge badge-danger">{{ cv.name }}: {{ cv.value }} {{ cv.unit }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+    {% else %}
+      <div class="badge badge-gray">Kein aktiver Stack</div>
+    {% endif %}
+  </div>
+
+  <!-- Letztes Blutbild -->
+  <div class="card">
+    <div class="section-header">
+      <div class="section-title">Letztes Blutbild</div>
+      <a href="/blutbilder/" class="btn btn-secondary btn-sm">Alle →</a>
+    </div>
+    {% if last_panel %}
+      <div style="font-weight:600;margin-bottom:.4rem">
+        {{ last_panel.date.strftime("%d.%m.%Y") }}
+        {% if last_panel.lab %}<span class="badge badge-gray" style="margin-left:.5rem">{{ last_panel.lab }}</span>{% endif %}
+      </div>
+      {% if last_panel.notes %}
+        <div style="font-size:.85rem;color:var(--gray-500);margin-bottom:.75rem">{{ last_panel.notes }}</div>
+      {% endif %}
+      <a href="/blutbilder/{{ last_panel.id }}" class="btn btn-primary btn-sm">Auswertung öffnen</a>
+    {% else %}
+      <div class="badge badge-gray">Noch kein Blutbild eingetragen</div>
+      <div style="margin-top:.75rem">
+        <a href="/blutbilder/" class="btn btn-primary btn-sm">+ PDF hochladen</a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- HRV + Gewicht Chart -->
+<div class="card" style="margin-bottom:1.25rem">
+  <div class="section-header">
+    <div class="section-title">HRV & Gewicht – letzte 30 Tage</div>
+    <a href="/tageslog/" class="btn btn-secondary btn-sm">Tageslog →</a>
+  </div>
+  <div class="chart-container" style="height:220px">
+    <canvas id="dashChart"></canvas>
+  </div>
+</div>
+
+<!-- Letztes Ereignis + Journal -->
+<div class="grid-2">
+
+  <div class="card">
+    <div class="section-header">
+      <div class="section-title">Letztes Ereignis</div>
+      <a href="/ereignisse/" class="btn btn-secondary btn-sm">Alle →</a>
+    </div>
+    {% if last_event %}
+      <div style="font-weight:600">{{ last_event.event_type }}</div>
+      <div style="font-size:.85rem;color:var(--gray-500)">{{ last_event.date.strftime("%d.%m.%Y") }}</div>
+      {% if last_event.amount_ml %}<div style="font-size:.85rem">{{ last_event.amount_ml }} ml</div>{% endif %}
+      {% if last_event.notes %}<div style="font-size:.8rem;margin-top:.4rem;color:var(--gray-700)">{{ last_event.notes }}</div>{% endif %}
+    {% else %}
+      <div class="badge badge-gray">Keine Ereignisse</div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="section-header">
+      <div class="section-title">Journal – Zuletzt</div>
+      <a href="/journal/" class="btn btn-secondary btn-sm">Alle →</a>
+    </div>
+    {% if recent_journal %}
+      {% for entry in recent_journal %}
+        <div style="padding:.4rem 0;border-bottom:1px solid var(--gray-100)">
+          <div style="font-size:.75rem;color:var(--gray-500)">{{ entry.date.strftime("%d.%m.%Y") }} · <span class="badge badge-info">{{ entry.entry_type }}</span></div>
+          <div style="font-size:.875rem;font-weight:600">{{ entry.title }}</div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="badge badge-gray">Noch kein Eintrag</div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  fetch("/tageslog/api/chart?days=30").then(r => r.json()).then(data => {
+    const ctx = document.getElementById("dashChart").getContext("2d");
+    new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: data.dates,
+        datasets: [
+          {
+            label: "HRV (ms)",
+            data: data.hrv,
+            borderColor: "#22c55e",
+            backgroundColor: "rgba(34,197,94,.08)",
+            tension: .3,
+            yAxisID: "y",
+            pointRadius: 3,
+          },
+          {
+            label: "Gewicht (kg)",
+            data: data.weight,
+            borderColor: "#3b82f6",
+            backgroundColor: "rgba(59,130,246,.08)",
+            tension: .3,
+            yAxisID: "y2",
+            pointRadius: 3,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        scales: {
+          y:  { position: "left",  title: { display: true, text: "HRV (ms)" } },
+          y2: { position: "right", title: { display: true, text: "Gewicht (kg)" }, grid: { drawOnChartArea: false } }
+        },
+        plugins: { legend: { position: "top" } }
+      }
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Fitness Dashboard{% endblock %} – Marco Böker</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-brand">
+    <span class="nav-icon">💪</span>
+    <span>Marco's Dashboard</span>
+  </div>
+  <ul class="nav-links">
+    <li><a href="/" {% if request.url.path == "/" %}class="active"{% endif %}>Dashboard</a></li>
+    <li><a href="/stack/" {% if "/stack" in request.url.path %}class="active"{% endif %}>Stack</a></li>
+    <li><a href="/blutbilder/" {% if "/blutbilder" in request.url.path %}class="active"{% endif %}>Blutbilder</a></li>
+    <li><a href="/tageslog/" {% if "/tageslog" in request.url.path %}class="active"{% endif %}>Tageslog</a></li>
+    <li><a href="/journal/" {% if "/journal" in request.url.path %}class="active"{% endif %}>Journal</a></li>
+    <li><a href="/ereignisse/" {% if "/ereignisse" in request.url.path %}class="active"{% endif %}>Ereignisse</a></li>
+    <li><a href="/import/" {% if "/import" in request.url.path %}class="active"{% endif %}>Import</a></li>
+  </ul>
+</nav>
+
+<main class="main-content">
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="footer">
+  <span>Fitness Dashboard v1.0 · Marco Böker · Stand: 2026</span>
+</footer>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>
