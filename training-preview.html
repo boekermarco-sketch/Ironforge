@@ -312,9 +312,199 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
 [data-theme="light"] .mobile-main-tab{background:rgba(0,0,0,.04)}
 [data-theme="light"] .mobile-train-tab{background:rgba(0,0,0,.03)}
 @media(max-width:640px){
-  .mobile-bottom-nav{display:block}
-  /* Alte bottom-tabs ausblenden falls vorhanden */
-  .mobile-bottom-tabs{display:none}
+  /* ── APP SHELL ─────────────────────────────────────── */
+  html,body{overflow:hidden;height:100dvh}
+  .shell{display:block !important}
+  .side{display:none !important}
+  .main-content{
+    padding:0 0 68px 0 !important;
+    height:calc(100dvh - 116px);
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    margin-top:54px;
+  }
+  /* Hide desktop-only elements */
+  .session-tabs{display:none !important}
+  .tab-state{display:none !important}
+  .phase-switch{display:none !important}
+  #phase-note{display:none !important}
+  /* Page top: compress */
+  .main-content > div:first-child{display:none}
+  /* Training grid: single column */
+  .training-grid{grid-template-columns:1fr !important;gap:10px}
+  /* Catalogue: single column */
+  #view-uebungen .analyse-grid > .card:nth-child(2) > div:first-of-type{
+    grid-template-columns:1fr 1fr !important;
+  }
+  /* Padding adjustments */
+  .card{padding:14px !important}
+
+  /* ── APP HEADER ────────────────────────────────────── */
+  #m-app-header{
+    display:flex !important;
+    position:fixed;top:0;left:0;right:0;
+    height:54px;z-index:100;
+    background:var(--panel);
+    border-bottom:1px solid var(--line);
+    padding:0 14px;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    backdrop-filter:blur(8px);
+  }
+  .m-header-btn{background:transparent;border:none;color:var(--muted);cursor:pointer;padding:6px;display:flex;align-items:center}
+  .m-header-title{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;letter-spacing:-.01em;flex:1;text-align:center}
+  .m-header-right{display:flex;align-items:center;min-width:60px;justify-content:flex-end}
+  .m-header-studio{font-size:10px;color:var(--gold);font-weight:800;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80px}
+
+  /* ── BOTTOM NAV ────────────────────────────────────── */
+  .mobile-bottom-nav{
+    display:flex !important;
+    position:fixed;bottom:0;left:0;right:0;
+    height:68px;z-index:100;
+    background:var(--panel);
+    border-top:1px solid var(--line);
+    padding:0 4px env(safe-area-inset-bottom);
+    align-items:center;
+    justify-content:space-around;
+  }
+  .m5-tab{
+    display:flex;flex-direction:column;align-items:center;gap:2px;
+    padding:6px 8px;border-radius:12px;border:none;
+    background:transparent;color:var(--soft);
+    font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+    cursor:pointer;transition:.18s;min-width:52px;flex:1;
+  }
+  .m5-tab svg{stroke:currentColor;transition:.18s}
+  .m5-tab.active{color:var(--gold)}
+  .m5-tab.active svg{stroke:var(--gold)}
+  .m5-center{position:relative;top:-6px}
+  .m5-center svg{background:var(--gold);stroke:#0a0a0a;border-radius:50%;padding:5px;width:36px;height:36px}
+  .m5-center.active svg{background:var(--gold)}
+  .m5-center span{color:var(--gold)}
+
+  /* ── SESSION OVERLAY ───────────────────────────────── */
+  #m-session-overlay{
+    display:none;
+    position:fixed;
+    top:54px;left:0;right:0;bottom:68px;
+    background:var(--bg);
+    z-index:60;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    padding:10px 14px 16px;
+    flex-direction:column;
+    gap:10px;
+  }
+  #m-session-overlay.active{display:flex}
+
+  /* Sub-tab bar */
+  .m-subtab-bar{display:flex;gap:4px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;flex-shrink:0;scrollbar-width:none}
+  .m-subtab-bar::-webkit-scrollbar{display:none}
+  .m-subtab{padding:6px 12px;border-radius:20px;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--soft);font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;white-space:nowrap;transition:.15s;flex-shrink:0}
+  .m-subtab.active{background:var(--goldSoft);color:var(--gold);border-color:rgba(208,163,90,.35)}
+
+  /* Rest bar (inline) */
+  .m-rest-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:14px;background:var(--goldSoft);border:1px solid rgba(208,163,90,.2);flex-shrink:0}
+  .m-rest-label{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:800;flex:1}
+  .m-rest-val{font-family:'Cormorant Garamond',serif;font-size:32px;line-height:1;color:var(--gold);font-weight:600}
+  .m-rest-stop{background:transparent;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:4px}
+
+  /* Exercise card */
+  .m-ex-card{
+    flex:1;
+    background:linear-gradient(145deg,var(--panel),var(--panel2));
+    border:1px solid var(--line);border-radius:20px;
+    padding:18px 16px;
+    display:flex;flex-direction:column;gap:10px;
+    min-height:220px;
+  }
+  .m-ex-progress-row{display:flex;justify-content:space-between;align-items:center}
+  .m-ex-counter{font-size:10px;color:var(--soft);font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+  .m-ex-dots{display:flex;gap:5px;align-items:center}
+  .m-ex-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.1);transition:.2s}
+  .m-ex-dot.done{background:var(--teal)}
+  .m-ex-dot.current{background:var(--gold);width:10px;height:10px}
+  .m-ex-badges-row{display:flex;gap:5px;flex-wrap:wrap}
+  .m-ex-big-name{font-family:'Cormorant Garamond',serif;font-size:clamp(22px,6vw,30px);font-weight:700;line-height:1.15;color:var(--text);letter-spacing:-.01em}
+  .m-ex-hist-label{font-size:10px;color:var(--soft);letter-spacing:.1em;text-transform:uppercase;font-weight:800;margin-top:4px}
+  .m-ex-hist-sets{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+  .m-ex-hist-set{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--muted);padding:3px 8px;border-radius:7px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06)}
+  .m-ex-hist-set.up{color:var(--teal)}
+  .m-ex-hist-set.pr{color:var(--gold)}
+  .m-ex-today-sets{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+  .m-ex-today-set{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--teal);padding:3px 8px;border-radius:7px;background:rgba(88,185,176,.08);border:1px solid rgba(88,185,176,.2)}
+  .m-ex-empty{color:var(--soft);font-size:12px;letter-spacing:.06em}
+
+  /* Action row */
+  .m-action-row{display:grid;grid-template-columns:44px 1fr 44px;gap:8px;align-items:center;flex-shrink:0}
+  .m-nav-btn{height:44px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
+  .m-nav-btn:active{background:var(--goldSoft);color:var(--gold)}
+  .m-log-btn{height:52px;border-radius:14px;background:var(--gold);color:#0a0a0a;border:none;font-family:'Manrope',sans-serif;font-size:13px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:.15s}
+  .m-log-btn:active{background:#e0b46a}
+
+  /* Pool FAB */
+  .m-pool-fab{position:sticky;bottom:8px;left:50%;transform:translateX(-50%);z-index:65;background:rgba(208,163,90,.15);color:var(--gold);border:1px solid rgba(208,163,90,.35);border-radius:999px;padding:8px 20px;font-family:'Manrope',sans-serif;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;display:block;width:fit-content;margin:0 auto;backdrop-filter:blur(6px)}
+
+  /* ── POOL BOTTOM SHEET ─────────────────────────────── */
+  #m-pool-backdrop{
+    display:none;
+    position:fixed;inset:0;
+    background:rgba(0,0,0,.6);
+    z-index:70;
+    backdrop-filter:blur(2px);
+  }
+  #m-pool-backdrop.open{display:block}
+  #m-pool-sheet{
+    position:fixed;bottom:0;left:0;right:0;
+    background:var(--panel);
+    border-radius:22px 22px 0 0;
+    border-top:1px solid var(--line);
+    padding:12px 14px 80px;
+    z-index:75;
+    transform:translateY(100%);
+    transition:transform .28s cubic-bezier(.4,0,.2,1);
+    max-height:80dvh;
+    overflow-y:auto;
+  }
+  #m-pool-sheet.open{transform:translateY(0)}
+  .m-sheet-handle{width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,.12);margin:0 auto 12px}
+  .m-pool-item{display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);margin-bottom:6px}
+  .m-pool-item-name{font-size:13px;font-weight:700;color:var(--text)}
+  .m-pool-item-meta{font-size:10px;color:var(--soft);margin-top:2px}
+  .m-pool-add-btn{background:rgba(208,163,90,.12);color:var(--gold);border:1px solid rgba(208,163,90,.3);border-radius:9px;padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap}
+
+  /* ── STUDIO OVERLAY ────────────────────────────────── */
+  #m-studio-overlay{
+    display:none;
+    position:fixed;
+    top:54px;left:0;right:0;bottom:68px;
+    background:var(--bg);
+    z-index:60;
+    overflow-y:auto;
+    padding:14px;
+    flex-direction:column;
+    gap:12px;
+  }
+  #m-studio-overlay.active{display:flex}
+  .m-studio-card{background:linear-gradient(145deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:20px;padding:16px}
+  .m-studio-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+  .m-stat{background:rgba(255,255,255,.02);border:1px solid var(--line);border-radius:14px;padding:12px 6px;text-align:center}
+  .m-stat-val{font-family:'Cormorant Garamond',serif;font-size:26px;line-height:1;color:var(--gold);font-weight:700}
+  .m-stat-lbl{font-size:9px;color:var(--soft);font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-top:4px}
+  .m-sync-row{display:flex;gap:8px}
+
+  /* ── REST TIMER: hide sticky banner on mobile (use inline bar) */
+  .rest-timer-wrap{display:none !important}
+
+  /* ── PLAN VIEW: show pool + active stacked ─────────── */
+  #pool-card{display:block}
+  body.mobile-session-focus #pool-card{display:block}
+
+  /* ── FIX: Catalog responsive ───────────────────────── */
+  #view-uebungen .card > div[style*="repeat(6"]{
+    grid-template-columns:1fr 1fr !important;
+  }
 }
 
 /* FORGE ANALYTICS */
@@ -780,30 +970,113 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
 
 </main>
 </div>
-<div class="mobile-bottom-nav" id="mobile-bottom-nav">
-  <!-- 3 Haupt-Views -->
-  <div class="mobile-main-tabs">
-    <button class="mobile-main-tab" id="m-main-stats" onclick="switchMobileMainView('stats')">
-      <span class="m-icon">📊</span>Stats
-    </button>
-    <button class="mobile-main-tab active" id="m-main-training" onclick="switchMobileMainView('training')">
-      <span class="m-icon">🏋️</span>Training
-    </button>
-    <button class="mobile-main-tab" id="m-main-history" onclick="switchMobileMainView('history')">
-      <span class="m-icon">📅</span>History
-    </button>
-  </div>
-  <!-- Training-Subtabs (nur wenn Training aktiv) -->
-  <div class="mobile-train-tabs show" id="mobile-train-tabs">
-    <button class="mobile-train-tab active" id="m-tab-push" onclick="changeTab('push')">Push</button>
-    <button class="mobile-train-tab" id="m-tab-pull_a" onclick="changeTab('pull_a')">Pull A</button>
-    <button class="mobile-train-tab" id="m-tab-pull_b" onclick="changeTab('pull_b')">Pull B</button>
-    <button class="mobile-train-tab" id="m-tab-legs" onclick="changeTab('legs')">Beine</button>
-    <button class="mobile-train-tab" id="m-tab-free" onclick="changeTab('free')">Frei</button>
-    <button class="mobile-train-tab" id="m-tab-cardio" onclick="changeTab('cardio')">Cardio</button>
+<!-- MOBILE BOTTOM NAV (5 Tabs) -->
+<nav class="mobile-bottom-nav" id="mobile-bottom-nav">
+  <button class="m5-tab" id="m5-studio" onclick="switchMobileView('studio')">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>Studio</span>
+  </button>
+  <button class="m5-tab" id="m5-plan" onclick="switchMobileView('plan')">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    <span>Plan</span>
+  </button>
+  <button class="m5-tab m5-center" id="m5-session" onclick="switchMobileView('session')">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 17.5 17.5M6.5 17.5 17.5 6.5"/><circle cx="12" cy="12" r="9"/></svg>
+    <span>Training</span>
+  </button>
+  <button class="m5-tab" id="m5-stats" onclick="switchMobileView('stats')">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    <span>Analyse</span>
+  </button>
+  <button class="m5-tab" id="m5-mehr" onclick="switchMobileView('mehr')">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+    <span>Mehr</span>
+  </button>
+</nav>
+<button id="edit-done-fab" class="edit-done-fab" onclick="exitEditMode()">Fertig</button>
+
+<!-- ══ MOBILE APP HEADER ════════════════════════════════════ -->
+<div id="m-app-header">
+  <button id="m-header-back" class="m-header-btn" onclick="mHeaderBack()" style="display:none">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
+  <div id="m-header-title" class="m-header-title">Iron Forge</div>
+  <div id="m-header-right" class="m-header-right">
+    <span id="m-header-studio" class="m-header-studio"></span>
   </div>
 </div>
-<button id="edit-done-fab" class="edit-done-fab" onclick="exitEditMode()">Fertig</button>
+
+<!-- ══ MOBILE SESSION FOCUS OVERLAY ═════════════════════════ -->
+<div id="m-session-overlay">
+  <!-- Sub-tab selector -->
+  <div id="m-subtab-bar" class="m-subtab-bar">
+    <button class="m-subtab active" id="mst-push"   onclick="mChangeTab('push')">Push</button>
+    <button class="m-subtab"        id="mst-pull_a" onclick="mChangeTab('pull_a')">Pull A</button>
+    <button class="m-subtab"        id="mst-pull_b" onclick="mChangeTab('pull_b')">Pull B</button>
+    <button class="m-subtab"        id="mst-legs"   onclick="mChangeTab('legs')">Beine</button>
+    <button class="m-subtab"        id="mst-free"   onclick="mChangeTab('free')">Frei</button>
+    <button class="m-subtab"        id="mst-cardio" onclick="mChangeTab('cardio')">Cardio</button>
+  </div>
+
+  <!-- Rest timer (inline when running) -->
+  <div id="m-rest-bar" class="m-rest-bar" style="display:none">
+    <span class="m-rest-label">Pause</span>
+    <span id="m-rest-val" class="m-rest-val">0:00</span>
+    <button onclick="stopRestTimer()" class="m-rest-stop">✕</button>
+  </div>
+
+  <!-- Exercise focus card -->
+  <div class="m-ex-card" id="m-ex-card">
+    <!-- Injected by renderMobileSession() -->
+  </div>
+
+  <!-- Log + Nav -->
+  <div class="m-action-row">
+    <button onclick="mNavEx(-1)" class="m-nav-btn" id="m-nav-prev">←</button>
+    <button onclick="mOpenLogger()" class="m-log-btn" id="m-log-btn">Satz loggen</button>
+    <button onclick="mNavEx(1)"  class="m-nav-btn" id="m-nav-next">→</button>
+  </div>
+
+  <!-- Pool FAB -->
+  <button onclick="openMobilePool()" class="m-pool-fab">+ Pool</button>
+
+  <!-- Finish session -->
+  <div style="text-align:center;padding:6px 0 2px">
+    <button onclick="finishSession()" class="btn btn-secondary btn-sm" style="font-size:11px">Session beenden ✓</button>
+  </div>
+</div>
+
+<!-- ══ MOBILE POOL SHEET ═════════════════════════════════════ -->
+<div id="m-pool-backdrop" onclick="closeMobilePool()"></div>
+<div id="m-pool-sheet">
+  <div class="m-sheet-handle"></div>
+  <div class="sh" style="margin-bottom:10px">
+    <div class="sh-title">Pool · <span id="m-pool-sheet-tab"></span></div>
+    <button onclick="closeMobilePool()" class="btn btn-secondary btn-sm" style="padding:3px 10px">✕</button>
+  </div>
+  <div class="cat-filters" id="m-pool-cat-filters"></div>
+  <div id="m-pool-sheet-list" style="overflow-y:auto;max-height:55dvh;padding-bottom:8px"></div>
+</div>
+
+<!-- ══ MOBILE STUDIO OVERLAY ═════════════════════════════════ -->
+<div id="m-studio-overlay">
+  <div class="m-studio-card">
+    <div style="font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:800;margin-bottom:6px">Studio</div>
+    <select id="m-studio-select" class="studio-select" onchange="mStudioChange()"></select>
+    <button onclick="addStudio()" class="btn btn-secondary btn-sm" style="margin-top:8px;width:100%">+ Studio hinzufügen</button>
+  </div>
+  <div class="m-studio-stats">
+    <div class="m-stat"><div class="m-stat-val" id="m-stat-sessions">–</div><div class="m-stat-lbl">Sessions</div></div>
+    <div class="m-stat"><div class="m-stat-val" id="m-stat-active">–</div><div class="m-stat-lbl">Aktiv</div></div>
+    <div class="m-stat"><div class="m-stat-val" id="m-stat-sets">–</div><div class="m-stat-lbl">Sätze heute</div></div>
+    <div class="m-stat"><div class="m-stat-val" id="m-stat-prs" style="color:var(--teal)">–</div><div class="m-stat-lbl">PRs</div></div>
+  </div>
+  <div class="m-sync-row">
+    <button onclick="syncToCloud()" class="btn btn-secondary btn-sm" style="flex:1">↑ Cloud Upload</button>
+    <button onclick="syncFromCloud()" class="btn btn-secondary btn-sm" style="flex:1">↓ Cloud Laden</button>
+  </div>
+  <div id="m-sync-status" class="sync-status" style="margin-top:8px;text-align:center"></div>
+</div>
 <div id="setup-overlay" class="setup-overlay">
   <div class="setup-box">
     <div class="sh">
@@ -928,7 +1201,7 @@ let catalogSource = 'local';
 let autoSyncTimer = null;
 let catalogStatusText = '';
 let gym80CategoryMap = null;
-const BUILD_STAMP = '2026-04-16 14:30';
+const BUILD_STAMP = '2026-04-16 16:00';
 
 const CATS = ['Brust','Rücken','Beine','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -3315,6 +3588,333 @@ async function syncFromCloud(){
 }
 
 // ════════════════════════════════════════════════════════════
+// MOBILE APP – View-System, Session-Navigator, Pool-Sheet
+// ════════════════════════════════════════════════════════════
+
+let mobileView  = 'session'; // studio | plan | session | stats | mehr
+let mobileExIdx = 0;         // current exercise index in session navigator
+
+const M_HEADER_TITLES = {
+  studio: 'Iron Forge',
+  plan:   'Planung',
+  session:'Training',
+  stats:  'Analyse',
+  mehr:   'Übungen',
+};
+
+function isMobile(){ return window.matchMedia('(max-width:640px)').matches; }
+
+function switchMobileView(view){
+  if(!isMobile()) return;
+  mobileView = view;
+
+  // Bottom nav active state
+  ['studio','plan','session','stats','mehr'].forEach(v=>{
+    document.getElementById('m5-'+v)?.classList.toggle('active', v===view);
+  });
+
+  // Update header
+  const titleEl = document.getElementById('m-header-title');
+  if(titleEl) titleEl.textContent = M_HEADER_TITLES[view] || 'Iron Forge';
+
+  // Show/hide overlays
+  document.getElementById('m-session-overlay')?.classList.toggle('active', view==='session');
+  document.getElementById('m-studio-overlay')?.classList.toggle('active',  view==='studio');
+
+  // Back button: show only in session/studio
+  const backBtn = document.getElementById('m-header-back');
+  if(backBtn) backBtn.style.display = (view==='session'||view==='studio') ? '' : 'none';
+
+  // Route desktop tab-system
+  if(view==='plan'){
+    if(!TRAIN_TABS.includes(currentTab)) changeTab('push');
+    else { render(); }
+  } else if(view==='session'){
+    if(!TRAIN_TABS.includes(currentTab)) changeTab('push');
+    mobileExIdx = 0;
+    renderMobileSession();
+    syncMobileRestTimer();
+  } else if(view==='stats'){
+    changeTab('analyse');
+  } else if(view==='mehr'){
+    changeTab('uebungen');
+  } else if(view==='studio'){
+    _syncMStudioOverlay();
+  }
+}
+
+function mHeaderBack(){
+  switchMobileView('plan');
+}
+
+function mChangeTab(tab){
+  changeTab(tab);
+  // sync subtab buttons
+  document.querySelectorAll('.m-subtab').forEach(b=>{
+    b.classList.toggle('active', b.id==='mst-'+tab);
+  });
+  mobileExIdx = 0;
+  renderMobileSession();
+}
+
+// ── Session Navigator ─────────────────────────────────────
+
+function getMobileSessionItems(){
+  return db.filter(x=>x.status==='active'&&x.sType===currentTab)
+           .sort((a,b)=>a.order-b.order);
+}
+
+function renderMobileSession(){
+  if(!isMobile()) return;
+  const items = getMobileSessionItems();
+  const card  = document.getElementById('m-ex-card');
+  if(!card) return;
+
+  // Sync subtab bar
+  document.querySelectorAll('.m-subtab').forEach(b=>{
+    b.classList.toggle('active', b.id==='mst-'+currentTab);
+  });
+
+  if(!items.length){
+    card.innerHTML = `
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:30px 0">
+        <div style="font-size:36px">💪</div>
+        <div style="font-size:14px;color:var(--muted);font-weight:700;text-align:center">Keine Übungen in dieser Session</div>
+        <div style="font-size:12px;color:var(--soft);text-align:center">Wechsle zu Plan und füge Übungen aus dem Pool hinzu.</div>
+        <button onclick="switchMobileView('plan')" class="btn btn-primary btn-sm" style="margin-top:6px">Zur Planung →</button>
+      </div>`;
+    document.getElementById('m-log-btn').style.opacity = '.3';
+    document.getElementById('m-log-btn').disabled = true;
+    document.getElementById('m-nav-prev').style.opacity = '.3';
+    document.getElementById('m-nav-next').style.opacity = '.3';
+    return;
+  }
+
+  // Clamp index
+  mobileExIdx = Math.max(0, Math.min(mobileExIdx, items.length-1));
+  const ex = items[mobileExIdx];
+
+  // Enable buttons
+  document.getElementById('m-log-btn').style.opacity = '1';
+  document.getElementById('m-log-btn').disabled = false;
+  document.getElementById('m-nav-prev').style.opacity = mobileExIdx > 0 ? '1' : '.25';
+  document.getElementById('m-nav-next').style.opacity = mobileExIdx < items.length-1 ? '1' : '.25';
+
+  // History (last session)
+  const hist = ex.history[currentStudio] || [];
+  const prev = ex.prev[currentStudio] || [];
+  const histHTML = hist.length
+    ? hist.map((s,i)=>{
+        const up = prev[i] && (s.w>prev[i].w || (s.w===prev[i].w&&s.r>prev[i].r));
+        return `<span class="m-ex-hist-set${up?' up':''}">${up?'↑ ':''}${s.w}×${s.r}</span>`;
+      }).join('')
+    : '<span class="m-ex-empty">Noch keine Einträge</span>';
+
+  // Today's logged sets from sessionLog
+  const today = new Date().toISOString().slice(0,10);
+  const todayLog = sessionLog.filter(s=>s.date===today&&s.studio===currentStudio);
+  let todaySets = [];
+  todayLog.forEach(sess=>{
+    (sess.exercises||[]).forEach(e=>{
+      if(e.exId===ex.id) todaySets.push(...(e.sets||[]));
+    });
+  });
+  const todayHTML = todaySets.length
+    ? todaySets.map(s=>`<span class="m-ex-today-set">${s.w}×${s.r}</span>`).join('')
+    : '';
+
+  // 1RM
+  const rm = maxRM(hist);
+  const catColor = CAT_COLOR[ex.cat]||'var(--soft)';
+
+  // Dots
+  const dotsHTML = items.map((_,i)=>{
+    const isDone = todayLog.some(sess=>(sess.exercises||[]).some(e=>e.exId===items[i].id&&(e.sets||[]).length));
+    const cls = i===mobileExIdx ? 'current' : isDone ? 'done' : '';
+    return `<span class="m-ex-dot ${cls}"></span>`;
+  }).join('');
+
+  card.innerHTML = `
+    <div class="m-ex-progress-row">
+      <span class="m-ex-counter">${mobileExIdx+1} / ${items.length}</span>
+      <div class="m-ex-dots">${dotsHTML}</div>
+    </div>
+    <div class="m-ex-badges-row">
+      <span class="pill" style="font-size:9px;padding:2px 8px;color:${catColor};background:rgba(255,255,255,.04)">${ex.cat}</span>
+      ${ex.group ? `<span class="pill pill-teal" style="font-size:9px;padding:2px 8px">${ex.group}</span>` : ''}
+      ${rm>0 ? `<span class="pill" style="font-size:9px;padding:2px 8px;color:var(--gold)">1RM ~${rm}kg</span>` : ''}
+    </div>
+    <div class="m-ex-big-name">${ex.name}</div>
+    ${ex.brand||ex.art ? `<div style="font-size:10px;color:var(--soft);font-family:'JetBrains Mono',monospace">${[ex.brand,ex.art].filter(Boolean).join(' · ')}</div>` : ''}
+    <div>
+      <div class="m-ex-hist-label">Letztes Mal</div>
+      <div class="m-ex-hist-sets">${histHTML}</div>
+    </div>
+    ${todayHTML ? `<div>
+      <div class="m-ex-hist-label" style="color:var(--teal)">Heute geloggt</div>
+      <div class="m-ex-today-sets">${todayHTML}</div>
+    </div>` : ''}`;
+}
+
+function mNavEx(dir){
+  const items = getMobileSessionItems();
+  const newIdx = mobileExIdx + dir;
+  if(newIdx >= 0 && newIdx < items.length){
+    mobileExIdx = newIdx;
+    renderMobileSession();
+  }
+}
+
+function mOpenLogger(){
+  const items = getMobileSessionItems();
+  const ex = items[mobileExIdx];
+  if(ex) openLogger(ex);
+}
+
+// ── Pool Bottom Sheet ─────────────────────────────────────
+
+let mobilePoolCat = 'Alle';
+
+function openMobilePool(){
+  const backdrop = document.getElementById('m-pool-backdrop');
+  const sheet    = document.getElementById('m-pool-sheet');
+  const tabLabel = document.getElementById('m-pool-sheet-tab');
+  if(backdrop) backdrop.classList.add('open');
+  if(sheet)    sheet.classList.add('open');
+  if(tabLabel) tabLabel.textContent = (currentTab||'Push').toUpperCase();
+  renderMobilePoolCatFilters();
+  renderMobilePoolSheet();
+}
+
+function closeMobilePool(){
+  document.getElementById('m-pool-backdrop')?.classList.remove('open');
+  document.getElementById('m-pool-sheet')?.classList.remove('open');
+}
+
+function renderMobilePoolCatFilters(){
+  const wrap = document.getElementById('m-pool-cat-filters');
+  if(!wrap) return;
+  wrap.innerHTML = CATS.map(c=>
+    `<button class="pill${c===mobilePoolCat?' active':''}" onclick="mFilterPoolCat('${c}')">${c}</button>`
+  ).join('');
+}
+
+function mFilterPoolCat(cat){
+  mobilePoolCat = cat;
+  renderMobilePoolCatFilters();
+  renderMobilePoolSheet();
+}
+
+function renderMobilePoolSheet(){
+  const list = document.getElementById('m-pool-sheet-list');
+  if(!list) return;
+  const items = db
+    .filter(x=>x.status==='pool' && x.cat===mobilePoolCat)
+    .filter(x=>poolMode==='global' ? (x.poolScope||'global')==='global' : (x.poolScope||'global')==='studio' && x.gym===currentStudio)
+    .sort((a,b)=>a.order-b.order);
+
+  list.innerHTML = items.length
+    ? items.map(ex=>{
+        const hist = ex.history[currentStudio]||[];
+        const rm   = maxRM(hist);
+        const lastSet = hist.length ? `${hist[hist.length-1].w}×${hist[hist.length-1].r}` : '–';
+        return `<div class="m-pool-item">
+          <div>
+            <div class="m-pool-item-name">${ex.name}</div>
+            <div class="m-pool-item-meta">${ex.group||ex.cat||''} · Letztes Mal: ${lastSet}${rm>0?' · 1RM ~'+rm+'kg':''}</div>
+          </div>
+          <button class="m-pool-add-btn" onclick="mAddToSession(${ex.id})">+ Session</button>
+        </div>`;
+      }).join('')
+    : '<div style="padding:20px;text-align:center;color:var(--soft);font-size:13px">Kein Pool für diesen Tab</div>';
+}
+
+function mAddToSession(id){
+  addToCurrentSession(id);
+  renderMobilePoolSheet();
+  renderMobileSession();
+}
+
+// ── Studio Overlay ─────────────────────────────────────────
+
+function _syncMStudioOverlay(){
+  const sel = document.getElementById('m-studio-select');
+  if(sel) sel.innerHTML = studios.map(s=>`<option value="${s}"${s===currentStudio?' selected':''}>${s}</option>`).join('');
+  const syncEl = document.getElementById('m-sync-status');
+  const mainSync = document.getElementById('sync-status');
+  if(syncEl && mainSync) syncEl.textContent = mainSync.textContent;
+  // Stats
+  const setEl = (id,val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
+  setEl('m-stat-sessions', document.getElementById('stat-sessions')?.textContent || '–');
+  setEl('m-stat-active',   document.getElementById('stat-active')?.textContent   || '–');
+  setEl('m-stat-sets',     document.getElementById('stat-sets')?.textContent     || '–');
+  setEl('m-stat-prs',      document.getElementById('stat-prs')?.textContent      || '–');
+}
+
+function mStudioChange(){
+  const sel = document.getElementById('m-studio-select');
+  if(sel){
+    currentStudio = sel.value;
+    localStorage.setItem('ifl_studio', currentStudio);
+    document.getElementById('studio-select').value = currentStudio;
+    render();
+    _syncMStudioOverlay();
+  }
+}
+
+// ── Rest Timer: sync to mobile inline bar ─────────────────
+
+function syncMobileRestTimer(){
+  if(!isMobile()) return;
+  const bar = document.getElementById('m-rest-bar');
+  const val = document.getElementById('m-rest-val');
+  const mainTimerWrap = document.getElementById('active-rest-timer');
+  if(!bar || !val) return;
+  const running = mainTimerWrap && mainTimerWrap.style.display !== 'none';
+  bar.style.display = running ? 'flex' : 'none';
+  if(running){
+    const mainVal = document.getElementById('rest-val');
+    if(mainVal) val.textContent = mainVal.textContent;
+  }
+}
+
+function stopRestTimer(){
+  // Stop the main timer (find stop button in main timer)
+  const mainStop = document.querySelector('#active-rest-timer button');
+  if(mainStop) mainStop.click();
+  document.getElementById('m-rest-bar').style.display = 'none';
+}
+
+// ── Mobile header studio chip ─────────────────────────────
+
+function _updateMobileHeader(){
+  if(!isMobile()) return;
+  const chip = document.getElementById('m-header-studio');
+  if(chip) chip.textContent = currentStudio || '';
+}
+
+// ── Init mobile state ─────────────────────────────────────
+
+function initMobile(){
+  if(!isMobile()) return;
+  // Header always visible on mobile
+  document.getElementById('m-app-header').style.display = 'flex';
+  _updateMobileHeader();
+  switchMobileView('session');
+}
+
+// Override: after every render() on mobile, refresh session view + header
+const _origRender = render;
+render = function(){
+  _origRender();
+  if(isMobile()){
+    _updateMobileHeader();
+    if(mobileView==='session') renderMobileSession();
+    if(mobileView==='studio')  _syncMStudioOverlay();
+  }
+};
+
+// ════════════════════════════════════════════════════════════
 // FORGE ANALYTICS – Compound Plotter + Peptid-Rechner
 // ════════════════════════════════════════════════════════════
 
@@ -3564,10 +4164,14 @@ function runPeptideCalc(){
 // ═══ INIT ════════════════════════════════════════════════════
 render();
 updateSyncStatus();
+initMobile();
 if(!getSyncConfig().supabaseUrl || !getSyncConfig().anonKey){
   openSetupWizard(true);
 }
-window.addEventListener('resize', renderMobilePhase);
+window.addEventListener('resize', ()=>{
+  renderMobilePhase();
+  if(isMobile()) initMobile();
+});
 </script>
 </body>
 </html>
