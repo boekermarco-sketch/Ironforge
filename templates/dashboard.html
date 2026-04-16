@@ -2,206 +2,472 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-<h1 class="page-title">Dashboard – {{ today.strftime("%d.%m.%Y") }}</h1>
+{% set blast_start = today.__class__(2026, 2, 23) %}
+{% set blast_day   = (today - blast_start).days + 1 %}
+{% set blast_week  = ((today - blast_start).days // 7) + 1 %}
+{% set L = last_log %}
+{% set has_weight = L and L.weight %}
+{% set has_kfa    = L and L.body_fat %}
+{% set has_hrv    = L and L.hrv %}
+{% set has_bb     = L and L.body_battery %}
+{% set has_sleep  = L and L.total_sleep_min %}
 
-<!-- KPI-Karten -->
-<div class="grid-4" style="margin-bottom:1.25rem">
-
-  <!-- Gewicht -->
-  <div class="card">
-    <div class="card-title">Gewicht</div>
-    <div class="card-value">{{ last_log.weight if last_log and last_log.weight else "–" }}</div>
-    <div class="card-unit">kg</div>
-    <div class="card-sub">Stand: {{ last_log.date.strftime("%d.%m.%Y") if last_log else "kein Eintrag" }}</div>
+<div class="page-top">
+  <div>
+    <div class="page-title">Dashboard</div>
+    <div class="page-meta">Übersicht · Recovery · Trends</div>
   </div>
-
-  <!-- HRV -->
-  <div class="card">
-    <div class="card-title">HRV</div>
-    <div class="card-value">{{ last_log.hrv if last_log and last_log.hrv else "–" }}</div>
-    <div class="card-unit">ms</div>
-    {% if last_log and last_log.hrv %}
-      {% if last_log.hrv >= 32 %}
-        <div class="card-sub" style="color:var(--green-600)">✅ Ziel >35ms fast erreicht</div>
-      {% elif last_log.hrv >= 28 %}
-        <div class="card-sub" style="color:var(--yellow-700)">⚡ Gut – Clen 40mcg möglich</div>
-      {% else %}
-        <div class="card-sub" style="color:var(--red-500)">⚠️ Unter Zielbereich</div>
-      {% endif %}
-    {% endif %}
-  </div>
-
-  <!-- Schlaf -->
-  <div class="card">
-    <div class="card-title">Schlaf-Score</div>
-    <div class="card-value">{{ last_log.sleep_score if last_log and last_log.sleep_score else "–" }}</div>
-    <div class="card-unit">Punkte (Ziel: >75)</div>
-    {% if last_log and last_log.deep_sleep_min %}
-      <div class="card-sub">Tiefschlaf: {{ last_log.deep_sleep_min }} Min</div>
-    {% endif %}
-  </div>
-
-  <!-- Body Battery -->
-  <div class="card">
-    <div class="card-title">Body Battery</div>
-    <div class="card-value">{{ last_log.body_battery if last_log and last_log.body_battery else "–" }}</div>
-    <div class="card-unit">Punkte (Ziel: >55)</div>
-    {% if last_log and last_log.heart_rate_night %}
-      <div class="card-sub">HF Nacht: {{ last_log.heart_rate_night }} bpm</div>
-    {% endif %}
-  </div>
+  <span class="pill pill-gold">{{ today.strftime("%d.%m.%Y") }}</span>
 </div>
 
-<!-- Stack-Fortschritt + letztes Blutbild -->
-<div class="grid-2" style="margin-bottom:1.25rem">
+<div class="g12">
 
-  <!-- Aktiver Stack -->
-  <div class="card">
-    <div class="section-header">
-      <div class="section-title">Aktiver Stack</div>
-      <a href="/stack/" class="btn btn-secondary btn-sm">Details →</a>
+  <!-- ── HERO GEWICHT ── -->
+  <div class="card card-hero s8" style="position:relative;overflow:hidden">
+    <div class="float-wrap">
+      <div class="fi">⚡</div><div class="fi">💉</div>
+      <div class="fi">🧬</div><div class="fi">📈</div>
+    </div>
+    <div style="position:relative;z-index:1">
+      <div class="kicker">Recomp-Blast 2026 · Woche {{ blast_week }} · Tag {{ blast_day }}</div>
+      <div class="hero-num" style="margin-top:10px">
+        {{ "%.2f"|format(L.weight) if has_weight else "–" }}<span class="hero-unit">KG</span>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+        {% if weight_delta_week is not none %}
+        <span style="color:{% if weight_delta_week <= 0 %}var(--teal){% else %}var(--red){% endif %};font-weight:800;font-size:.95rem">
+          {% if weight_delta_week > 0 %}+{% endif %}{{ weight_delta_week }} kg
+        </span>
+        <span class="c-soft" style="font-size:13px">vs. Vorwoche</span>
+        {% endif %}
+        {% if has_kfa %}
+        <span class="pill pill-teal" style="margin-left:auto">KFA {{ "%.1f"|format(L.body_fat) }} %</span>
+        {% endif %}
+      </div>
+    </div>
+    <div style="position:relative;z-index:1">
+      <div class="mg mg-4" style="margin-top:18px">
+        {% if L and L.muscle_mass %}
+        <div class="metric">
+          <div class="m-label">Muskelmasse</div>
+          <div class="m-val c-teal">{{ "%.1f"|format(L.muscle_mass) }}</div>
+          <div class="m-small">kg</div>
+        </div>
+        {% endif %}
+        {% if L and L.fat_mass_kg %}
+        <div class="metric">
+          <div class="m-label">Fettmasse</div>
+          <div class="m-val">{{ "%.2f"|format(L.fat_mass_kg) }}</div>
+          <div class="m-small">kg</div>
+        </div>
+        {% endif %}
+        {% if L and L.water_percent %}
+        <div class="metric">
+          <div class="m-label">Körperwasser</div>
+          <div class="m-val">{{ "%.1f"|format(L.water_percent) }}</div>
+          <div class="m-small">%</div>
+        </div>
+        {% endif %}
+        {% if L and L.bmi %}
+        <div class="metric">
+          <div class="m-label">BMI</div>
+          <div class="m-val">{{ "%.1f"|format(L.bmi) }}</div>
+          <div class="m-small">kg/m²</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RECOVERY ── -->
+  <div class="card s4">
+    <div class="sh">
+      <div class="sh-title">Recovery</div>
+      {% if has_hrv and L.hrv < 30 %}
+      <span class="pill pill-red">Regeneration nötig</span>
+      {% elif has_hrv and L.hrv >= 35 %}
+      <span class="pill pill-teal">Gut erholt</span>
+      {% endif %}
+    </div>
+    <div class="llist">
+      {% if has_hrv %}
+      <div class="litem">
+        <strong>HRV</strong>
+        <span style="font-family:'JetBrains Mono';color:{% if L.hrv >= 35 %}var(--teal){% elif L.hrv >= 28 %}var(--warn){% else %}var(--red){% endif %};font-weight:700">{{ L.hrv }} ms</span>
+      </div>
+      {% endif %}
+      {% if has_bb %}
+      <div class="litem">
+        <strong>Body Battery</strong>
+        <span style="font-family:'JetBrains Mono';color:{% if L.body_battery >= 70 %}var(--teal){% elif L.body_battery >= 45 %}var(--gold){% else %}var(--red){% endif %};font-weight:700">{{ L.body_battery }}</span>
+      </div>
+      {% endif %}
+      {% if L and L.sleep_score %}
+      <div class="litem">
+        <strong>Sleep Score</strong>
+        <span style="font-family:'JetBrains Mono';color:{% if L.sleep_score >= 80 %}var(--teal){% elif L.sleep_score >= 65 %}var(--gold){% else %}var(--red){% endif %};font-weight:700">{{ L.sleep_score }}</span>
+      </div>
+      {% endif %}
+      {% if L and L.resting_pulse %}
+      <div class="litem">
+        <strong>Ruhepuls</strong>
+        <span style="font-family:'JetBrains Mono';color:var(--muted);font-weight:700">{{ L.resting_pulse }} bpm</span>
+      </div>
+      {% endif %}
+      {% if L and L.training_readiness %}
+      <div class="litem">
+        <strong>Training Readiness</strong>
+        <span style="font-family:'JetBrains Mono';color:{% if L.training_readiness >= 70 %}var(--teal){% elif L.training_readiness >= 45 %}var(--gold){% else %}var(--red){% endif %};font-weight:700">{{ L.training_readiness }}</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ── GEWICHT CHART ── -->
+  <div class="card s8">
+    <div class="sh" style="flex-wrap:wrap;gap:8px">
+      <div class="sh-title" id="chart-weight-title">Gewichtsverlauf · 30 Tage</div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap">
+        <button class="pill pill-gold" data-metric="weight"  onclick="switchWeightMetric('weight')" style="cursor:pointer;font-size:10px;padding:4px 10px">Gewicht</button>
+        <button class="pill" data-metric="kfa"    onclick="switchWeightMetric('kfa')"    style="cursor:pointer;font-size:10px;padding:4px 10px">KFA %</button>
+        <button class="pill" data-metric="kfa_kg" onclick="switchWeightMetric('kfa_kg')" style="cursor:pointer;font-size:10px;padding:4px 10px">KFA kg</button>
+        <button class="pill" data-metric="muscle" onclick="switchWeightMetric('muscle')" style="cursor:pointer;font-size:10px;padding:4px 10px">Muskelmasse</button>
+        <button class="pill" data-metric="kombi"  onclick="switchWeightMetric('kombi')"  style="cursor:pointer;font-size:10px;padding:4px 10px">Kombi</button>
+      </div>
+    </div>
+    <div class="chart-box" style="height:220px"><canvas id="chartWeight"></canvas></div>
+  </div>
+
+  <!-- ── VITALS ── -->
+  <div class="card s4">
+    <div class="sh"><div class="sh-title">Vitals</div></div>
+    {% if (L and L.bp_systolic and L.bp_diastolic) or (L and L.pulse_wave_velocity) %}
+    <div class="mg mg-2" style="border-radius:14px">
+      {% if L and L.bp_systolic and L.bp_diastolic %}
+      <div class="metric">
+        <div class="m-label">Blutdruck</div>
+        <div class="m-val" style="color:{% if L.bp_systolic > 140 %}var(--red){% elif L.bp_systolic > 130 %}var(--warn){% else %}var(--teal){% endif %};font-size:18px">{{ L.bp_systolic }}/{{ L.bp_diastolic }}</div>
+        <div class="m-small">mmHg</div>
+      </div>
+      {% endif %}
+      {% if L and L.pulse_wave_velocity %}
+      <div class="metric">
+        <div class="m-label">PWV</div>
+        <div class="m-val" style="color:{% if L.pulse_wave_velocity < 7 %}var(--teal){% else %}var(--warn){% endif %};font-size:18px">{{ "%.2f"|format(L.pulse_wave_velocity) }}</div>
+        <div class="m-small">m/s</div>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+    {% if L and L.stress_avg %}
+    <div class="mg mg-2" style="border-radius:14px;margin-top:2px">
+      <div class="metric">
+        <div class="m-label">Stress</div>
+        <div class="m-val" style="color:{% if L.stress_avg > 60 %}var(--red){% elif L.stress_avg > 40 %}var(--warn){% else %}var(--teal){% endif %};font-size:18px">{{ L.stress_avg }}</div>
+        <div class="m-small">/ 100</div>
+      </div>
+      {% if L.vo2max %}
+      <div class="metric">
+        <div class="m-label">VO₂max</div>
+        <div class="m-val" style="font-size:18px">{{ L.vo2max }}</div>
+        <div class="m-small">ml/kg/min</div>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+    {% if not ((L and L.bp_systolic and L.bp_diastolic) or (L and L.pulse_wave_velocity) or (L and L.stress_avg)) %}
+    <div style="font-size:12px;color:var(--soft);padding:8px 0">Keine aktuellen Vitals vorhanden</div>
+    {% endif %}
+  </div>
+
+  <!-- ── HRV + BODY BATTERY CHART ── -->
+  <div class="card s6">
+    <div class="sh"><div class="sh-title">HRV &amp; Body Battery · 30 Tage</div></div>
+    <div class="chart-box" style="height:200px"><canvas id="chartHrv"></canvas></div>
+  </div>
+
+  <!-- ── SCHLAF CHART ── -->
+  <div class="card s6">
+    <div class="sh"><div class="sh-title">Schlaf · 30 Tage</div></div>
+    <div class="chart-box" style="height:200px"><canvas id="chartSleep"></canvas></div>
+  </div>
+
+  <!-- ── AKTIVER STACK ── -->
+  <div class="card s4">
+    <div class="sh">
+      <div class="sh-title">Aktiver Stack</div>
+      <a href="/stack/" class="btn btn-secondary btn-sm">Details</a>
     </div>
     {% if active_stack %}
-      <div style="font-weight:600;font-size:1rem;margin-bottom:.5rem">{{ active_stack.name }}</div>
-      <div style="font-size:.85rem;color:var(--gray-500);margin-bottom:.75rem">
-        Start: {{ active_stack.start_date.strftime("%d.%m.%Y") }}
-        {% if active_stack.end_date %}→ Ende: {{ active_stack.end_date.strftime("%d.%m.%Y") }}{% endif %}
-      </div>
-      {% if stack_progress is not none %}
-      <div style="font-size:.8rem;color:var(--gray-500);margin-bottom:.3rem">
-        Woche {{ ((stack_days_done) // 7) + 1 }} von {{ stack_days_total // 7 }}
-        ({{ stack_progress }}%)
-      </div>
-      <div class="progress-bar-wrap">
-        <div class="progress-bar-fill" style="width:{{ stack_progress }}%"></div>
-      </div>
-      {% endif %}
-      {% if critical_values %}
-      <div style="margin-top:.75rem">
-        <div class="card-title" style="margin-bottom:.4rem">⚠️ Kritische Werte (letztes Blutbild)</div>
-        {% for cv in critical_values %}
-          <span class="badge badge-danger">{{ cv.name }}: {{ cv.value }} {{ cv.unit }}</span>
-        {% endfor %}
-      </div>
-      {% endif %}
+    <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;letter-spacing:-.02em;margin-bottom:4px">{{ active_stack.name }}</div>
+    <div style="font-size:.78rem;color:var(--soft);margin-bottom:14px">
+      {{ active_stack.start_date.strftime("%d.%m.%Y") }}{% if active_stack.goal %} · {{ active_stack.goal }}{% endif %}
+    </div>
+    {% if stack_progress is not none %}
+    <div style="display:flex;justify-content:space-between;font-size:.7rem;color:var(--soft);margin-bottom:5px">
+      <span>Woche {{ (stack_days_done // 7) + 1 }} / {{ stack_days_total // 7 }}</span>
+      <span class="c-gold">{{ stack_progress }}%</span>
+    </div>
+    <div class="blast-bar"><div class="blast-fill" style="width:{{ stack_progress }}%"></div></div>
+    {% endif %}
     {% else %}
-      <div class="badge badge-gray">Kein aktiver Stack</div>
+    <span class="badge badge-gray">Kein aktiver Stack</span>
     {% endif %}
   </div>
 
-  <!-- Letztes Blutbild -->
-  <div class="card">
-    <div class="section-header">
-      <div class="section-title">Letztes Blutbild</div>
-      <a href="/blutbilder/" class="btn btn-secondary btn-sm">Alle →</a>
+  <!-- ── BLUTBILD ── -->
+  <div class="card s4">
+    <div class="sh">
+      <div class="sh-title">Letztes Blutbild</div>
+      <a href="/blutbilder/" class="btn btn-secondary btn-sm">Alle</a>
     </div>
     {% if last_panel %}
-      <div style="font-weight:600;margin-bottom:.4rem">
-        {{ last_panel.date.strftime("%d.%m.%Y") }}
-        {% if last_panel.lab %}<span class="badge badge-gray" style="margin-left:.5rem">{{ last_panel.lab }}</span>{% endif %}
+    <div style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;margin-bottom:4px">{{ last_panel.date.strftime("%d.%m.%Y") }}</div>
+    {% if last_panel.lab %}<div style="font-size:.72rem;color:var(--soft);margin-bottom:12px">{{ last_panel.lab }}</div>{% endif %}
+    {% if critical_values %}
+    <div class="llist" style="margin-bottom:12px">
+      {% for cv in critical_values %}
+      <div class="litem">
+        <span class="c-muted" style="font-size:12px">{{ cv.name }}</span>
+        <span style="color:var(--red);font-family:'JetBrains Mono';font-weight:700;font-size:12px">{{ cv.value }} {{ cv.unit or "" }}</span>
       </div>
-      {% if last_panel.notes %}
-        <div style="font-size:.85rem;color:var(--gray-500);margin-bottom:.75rem">{{ last_panel.notes }}</div>
-      {% endif %}
-      <a href="/blutbilder/{{ last_panel.id }}" class="btn btn-primary btn-sm">Auswertung öffnen</a>
-    {% else %}
-      <div class="badge badge-gray">Noch kein Blutbild eingetragen</div>
-      <div style="margin-top:.75rem">
-        <a href="/blutbilder/" class="btn btn-primary btn-sm">+ PDF hochladen</a>
-      </div>
-    {% endif %}
-  </div>
-</div>
-
-<!-- HRV + Gewicht Chart -->
-<div class="card" style="margin-bottom:1.25rem">
-  <div class="section-header">
-    <div class="section-title">HRV & Gewicht – letzte 30 Tage</div>
-    <a href="/tageslog/" class="btn btn-secondary btn-sm">Tageslog →</a>
-  </div>
-  <div class="chart-container" style="height:220px">
-    <canvas id="dashChart"></canvas>
-  </div>
-</div>
-
-<!-- Letztes Ereignis + Journal -->
-<div class="grid-2">
-
-  <div class="card">
-    <div class="section-header">
-      <div class="section-title">Letztes Ereignis</div>
-      <a href="/ereignisse/" class="btn btn-secondary btn-sm">Alle →</a>
-    </div>
-    {% if last_event %}
-      <div style="font-weight:600">{{ last_event.event_type }}</div>
-      <div style="font-size:.85rem;color:var(--gray-500)">{{ last_event.date.strftime("%d.%m.%Y") }}</div>
-      {% if last_event.amount_ml %}<div style="font-size:.85rem">{{ last_event.amount_ml }} ml</div>{% endif %}
-      {% if last_event.notes %}<div style="font-size:.8rem;margin-top:.4rem;color:var(--gray-700)">{{ last_event.notes }}</div>{% endif %}
-    {% else %}
-      <div class="badge badge-gray">Keine Ereignisse</div>
-    {% endif %}
-  </div>
-
-  <div class="card">
-    <div class="section-header">
-      <div class="section-title">Journal – Zuletzt</div>
-      <a href="/journal/" class="btn btn-secondary btn-sm">Alle →</a>
-    </div>
-    {% if recent_journal %}
-      {% for entry in recent_journal %}
-        <div style="padding:.4rem 0;border-bottom:1px solid var(--gray-100)">
-          <div style="font-size:.75rem;color:var(--gray-500)">{{ entry.date.strftime("%d.%m.%Y") }} · <span class="badge badge-info">{{ entry.entry_type }}</span></div>
-          <div style="font-size:.875rem;font-weight:600">{{ entry.title }}</div>
-        </div>
       {% endfor %}
+    </div>
+    {% endif %}
+    <a href="/blutbilder/{{ last_panel.id }}" class="btn btn-primary btn-sm" style="width:100%;justify-content:center">Auswertung</a>
     {% else %}
-      <div class="badge badge-gray">Noch kein Eintrag</div>
+    <span class="badge badge-gray">Noch kein Blutbild</span>
     {% endif %}
   </div>
 
-</div>
+  <!-- ── NÄCHSTES BLUTBILD ── -->
+  {% set next_days = (next_blood_date - today).days %}
+  {% if next_days >= 0 %}
+  <div class="card s4">
+    <div class="sh"><div class="sh-title">Nächstes Blutbild</div></div>
+    <div style="display:flex;align-items:flex-end;justify-content:space-between">
+      <div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.4rem">{{ next_blood_date.strftime("%d.%m.%Y") }}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:3rem;color:var(--gold);line-height:1">{{ next_days }}</div>
+        <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--soft)">Tage</div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+</div><!-- /g12 -->
+
+<!-- ── WEITERE MESSWERTE ── -->
+{% set has_any_detail = (L and L.fat_mass_kg) or (L and L.water_percent) or (L and L.vascular_age) or (L and L.heart_rate_night) or (L and L.bp_systolic) or (L and L.breath_rate) or (L and L.deep_sleep_min) or weight_delta_month is not none %}
+{% if has_any_detail %}
+<details class="details-block" style="margin-top:14px">
+  <summary>Weitere Messwerte</summary>
+  <div class="details-block-body">
+    <div class="mg mg-4" style="margin-bottom:2px">
+      {% if L and L.fat_mass_kg and L.weight %}
+      <div class="metric"><div class="m-label">FFM</div><div class="m-val">{{ "%.1f"|format(L.weight - L.fat_mass_kg) }}</div><div class="m-small">kg Magermasse</div></div>
+      {% endif %}
+      {% if L and L.water_percent %}
+      <div class="metric"><div class="m-label">Körperwasser</div><div class="m-val">{{ "%.1f"|format(L.water_percent) }}</div><div class="m-small">%</div></div>
+      {% endif %}
+      {% if weight_delta_month is not none %}
+      <div class="metric"><div class="m-label">Δ 30 Tage</div><div class="m-val" style="color:{% if weight_delta_month < 0 %}var(--teal){% else %}var(--red){% endif %}">{% if weight_delta_month > 0 %}+{% endif %}{{ weight_delta_month }}</div><div class="m-small">kg</div></div>
+      {% endif %}
+      {% if L and L.vascular_age %}
+      <div class="metric"><div class="m-label">Gefäßalter</div><div class="m-val">{{ L.vascular_age }}</div><div class="m-small">Jahre</div></div>
+      {% endif %}
+      {% if L and L.heart_rate_night %}
+      <div class="metric"><div class="m-label">HF Nacht</div><div class="m-val">{{ L.heart_rate_night }}</div><div class="m-small">bpm</div></div>
+      {% endif %}
+      {% if L and L.breath_rate %}
+      <div class="metric"><div class="m-label">Atemfreq.</div><div class="m-val" style="color:{% if L.breath_rate > 16 %}var(--warn){% else %}var(--teal){% endif %}">{{ "%.1f"|format(L.breath_rate) }}</div><div class="m-small">brpm</div></div>
+      {% endif %}
+      {% if L and L.deep_sleep_min %}
+      <div class="metric"><div class="m-label">Tiefschlaf</div><div class="m-val" style="color:{% if L.deep_sleep_min >= 60 %}var(--teal){% elif L.deep_sleep_min >= 40 %}var(--warn){% else %}var(--red){% endif %}">{{ L.deep_sleep_min }}</div><div class="m-small">min</div></div>
+      {% endif %}
+      {% if L and L.rem_sleep_min %}
+      <div class="metric"><div class="m-label">REM</div><div class="m-val">{{ L.rem_sleep_min }}</div><div class="m-small">min</div></div>
+      {% endif %}
+    </div>
+  </div>
+</details>
+{% endif %}
+
 {% endblock %}
 
 {% block scripts %}
 <script>
-  fetch("/tageslog/api/chart?days=30").then(r => r.json()).then(data => {
-    const ctx = document.getElementById("dashChart").getContext("2d");
-    new Chart(ctx, {
-      type: "line",
+const G  = '#d0a35a';
+const T  = '#58b9b0';
+const Gf = t => `rgba(208,163,90,${t})`;
+const Tf = t => `rgba(88,185,176,${t})`;
+
+// Theme-reactive values (read at chart creation time)
+const cs    = getComputedStyle(document.documentElement);
+const GRID  = cs.getPropertyValue('--chart-grid').trim()    || 'rgba(214,198,169,.04)';
+const TICK  = cs.getPropertyValue('--chart-tick').trim()    || '#898174';
+const PANEL = cs.getPropertyValue('--panel').trim()         || '#101317';
+
+const WEIGHT_METRICS = {
+  weight:  { key: 'weight',      unit: ' kg', title: 'Gewichtsverlauf · 30 Tage' },
+  kfa:     { key: 'body_fat',    unit: ' %',  title: 'Körperfett % · 30 Tage' },
+  kfa_kg:  { key: 'fat_mass_kg', unit: ' kg', title: 'Körperfett kg · 30 Tage' },
+  muscle:  { key: 'muscle_mass', unit: ' kg', title: 'Muskelmasse · 30 Tage' },
+  kombi:   { title: 'Gewicht / KFA% / Muskelmasse · 30 Tage' },
+};
+
+let weightChart = null;
+let apiData = null;
+
+function _buildWeightGradient(ctx) {
+  const fill = ctx.createLinearGradient(0, 0, 0, 220);
+  fill.addColorStop(0, Gf('.25'));
+  fill.addColorStop(1, Gf('.02'));
+  return fill;
+}
+
+function switchWeightMetric(id) {
+  if (!weightChart || !apiData) return;
+
+  document.getElementById('chart-weight-title').textContent = WEIGHT_METRICS[id]?.title || '';
+  document.querySelectorAll('[data-metric]').forEach(b => {
+    b.className = b.dataset.metric === id ? 'pill pill-gold' : 'pill';
+    b.style.cursor = 'pointer'; b.style.fontSize = '10px'; b.style.padding = '4px 10px';
+  });
+
+  if (id === 'kombi') {
+    // Dual-Y: Gewicht links (kg), KFA% rechts
+    const wCtx = document.getElementById('chartWeight').getContext('2d');
+    weightChart.destroy();
+    weightChart = new Chart(wCtx, {
       data: {
-        labels: data.dates,
+        labels: apiData.dates,
         datasets: [
           {
-            label: "HRV (ms)",
-            data: data.hrv,
-            borderColor: "#22c55e",
-            backgroundColor: "rgba(34,197,94,.08)",
-            tension: .3,
-            yAxisID: "y",
-            pointRadius: 3,
+            type: 'line', label: 'Gewicht', data: apiData.weight,
+            borderColor: G, borderWidth: 2.5, tension: .35,
+            pointRadius: 3, pointBackgroundColor: G, pointBorderColor: PANEL, pointBorderWidth: 2,
+            fill: false, yAxisID: 'yKG', spanGaps: true
           },
           {
-            label: "Gewicht (kg)",
-            data: data.weight,
-            borderColor: "#3b82f6",
-            backgroundColor: "rgba(59,130,246,.08)",
-            tension: .3,
-            yAxisID: "y2",
-            pointRadius: 3,
+            type: 'line', label: 'KFA %', data: apiData.body_fat,
+            borderColor: T, borderWidth: 2, tension: .35,
+            pointRadius: 3, pointBackgroundColor: T, pointBorderColor: PANEL, pointBorderWidth: 2,
+            fill: false, yAxisID: 'yPCT', spanGaps: true, borderDash: [4,3]
+          },
+          {
+            type: 'line', label: 'Muskelmasse', data: apiData.muscle_mass,
+            borderColor: Tf('.7'), borderWidth: 2, tension: .35,
+            pointRadius: 2, pointBackgroundColor: T, pointBorderColor: PANEL, pointBorderWidth: 1,
+            fill: false, yAxisID: 'yKG', spanGaps: true, borderDash: [2,2]
           }
         ]
       },
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: { mode: "index", intersect: false },
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: true, labels: { color: TICK, font: { size: 10 }, boxWidth: 10, padding: 10 } } },
         scales: {
-          y:  { position: "left",  title: { display: true, text: "HRV (ms)" } },
-          y2: { position: "right", title: { display: true, text: "Gewicht (kg)" }, grid: { drawOnChartArea: false } }
-        },
-        plugins: { legend: { position: "top" } }
+          x:    { grid: { color: GRID }, ticks: { color: TICK, font: { size: 10 } } },
+          yKG:  { position: 'left',  grid: { color: GRID }, ticks: { color: G, font: { size: 10 }, callback: v => v + ' kg' } },
+          yPCT: { position: 'right', grid: { display: false }, ticks: { color: T, font: { size: 10 }, callback: v => v + ' %' } }
+        }
       }
     });
+    return;
+  }
+
+  // Einzel-Metrik: Vorherigen Kombi-Chart ggf. zerstören & neu aufbauen
+  const cfg = WEIGHT_METRICS[id];
+  if (weightChart.data.datasets.length > 1) {
+    // Rebuild als Single-Dataset-Chart
+    const wCtx = document.getElementById('chartWeight').getContext('2d');
+    weightChart.destroy();
+    const wFill = _buildWeightGradient(wCtx);
+    weightChart = new Chart(wCtx, {
+      type: 'line',
+      data: { labels: apiData.dates, datasets: [{
+        data: apiData[cfg.key]||[], borderColor: G, borderWidth: 2.5, tension: .35,
+        pointRadius: 3, pointBackgroundColor: G, pointBorderColor: PANEL, pointBorderWidth: 2,
+        fill: true, backgroundColor: wFill, spanGaps: true
+      }]},
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { color: GRID }, ticks: { color: TICK, font: { size: 10 } } },
+          y: { grid: { color: GRID }, ticks: { color: TICK, font: { size: 10 }, callback: v => v != null ? v + cfg.unit : '' } }
+        }
+      }
+    });
+    return;
+  }
+  weightChart.data.datasets[0].data = apiData[cfg.key] || [];
+  weightChart.options.scales.y.ticks.callback = v => v != null ? v + cfg.unit : '';
+  weightChart.update();
+}
+
+fetch('/tageslog/api/chart?days=30').then(r => r.json()).then(d => {
+  apiData = d;
+
+  // ── Gewicht (mit Metrik-Toggle) ──
+  const wCtx = document.getElementById('chartWeight').getContext('2d');
+  const wFill = wCtx.createLinearGradient(0,0,0,220);
+  wFill.addColorStop(0, Gf('.25')); wFill.addColorStop(1, Gf('.02'));
+  weightChart = new Chart(wCtx, {
+    type: 'line',
+    data: { labels: d.dates, datasets: [{
+      data: d.weight, borderColor: G, borderWidth: 2.5, tension: .35,
+      pointRadius: 3, pointBackgroundColor: G, pointBorderColor: PANEL, pointBorderWidth: 2,
+      fill: true, backgroundColor: wFill, spanGaps: true
+    }]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: GRID }, ticks: { color: TICK, font: { size: 10 } } },
+        y: { grid: { color: GRID }, ticks: { color: TICK, font: { size: 10 }, callback: v => v + ' kg' } }
+      }
+    }
   });
+
+  // ── HRV + Body Battery ──
+  const hCtx = document.getElementById('chartHrv').getContext('2d');
+  new Chart(hCtx, {
+    data: { labels: d.dates, datasets: [
+      { type: 'bar',  label: 'Body Battery', data: d.body_battery, backgroundColor: Tf('.2'), borderColor: Tf('.45'), borderWidth: 1, borderRadius: 4, yAxisID: 'yBB' },
+      { type: 'line', label: 'HRV', data: d.hrv, borderColor: G, borderWidth: 2.5, tension: .35, pointRadius: 3, pointBackgroundColor: G, pointBorderColor: PANEL, pointBorderWidth: 2, fill: false, yAxisID: 'yHRV', spanGaps: true }
+    ]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: true, labels: { color: TICK, font: { size: 10 }, boxWidth: 10, padding: 12 } } },
+      scales: {
+        x:    { grid: { color: GRID }, ticks: { color: TICK, font: { size: 10 } } },
+        yHRV: { position: 'left',  grid: { color: GRID }, ticks: { color: G,    font: { size: 10 }, callback: v => v + ' ms' } },
+        yBB:  { position: 'right', grid: { display: false }, ticks: { color: T, font: { size: 10 } }, min: 0, max: 100 }
+      }
+    }
+  });
+
+  // ── Schlaf ──
+  const sCtx = document.getElementById('chartSleep').getContext('2d');
+  new Chart(sCtx, {
+    type: 'bar',
+    data: { labels: d.dates, datasets: [
+      { label: 'Tief',   data: d.deep_sleep,  backgroundColor: Gf('.85'), borderRadius: 3, stack: 's' },
+      { label: 'REM',    data: d.rem_sleep,   backgroundColor: Gf('.45'), borderRadius: 3, stack: 's' },
+      { label: 'Leicht', data: d.light_sleep, backgroundColor: Gf('.18'), borderRadius: 3, stack: 's' },
+    ]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: true, labels: { color: TICK, font: { size: 10 }, boxWidth: 10, padding: 10 } } },
+      scales: {
+        x: { grid: { color: GRID }, ticks: { color: TICK, font: { size: 10 } }, stacked: true },
+        y: { grid: { color: GRID }, ticks: { color: TICK, font: { size: 10 }, callback: v => Math.round(v/60)+'h' }, stacked: true }
+      }
+    }
+  });
+});
 </script>
 {% endblock %}

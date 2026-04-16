@@ -4,17 +4,29 @@ echo  Fitness Dashboard von Marco Boeker
 echo ============================================
 echo.
 
-:: Alten Prozess auf Port 8080 beenden falls noch einer laeuft
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":8080 " ^| findstr "LISTENING" 2^>nul') do (
-    taskkill /PID %%a /F >nul 2>&1
+:: Alte Python-Prozesse beenden
+echo Beende alte Server-Prozesse...
+taskkill /IM python.exe /F >nul 2>&1
+taskkill /IM python3.exe /F >nul 2>&1
+timeout /t 2 /nobreak >nul
+
+cd /d "%~dp0"
+
+:: .env laden
+if exist ".env" (
+    for /f "usebackq tokens=1,* delims==" %%A in (".env") do set "%%A=%%B"
 )
 
 echo Starte Server...
 echo Oeffne Browser: http://localhost:8080
 echo.
-echo Zum Beenden: Strg+C druecken
+echo Daten abrufen: http://localhost:8080/import/
+echo Zum Beenden:   Strg+C druecken
 echo.
-cd /d "%~dp0"
-start "" http://localhost:8080
-python -m uvicorn app.main:app --host 127.0.0.1 --port 8080
+
+:: Browser nach 3 Sekunden im Hintergrund oeffnen
+start /min "" cmd /c "timeout /t 3 /nobreak >nul && start http://localhost:8080"
+
+:: Server im Vordergrund starten (Logs sichtbar)
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8080 --reload
 pause

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IRON FORGE LABS · MARCO BÖKER</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #f2f4f6;
+  --card: #ffffff;
+  --acc: #ff5f00;
+  --black: #000000;
+  --grey-text: #6b7280;
+  --border: #e5e7eb;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--black); font-family: 'Inter', sans-serif; min-height: 100vh; padding-bottom: 5rem; }
+
+/* Header & Navigation */
+header { 
+  background: var(--black); color: #fff; padding: 2rem; 
+  display: flex; justify-content: space-between; align-items: center;
+  position: sticky; top: 0; z-index: 100;
+}
+.brand { font-family: 'Archivo Black', sans-serif; font-size: 1.5rem; letter-spacing: -1px; }
+.brand span { color: var(--acc); }
+
+nav { display: flex; gap: 2rem; }
+.nav-btn { 
+  background: transparent; border: none; color: #666; font-weight: 900; 
+  text-transform: uppercase; font-size: 0.8rem; cursor: pointer; letter-spacing: 1px;
+  transition: 0.2s;
+}
+.nav-btn:hover { color: #fff; }
+.nav-btn.active { color: var(--acc); }
+
+/* Layout Containers */
+.container { max-width: 1300px; margin: 3rem auto; padding: 0 2rem; }
+.tab-content { display: none; animation: fadeIn 0.4s ease-out; }
+.tab-content.active { display: block; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Cards & Grid */
+.bento-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1.5rem; }
+.card { background: var(--card); border-radius: 24px; padding: 2rem; border: 1px solid var(--border); }
+.span-4 { grid-column: span 4; }
+.span-2 { grid-column: span 2; }
+.span-3 { grid-column: span 3; }
+.span-6 { grid-column: span 6; }
+
+/* Typography */
+.lbl { font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; color: var(--grey-text); margin-bottom: 1.5rem; display: block; }
+h2 { font-family: 'Archivo Black', sans-serif; font-size: 4rem; line-height: 0.8; letter-spacing: -3px; margin-bottom: 1rem; }
+h3 { font-family: 'Archivo Black', sans-serif; font-size: 1.5rem; text-transform: uppercase; margin-bottom: 1.5rem; }
+
+/* Tables */
+table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9rem; }
+th { text-align: left; padding: 12px; font-weight: 900; text-transform: uppercase; font-size: 0.7rem; color: var(--grey-text); border-bottom: 2px solid var(--black); }
+td { padding: 12px; border-bottom: 1px solid var(--border); }
+tr:last-child td { border: none; }
+.val-up { color: #16a34a; font-weight: 700; }
+.val-down { color: #dc2626; font-weight: 700; }
+
+/* Special Elements */
+.chart-container { height: 300px; margin-top: 1.5rem; }
+.stack-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-weight: 600; }
+.stack-item span:last-child { color: var(--acc); font-family: 'JetBrains Mono'; }
+.warning { color: var(--acc); font-weight: 900; text-transform: uppercase; font-size: 0.75rem; border: 2px solid var(--acc); padding: 10px; display: inline-block; margin-top: 10px; }
+
+</style>
+</head>
+<body>
+
+<header>
+    <div class="brand">IRON FORGE<span> LABS</span></div>
+    <nav>
+        <button class="nav-btn active" onclick="showTab(this, 'dash')">Overview</button>
+        <button class="nav-btn" onclick="showTab(this, 'physique')">Physique</button>
+        <button class="nav-btn" onclick="showTab(this, 'recovery')">Recovery</button>
+        <button class="nav-btn" onclick="showTab(this, 'stack')">Stack</button>
+    </nav>
+</header>
+
+<div class="container">
+
+    <div id="dash" class="tab-content active">
+        <div class="bento-grid">
+            <div class="card span-4">
+                <span class="lbl">Current Body Mass</span>
+                <h2>71.6<span style="font-size: 1.2rem; letter-spacing: 0; color: #ccc;">KG</span></h2>
+                <div style="font-weight: 800; font-size: 1.1rem; color: var(--acc);">−0.3KG <span style="color: var(--grey-text); font-weight: 400;">VS VORWOCHE</span></div>
+                <div class="chart-container"><canvas id="weightChart"></canvas></div>
+            </div>
+            <div class="card span-2" style="background: var(--black); color: #fff;">
+                <span class="lbl" style="color: #666;">Daily Vitals</span>
+                <div style="margin-top: 2rem;">
+                    <span class="lbl" style="color: #fff; opacity: 0.5;">HRV</span>
+                    <div style="font-family: 'Archivo Black'; font-size: 3rem; color: var(--acc);">38<span style="font-size: 1rem; color: #fff;">ms</span></div>
+                </div>
+                <div style="margin-top: 2rem;">
+                    <span class="lbl" style="color: #fff; opacity: 0.5;">Sleep Score</span>
+                    <div style="font-family: 'Archivo Black'; font-size: 3rem;">82<span style="font-size: 1rem; color: #fff;">/100</span></div>
+                </div>
+                <div style="margin-top: 2rem; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 12px; font-size: 0.8rem;">
+                    <strong>Nächste Injektion:</strong><br>Mittwoch Abend (V7 Protocol)
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="physique" class="tab-content">
+        <div class="bento-grid">
+            <div class="card span-6">
+                <h3>Körpermasse & Analyse</h3>
+                <table>
+                    <thead>
+                        <tr><th>Datum</th><th>Gewicht</th><th>Bauch</th><th>KFA (Est.)</th><th>Trend</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>10.04.2026</td><td>71.6 kg</td><td>81 cm</td><td>13.6%</td><td class="val-down">−0.3 kg</td></tr>
+                        <tr><td>03.04.2026</td><td>71.9 kg</td><td>81.5 cm</td><td>13.8%</td><td class="val-down">−0.4 kg</td></tr>
+                        <tr><td>27.03.2026</td><td>72.3 kg</td><td>82 cm</td><td>14.1%</td><td class="val-up">+0.2 kg</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="stack" class="tab-content">
+        <div class="bento-grid">
+            <div class="card span-3">
+                <h3>Morning Stack</h3>
+                <div class="stack-item"><span>Omega 3</span><span>3g</span></div>
+                <div class="stack-item"><span>Multivitamin</span><span>1 Tab</span></div>
+                <div class="stack-item"><span>Kreatin</span><span>5g</span></div>
+                <div class="warning">D3 / K2 fehlt im Bestand!</div>
+            </div>
+            <div class="card span-3">
+                <h3>Protocol V7</h3>
+                <div class="stack-item"><span>Testosteron E.</span><span>125mg</span></div>
+                <div class="stack-item"><span>Primobolan</span><span>100mg</span></div>
+                <div style="margin-top: 2rem; font-size: 0.8rem; line-height: 1.6;">
+                    <strong>Intervall:</strong> Jeden Mittwoch Abend & Sonntag Morgen.<br>
+                    <strong>Phase:</strong> Recomp / Leaning
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function showTab(btn, tabId) {
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(tabId).classList.add('active');
+}
+
+// Chart Initialisierung
+const ctx = document.getElementById('weightChart').getContext('2d');
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: ['KW11', 'KW12', 'KW13', 'KW14', 'KW15'],
+        datasets: [{
+            label: 'Gewicht',
+            data: [73.5, 72.8, 72.3, 71.9, 71.6],
+            borderColor: '#000',
+            borderWidth: 6,
+            tension: 0.4,
+            pointRadius: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { grid: { display: false }, ticks: { font: { weight: 'bold' } } },
+            y: { border: { display: false }, ticks: { display: false }, min: 70 }
+        }
+    }
+});
+</script>
+</body>
+</html>

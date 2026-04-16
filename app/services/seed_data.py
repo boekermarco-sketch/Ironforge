@@ -12,17 +12,18 @@ from app.models import (
 
 
 def seed_all(db: Session):
-    """Nur laden wenn noch keine Substanzen vorhanden sind."""
-    if db.query(Substance).count() > 0:
-        return
-    _seed_substances(db)
-    _seed_biomarkers(db)
-    _seed_stack(db)
-    _seed_blood_panels(db)
-    _seed_garmin_logs(db)
-    _seed_medical_events(db)
-    db.commit()
-    print("Seed-Daten geladen: Stack, Blutbilder, Garmin-Verlauf")
+    """Seed-Daten beim ersten Start; Updates immer prüfen."""
+    first_run = db.query(Substance).count() == 0
+    if first_run:
+        _seed_substances(db)
+        _seed_biomarkers(db)
+        _seed_stack(db)
+        _seed_blood_panels(db)
+        _seed_garmin_logs(db)
+        _seed_medical_events(db)
+        db.commit()
+        print("Seed-Daten geladen: Stack, Blutbilder, Garmin-Verlauf")
+    _update_stack_april_2026(db)
 
 
 # ─── Substanzen ───────────────────────────────────────────────────────────────
@@ -326,3 +327,121 @@ def _seed_medical_events(db: Session):
         notes="Aderlass 1 von geplant 2. Hämatokrit war 0,53 – Ziel: <0,50. Blut nicht für Transfusion verwendbar (Stack). Danach Clen auf 40mcg erhöht."
     ))
     db.flush()
+
+
+# ─── Stack-Update 02.04.2026 ──────────────────────────────────────────────────
+
+def _close_active_dose_events(db: Session, stack_id: int, substance_name: str, end_date):
+    """Setzt end_date aller offenen DoseEvents für eine Substanz im Stack."""
+    sub = db.query(Substance).filter(Substance.name == substance_name).first()
+    if not sub:
+        return
+    events = (
+        db.query(DoseEvent)
+        .filter(DoseEvent.stack_id == stack_id, DoseEvent.substance_id == sub.id, DoseEvent.end_date == None)
+        .all()
+    )
+    for ev in events:
+        ev.end_date = end_date
+
+
+def _update_stack_april_2026(db: Session):
+    """
+    Stack-Änderungen ab 02.04.2026 nach Blutbild 01.04.2026.
+    Sentinel: DoseEvent.change_reason == 'Stack-Update 02.04.2026'
+    """
+    from app.models import DoseEvent as DE
+    if db.query(DE).filter(DE.change_reason == "Stack-Update 02.04.2026").first():
+        return  # Bereits angewendet
+
+    stack = db.query(Stack).filter(Stack.name == "16 Wochen Recomp-Blast").first()
+    if not stack:
+        return
+
+    upd = date(2026, 4, 2)
+    end_old = date(2026, 4, 1)
+
+    def sub(name):
+        return db.query(Substance).filter(Substance.name == name).first()
+
+    def add(substance_name, dose_amount, dose_unit, frequency, timing, notes=None):
+        s = sub(substance_name)
+        if s:
+            db.add(DoseEvent(
+                stack_id=stack.id, substance_id=s.id,
+                dose_amount=dose_amount, dose_unit=dose_unit,
+                frequency=frequency, timing=timing,
+                start_date=upd, change_reason="Stack-Update 02.04.2026",
+                notes=notes,
+            ))
+
+    # 1. Cabergolin: 2x/Woche → 1x/Woche Mittwoch
+    _close_active_dose_events(db, stack.id, "Cabergolin", end_old)
+    add("Cabergolin", 0.25, "mg", "1x/Woche",
+        "Mittwoch abends (Pin-Tag)",
+        "Prolaktin gecrasht auf 0.9 µg/L – reduziert")
+
+    # 2. Yohimbin: 10mg → 15mg
+    _close_active_dose_events(db, stack.id, "Yohimbin", end_old)
+    add("Yohimbin", 15, "mg", "täglich",
+        "07:00 nüchtern")
+
+    # 3. B-Komplex: raus
+    _close_active_dose_events(db, stack.id, "B-Komplex", end_old)
+
+    # 4. Vitamin C: raus
+    _close_active_dose_events(db, stack.id, "Vitamin C", end_old)
+
+    # 5. NAC: 800mg 2x täglich (morgens + abends)
+    _close_active_dose_events(db, stack.id, "NAC (N-Acetylcystein)", end_old)
+    add("NAC (N-Acetylcystein)", 800, "mg", "2x täglich",
+        "10-11 Uhr mit Essen (1. Dosis)",
+        "GPT 105 – Leberschutz intensiviert. 2. Dosis 17-18 Uhr.")
+    s_nac = sub("NAC (N-Acetylcystein)")
+    if s_nac:
+        db.add(DoseEvent(
+            stack_id=stack.id, substance_id=s_nac.id,
+            dose_amount=800, dose_unit="mg", frequency="2x täglich",
+            timing="17-18 Uhr mit Mahlzeit (2. Dosis)",
+            start_date=upd, change_reason="Stack-Update 02.04.2026",
+            notes="2. Tagesdosis Leberschutz",
+        ))
+
+    # 6. Omega-3: 2x2 Kapseln/Tag Bodylab Extreme
+    _close_active_dose_events(db, stack.id, "Omega-3 (EPA/DHA)", end_old)
+    add("Omega-3 (EPA/DHA)", 2, "Kapseln", "2x täglich",
+        "10-11 Uhr: 2 Kapseln Bodylab Extreme (1. Dosis)",
+        "HDL 33 – therapeutische Dosis. 2. Dosis 17-18 Uhr.")
+    s_o3 = sub("Omega-3 (EPA/DHA)")
+    if s_o3:
+        db.add(DoseEvent(
+            stack_id=stack.id, substance_id=s_o3.id,
+            dose_amount=2, dose_unit="Kapseln", frequency="2x täglich",
+            timing="17-18 Uhr: 2 Kapseln Bodylab Extreme (2. Dosis)",
+            start_date=upd, change_reason="Stack-Update 02.04.2026",
+            notes="2. Tagesdosis für HDL",
+        ))
+
+    # 7. Essetil Forte: 600mg 2x täglich (morgens + abends)
+    _close_active_dose_events(db, stack.id, "Essetil Forte", end_old)
+    add("Essetil Forte", 600, "mg", "2x täglich",
+        "10-11 Uhr mit Essen (1. Dosis)",
+        "GPT 105 – Phospholipide erhöht")
+    s_es = sub("Essetil Forte")
+    if s_es:
+        db.add(DoseEvent(
+            stack_id=stack.id, substance_id=s_es.id,
+            dose_amount=600, dose_unit="mg", frequency="2x täglich",
+            timing="17-18 Uhr mit Mahlzeit (2. Dosis)",
+            start_date=upd, change_reason="Stack-Update 02.04.2026",
+            notes="2. Tagesdosis Essetil Forte",
+        ))
+
+    # 8. Exemestan: 10 Tage täglich 25mg, dann alternierend 12,5/25mg
+    _close_active_dose_events(db, stack.id, "Exemestan", end_old)
+    add("Exemestan", 25, "mg", "täglich (10 Tage), dann alternierend",
+        "10-11 Uhr mit Essen",
+        "E2 war 99 ng/L. 02.04–11.04: täglich 25mg. Ab 12.04: alternierend 12,5mg / 25mg je Tag.")
+
+    db.commit()
+    print("Stack-Update 02.04.2026 angewendet")

@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from datetime import date, timedelta
 from pathlib import Path
+from typing import Optional
 
 from app.database import get_db
 from app.models import Stack, DoseEvent, Substance, DailyLog, BloodPanel, BloodValue, Biomarker, MedicalEvent, JournalEntry
@@ -39,8 +40,13 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
             .all()
         )
 
-    # Letzter Tageslog
-    last_log = db.query(DailyLog).order_by(DailyLog.date.desc()).first()
+    # Letzter Tageslog mit Gewicht (Fallback: letzter überhaupt)
+    last_log = (
+        db.query(DailyLog)
+        .filter(DailyLog.weight != None)
+        .order_by(DailyLog.date.desc())
+        .first()
+    ) or db.query(DailyLog).order_by(DailyLog.date.desc()).first()
 
     # Letztes Blutbild
     last_panel = db.query(BloodPanel).order_by(BloodPanel.date.desc()).first()
@@ -60,14 +66,32 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
     # Letztes medizinisches Ereignis
     last_event = db.query(MedicalEvent).order_by(MedicalEvent.date.desc()).first()
 
-    # Letzte 7 Tage HRV + Gewicht für Mini-Chart
-    week_ago = today - timedelta(days=7)
+    # Letzte 7 Tage + Verlaufs-Deltas
+    week_ago  = today - timedelta(days=7)
+    month_ago = today - timedelta(days=30)
+    year_ago  = today - timedelta(days=365)
+
     recent_logs = (
         db.query(DailyLog)
         .filter(DailyLog.date >= week_ago)
         .order_by(DailyLog.date.asc())
         .all()
     )
+
+    def _weight_delta(since: date) -> Optional[float]:
+        old = (
+            db.query(DailyLog.weight)
+            .filter(DailyLog.date >= since, DailyLog.weight != None)
+            .order_by(DailyLog.date.asc())
+            .first()
+        )
+        if last_log and last_log.weight and old and old[0]:
+            return round(last_log.weight - old[0], 1)
+        return None
+
+    weight_delta_week  = _weight_delta(week_ago)
+    weight_delta_month = _weight_delta(month_ago)
+    weight_delta_year  = _weight_delta(year_ago)
 
     # Stack-Fortschritt
     stack_progress = None
@@ -104,6 +128,9 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
         "stack_days_done": stack_days_done,
         "next_blood_date": next_blood_date,
         "recent_journal": recent_journal,
+        "weight_delta_week": weight_delta_week,
+        "weight_delta_month": weight_delta_month,
+        "weight_delta_year": weight_delta_year,
     })
 
 

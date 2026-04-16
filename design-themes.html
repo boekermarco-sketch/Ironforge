@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Design-Vorschau – Themes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #1a1a1a; font-family: Inter, sans-serif; padding: 2rem; }
+h1 { color: #fff; font-size: 1.1rem; margin-bottom: 2rem; opacity: .6; letter-spacing: .08em; text-transform: uppercase; }
+
+.themes { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem; }
+
+/* ── Theme Card ── */
+.theme { border-radius: 16px; overflow: hidden; border: 2px solid transparent; cursor: pointer; }
+.theme:hover { border-color: rgba(255,255,255,.3); }
+.theme-label { padding: .6rem 1rem; font-size: .75rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; background: #222; color: #aaa; }
+
+/* ── Mini Dashboard Preview ── */
+.preview {
+  padding: 1.25rem;
+  display: flex; flex-direction: column; gap: .75rem;
+}
+
+.p-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .5rem .75rem; border-radius: 8px; font-size: .7rem; font-weight: 700; letter-spacing: .1em;
+}
+.p-brand { font-size: .75rem; font-weight: 900; letter-spacing: .12em; }
+
+.p-hero {
+  border-radius: 12px; padding: 1.25rem;
+  display: grid; grid-template-columns: 1fr 160px; gap: 1rem; min-height: 110px;
+}
+.p-hero-val { font-size: 2.6rem; font-weight: 900; line-height: 1; }
+.p-hero-val span { font-size: .45em; opacity: .6; }
+.p-hero-sub { font-size: .62rem; opacity: .55; margin-top: .3rem; }
+.p-bar { height: 4px; border-radius: 2px; margin-top: .6rem; overflow: hidden; background: rgba(255,255,255,.1); }
+.p-bar-fill { height: 100%; border-radius: 2px; width: 48%; }
+.p-right { border-radius: 8px; padding: .75rem; display: flex; flex-direction: column; justify-content: space-between; }
+.p-chip { font-size: .6rem; font-weight: 700; padding: .2rem .45rem; border-radius: 4px; display: inline-block; margin-bottom: .25rem; }
+
+.p-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; }
+.p-card { border-radius: 10px; padding: .7rem .75rem; }
+.p-card-lbl { font-size: .58rem; opacity: .5; margin-bottom: .2rem; text-transform: uppercase; letter-spacing: .06em; }
+.p-card-val { font-size: 1.1rem; font-weight: 700; }
+.p-card-unit { font-size: .55rem; opacity: .45; }
+
+/* ─────────────────────────────── THEME A: Current (Lime) */
+.a .preview { background: #080808; }
+.a .p-nav { background: #0f0f0f; color: #fff; }
+.a .p-brand span { color: #b8f027; }
+.a .p-hero { background: #0f0f0f; color: #fff; }
+.a .p-bar-fill { background: #b8f027; }
+.a .p-right { background: rgba(184,240,39,.08); }
+.a .p-chip { background: rgba(184,240,39,.15); color: #b8f027; }
+.a .p-card { background: #0f0f0f; color: #fff; }
+.a .p-accent { color: #b8f027; }
+.a .p-hero-sub { color: #b8f027; }
+
+/* ─────────────────────────────── THEME B: Warm Navy + Amber */
+.b .preview { background: #0d0f18; }
+.b .p-nav { background: #141622; color: #e8e8f0; }
+.b .p-brand span { color: #f59e0b; }
+.b .p-hero { background: #141622; color: #e8e8f0; }
+.b .p-bar-fill { background: linear-gradient(90deg,#f59e0b,#fb923c); }
+.b .p-right { background: rgba(245,158,11,.08); }
+.b .p-chip { background: rgba(245,158,11,.15); color: #fbbf24; }
+.b .p-card { background: #141622; color: #e8e8f0; }
+.b .p-accent { color: #f59e0b; }
+.b .p-hero-sub { color: #f59e0b; }
+
+/* ─────────────────────────────── THEME C: Slate + Cyan */
+.c .preview { background: #0c1018; }
+.c .p-nav { background: #131b26; color: #dde6f0; }
+.c .p-brand span { color: #22d3ee; }
+.c .p-hero { background: #131b26; color: #dde6f0; }
+.c .p-bar-fill { background: linear-gradient(90deg,#22d3ee,#06b6d4); }
+.c .p-right { background: rgba(34,211,238,.07); }
+.c .p-chip { background: rgba(34,211,238,.12); color: #22d3ee; }
+.c .p-card { background: #131b26; color: #dde6f0; }
+.c .p-accent { color: #22d3ee; }
+.c .p-hero-sub { color: #22d3ee; }
+
+/* ─────────────────────────────── THEME D: Warm Gray + Orange (wie original) */
+.d .preview { background: #111010; }
+.d .p-nav { background: #181716; color: #f0ece8; }
+.d .p-brand span { color: #f97316; }
+.d .p-hero { background: #181716; color: #f0ece8; }
+.d .p-bar-fill { background: linear-gradient(90deg,#f97316,#ea580c); }
+.d .p-right { background: rgba(249,115,22,.08); }
+.d .p-chip { background: rgba(249,115,22,.15); color: #fb923c; }
+.d .p-card { background: #181716; color: #f0ece8; }
+.d .p-accent { color: #f97316; }
+.d .p-hero-sub { color: #f97316; }
+
+/* ─────────────────────────────── THEME E: Dark Green */
+.e .preview { background: #080d0a; }
+.e .p-nav { background: #0d1610; color: #ddf0e4; }
+.e .p-brand span { color: #4ade80; }
+.e .p-hero { background: #0d1610; color: #ddf0e4; }
+.e .p-bar-fill { background: linear-gradient(90deg,#4ade80,#22c55e); }
+.e .p-right { background: rgba(74,222,128,.07); }
+.e .p-chip { background: rgba(74,222,128,.12); color: #4ade80; }
+.e .p-card { background: #0d1610; color: #ddf0e4; }
+.e .p-accent { color: #4ade80; }
+.e .p-hero-sub { color: #4ade80; }
+
+/* ─────────────────────────────── THEME F: Deep Purple */
+.f .preview { background: #0d0b14; }
+.f .p-nav { background: #150f20; color: #e8e0f8; }
+.f .p-brand span { color: #a78bfa; }
+.f .p-hero { background: #150f20; color: #e8e0f8; }
+.f .p-bar-fill { background: linear-gradient(90deg,#a78bfa,#8b5cf6); }
+.f .p-right { background: rgba(167,139,250,.08); }
+.f .p-chip { background: rgba(167,139,250,.12); color: #c4b5fd; }
+.f .p-card { background: #150f20; color: #e8e0f8; }
+.f .p-accent { color: #a78bfa; }
+.f .p-hero-sub { color: #a78bfa; }
+</style>
+</head>
+<body>
+<h1>Design Themes – Vorschau zur Auswahl</h1>
+<div class="themes">
+
+<!-- A: Current -->
+<div class="theme a">
+  <div class="theme-label">A · Aktuell — Schwarz + Neon Lime</div>
+  <div class="preview">
+    <div class="p-nav"><span class="p-brand">IRON <span>FORGE</span> LAB</span><span style="opacity:.5;font-size:.65rem">Dashboard · Stack · Tageslog</span></div>
+    <div class="p-hero">
+      <div>
+        <div style="font-size:.58rem;opacity:.45;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.3rem">Recomp Blast · Tag 47</div>
+        <div class="p-hero-val">71.6<span>KG</span></div>
+        <div class="p-hero-sub">Woche 7 · −0.3kg diese Woche</div>
+        <div class="p-bar"><div class="p-bar-fill"></div></div>
+        <div style="font-size:.55rem;opacity:.35;margin-top:.3rem;font-family:'JetBrains Mono',monospace">Woche 7 / 16 · 48%</div>
+      </div>
+      <div class="p-right">
+        <div>
+          <div class="p-chip">HRV 38 ms</div><br>
+          <div class="p-chip">Sleep 82</div><br>
+          <div class="p-chip">BB 71</div>
+        </div>
+        <div style="font-size:.58rem;opacity:.3">KFA 13.6%</div>
+      </div>
+    </div>
+    <div class="p-grid">
+      <div class="p-card"><div class="p-card-lbl">HRV</div><div class="p-card-val p-accent">38</div><div class="p-card-unit">ms</div></div>
+      <div class="p-card"><div class="p-card-lbl">Schlaf</div><div class="p-card-val">7h 20m</div><div class="p-card-unit">Score 82</div></div>
+      <div class="p-card"><div class="p-card-lbl">Schritte</div><div class="p-card-val">9.840</div><div class="p-card-unit">Ziel 10k</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- B: Amber -->
+<div class="theme b">
+  <div class="theme-label">B · Dunkelblau + Amber (warm)</div>
+  <div class="preview">
+    <div class="p-nav"><span class="p-brand">IRON <span>FORGE</span> LAB</span><span style="opacity:.5;font-size:.65rem">Dashboard · Stack · Tageslog</span></div>
+    <div class="p-hero">
+      <div>
+        <div style="font-size:.58rem;opacity:.45;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.3rem">Recomp Blast · Tag 47</div>
+        <div class="p-hero-val">71.6<span>KG</span></div>
+        <div class="p-hero-sub">Woche 7 · −0.3kg diese Woche</div>
+        <div class="p-bar"><div class="p-bar-fill"></div></div>
+        <div style="font-size:.55rem;opacity:.35;margin-top:.3rem;font-family:'JetBrains Mono',monospace">Woche 7 / 16 · 48%</div>
+      </div>
+      <div class="p-right">
+        <div>
+          <div class="p-chip">HRV 38 ms</div><br>
+          <div class="p-chip">Sleep 82</div><br>
+          <div class="p-chip">BB 71</div>
+        </div>
+        <div style="font-size:.58rem;opacity:.3">KFA 13.6%</div>
+      </div>
+    </div>
+    <div class="p-grid">
+      <div class="p-card"><div class="p-card-lbl">HRV</div><div class="p-card-val p-accent">38</div><div class="p-card-unit">ms</div></div>
+      <div class="p-card"><div class="p-card-lbl">Schlaf</div><div class="p-card-val">7h 20m</div><div class="p-card-unit">Score 82</div></div>
+      <div class="p-card"><div class="p-card-lbl">Schritte</div><div class="p-card-val">9.840</div><div class="p-card-unit">Ziel 10k</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- C: Cyan -->
+<div class="theme c">
+  <div class="theme-label">C · Dunkelblau + Cyan</div>
+  <div class="preview">
+    <div class="p-nav"><span class="p-brand">IRON <span>FORGE</span> LAB</span><span style="opacity:.5;font-size:.65rem">Dashboard · Stack · Tageslog</span></div>
+    <div class="p-hero">
+      <div>
+        <div style="font-size:.58rem;opacity:.45;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.3rem">Recomp Blast · Tag 47</div>
+        <div class="p-hero-val">71.6<span>KG</span></div>
+        <div class="p-hero-sub">Woche 7 · −0.3kg diese Woche</div>
+        <div class="p-bar"><div class="p-bar-fill"></div></div>
+        <div style="font-size:.55rem;opacity:.35;margin-top:.3rem;font-family:'JetBrains Mono',monospace">Woche 7 / 16 · 48%</div>
+      </div>
+      <div class="p-right">
+        <div>
+          <div class="p-chip">HRV 38 ms</div><br>
+          <div class="p-chip">Sleep 82</div><br>
+          <div class="p-chip">BB 71</div>
+        </div>
+        <div style="font-size:.58rem;opacity:.3">KFA 13.6%</div>
+      </div>
+    </div>
+    <div class="p-grid">
+      <div class="p-card"><div class="p-card-lbl">HRV</div><div class="p-card-val p-accent">38</div><div class="p-card-unit">ms</div></div>
+      <div class="p-card"><div class="p-card-lbl">Schlaf</div><div class="p-card-val">7h 20m</div><div class="p-card-unit">Score 82</div></div>
+      <div class="p-card"><div class="p-card-lbl">Schritte</div><div class="p-card-val">9.840</div><div class="p-card-unit">Ziel 10k</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- D: Orange (original) -->
+<div class="theme d">
+  <div class="theme-label">D · Warm Dunkel + Orange (Original)</div>
+  <div class="preview">
+    <div class="p-nav"><span class="p-brand">IRON <span>FORGE</span> LAB</span><span style="opacity:.5;font-size:.65rem">Dashboard · Stack · Tageslog</span></div>
+    <div class="p-hero">
+      <div>
+        <div style="font-size:.58rem;opacity:.45;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.3rem">Recomp Blast · Tag 47</div>
+        <div class="p-hero-val">71.6<span>KG</span></div>
+        <div class="p-hero-sub">Woche 7 · −0.3kg diese Woche</div>
+        <div class="p-bar"><div class="p-bar-fill"></div></div>
+        <div style="font-size:.55rem;opacity:.35;margin-top:.3rem;font-family:'JetBrains Mono',monospace">Woche 7 / 16 · 48%</div>
+      </div>
+      <div class="p-right">
+        <div>
+          <div class="p-chip">HRV 38 ms</div><br>
+          <div class="p-chip">Sleep 82</div><br>
+          <div class="p-chip">BB 71</div>
+        </div>
+        <div style="font-size:.58rem;opacity:.3">KFA 13.6%</div>
+      </div>
+    </div>
+    <div class="p-grid">
+      <div class="p-card"><div class="p-card-lbl">HRV</div><div class="p-card-val p-accent">38</div><div class="p-card-unit">ms</div></div>
+      <div class="p-card"><div class="p-card-lbl">Schlaf</div><div class="p-card-val">7h 20m</div><div class="p-card-unit">Score 82</div></div>
+      <div class="p-card"><div class="p-card-lbl">Schritte</div><div class="p-card-val">9.840</div><div class="p-card-unit">Ziel 10k</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- E: Green -->
+<div class="theme e">
+  <div class="theme-label">E · Fast-Schwarz + Grün</div>
+  <div class="preview">
+    <div class="p-nav"><span class="p-brand">IRON <span>FORGE</span> LAB</span><span style="opacity:.5;font-size:.65rem">Dashboard · Stack · Tageslog</span></div>
+    <div class="p-hero">
+      <div>
+        <div style="font-size:.58rem;opacity:.45;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.3rem">Recomp Blast · Tag 47</div>
+        <div class="p-hero-val">71.6<span>KG</span></div>
+        <div class="p-hero-sub">Woche 7 · −0.3kg diese Woche</div>
+        <div class="p-bar"><div class="p-bar-fill"></div></div>
+        <div style="font-size:.55rem;opacity:.35;margin-top:.3rem;font-family:'JetBrains Mono',monospace">Woche 7 / 16 · 48%</div>
+      </div>
+      <div class="p-right">
+        <div>
+          <div class="p-chip">HRV 38 ms</div><br>
+          <div class="p-chip">Sleep 82</div><br>
+          <div class="p-chip">BB 71</div>
+        </div>
+        <div style="font-size:.58rem;opacity:.3">KFA 13.6%</div>
+      </div>
+    </div>
+    <div class="p-grid">
+      <div class="p-card"><div class="p-card-lbl">HRV</div><div class="p-card-val p-accent">38</div><div class="p-card-unit">ms</div></div>
+      <div class="p-card"><div class="p-card-lbl">Schlaf</div><div class="p-card-val">7h 20m</div><div class="p-card-unit">Score 82</div></div>
+      <div class="p-card"><div class="p-card-lbl">Schritte</div><div class="p-card-val">9.840</div><div class="p-card-unit">Ziel 10k</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- F: Purple -->
+<div class="theme f">
+  <div class="theme-label">F · Dunkelviolett + Lila</div>
+  <div class="preview">
+    <div class="p-nav"><span class="p-brand">IRON <span>FORGE</span> LAB</span><span style="opacity:.5;font-size:.65rem">Dashboard · Stack · Tageslog</span></div>
+    <div class="p-hero">
+      <div>
+        <div style="font-size:.58rem;opacity:.45;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.3rem">Recomp Blast · Tag 47</div>
+        <div class="p-hero-val">71.6<span>KG</span></div>
+        <div class="p-hero-sub">Woche 7 · −0.3kg diese Woche</div>
+        <div class="p-bar"><div class="p-bar-fill"></div></div>
+        <div style="font-size:.55rem;opacity:.35;margin-top:.3rem;font-family:'JetBrains Mono',monospace">Woche 7 / 16 · 48%</div>
+      </div>
+      <div class="p-right">
+        <div>
+          <div class="p-chip">HRV 38 ms</div><br>
+          <div class="p-chip">Sleep 82</div><br>
+          <div class="p-chip">BB 71</div>
+        </div>
+        <div style="font-size:.58rem;opacity:.3">KFA 13.6%</div>
+      </div>
+    </div>
+    <div class="p-grid">
+      <div class="p-card"><div class="p-card-lbl">HRV</div><div class="p-card-val p-accent">38</div><div class="p-card-unit">ms</div></div>
+      <div class="p-card"><div class="p-card-lbl">Schlaf</div><div class="p-card-val">7h 20m</div><div class="p-card-unit">Score 82</div></div>
+      <div class="p-card"><div class="p-card-lbl">Schritte</div><div class="p-card-val">9.840</div><div class="p-card-unit">Ziel 10k</div></div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<div style="margin-top:2rem;padding:1rem;background:#1e1e1e;border-radius:8px;color:#888;font-size:.8rem">
+  Alle Themes sind gleich dunkel — nur Hintergrundton und Akzentfarbe unterscheiden sich.<br>
+  Sag mir welches (A–F) dir am besten gefällt, oder beschreibe was du ändern möchtest (z.B. "B aber mit weniger Blau", "D aber etwas heller").
+</div>
+</body>
+</html>

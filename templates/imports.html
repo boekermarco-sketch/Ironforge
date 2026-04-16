@@ -2,187 +2,382 @@
 {% block title %}Import{% endblock %}
 
 {% block content %}
-<h1 class="page-title">Daten-Import</h1>
+
+<!-- ══ PAGE TOP ══════════════════════════════════════════════════ -->
+<div class="page-top">
+  <div>
+    <div class="page-title">Import</div>
+    <div class="page-meta">Garmin · Withings · MyFitnessPal · PDF · API</div>
+  </div>
+  {% if total_logs %}
+  <span class="pill">{{ total_logs }} Logs in DB</span>
+  {% endif %}
+</div>
 
 {% if msg %}
-<div class="alert alert-success" style="font-size:.9rem;white-space:pre-wrap">✅ {{ msg }}</div>
+<div class="card" style="margin-bottom:14px;border-left:3px solid {% if 'Fehler' in msg or 'fehlt' in msg %}var(--red){% else %}var(--teal){% endif %};padding:14px 18px">
+  <div style="font-size:13px;color:{% if 'Fehler' in msg or 'fehlt' in msg %}var(--red){% else %}var(--teal){% endif %}">{{ msg }}</div>
+</div>
 {% endif %}
 
-<!-- ALLES AUF EINMAL -->
-<div class="card" style="margin-bottom:1.5rem;border-left:4px solid var(--green-500)">
-  <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
-    <div style="flex:1">
-      <div class="section-title">Alles auf einmal importieren</div>
-      <div style="font-size:.85rem;color:var(--gray-500);margin-top:.3rem">
-        Importiert automatisch Withings + Garmin + MyFitnessPal aus den vorhandenen Ordnern.<br>
-        Bereits importierte Daten werden nicht doppelt eingefügt – sicher wiederholbar.
+<!-- ══ STATUS ════════════════════════════════════════════════════ -->
+<div class="card" style="margin-bottom:14px">
+  <div class="sh"><div class="sh-title">Status</div></div>
+  <div class="mg mg-4">
+    <div class="metric">
+      <div class="m-label">Garmin API</div>
+      <div class="m-val" style="color:{% if garmin_configured %}var(--teal){% else %}var(--red){% endif %}">{% if garmin_configured %}OK{% else %}–{% endif %}</div>
+      <div class="m-small">{% if last_fetch %}Letzter Abruf {{ last_fetch.strftime("%d.%m.%Y") }}{% elif garmin_configured %}noch nicht abgerufen{% else %}GARMIN_EMAIL/.env fehlt{% endif %}</div>
+    </div>
+    <div class="metric">
+      <div class="m-label">Withings API</div>
+      <div class="m-val" style="color:{% if withings_configured %}var(--teal){% else %}var(--red){% endif %}">{% if withings_configured %}OK{% else %}–{% endif %}</div>
+      <div class="m-small">{% if withings_configured %}{% if last_withings_backfill %}Backfill {{ last_withings_backfill.strftime("%d.%m.%Y") }}{% else %}Backfill verfügbar{% endif %}{% else %}.withings_credentials.json fehlt{% endif %}</div>
+    </div>
+    <div class="metric">
+      <div class="m-label">Withings CSV</div>
+      <div class="m-val" style="color:{% if withings_ok %}var(--teal){% else %}var(--soft){% endif %}">{% if withings_ok %}OK{% else %}–{% endif %}</div>
+      <div class="m-small">{% if withings_ok %}Ordner vorhanden{% else %}Imports/Withings/{% endif %}</div>
+    </div>
+    <div class="metric">
+      <div class="m-label">Garmin JSON</div>
+      <div class="m-val" style="color:{% if garmin_ok %}var(--teal){% else %}var(--soft){% endif %}">{% if garmin_ok %}OK{% else %}–{% endif %}</div>
+      <div class="m-small">{% if garmin_ok %}Ordner vorhanden{% else %}DI-Connect-Wellness/{% endif %}</div>
+    </div>
+    <div class="metric">
+      <div class="m-label">MFP API</div>
+      <div class="m-val" style="color:{% if mfp_api_ok %}var(--teal){% else %}var(--soft){% endif %}">{% if mfp_api_ok %}OK{% else %}–{% endif %}</div>
+      <div class="m-small">{% if mfp_api_ok %}{% if last_mfp_fetch %}Letzter Abruf {{ last_mfp_fetch.strftime("%d.%m.%Y") }}{% else %}bereit{% endif %}{% else %}MFP_USERNAME/.env fehlt{% endif %}</div>
+    </div>
+    <div class="metric">
+      <div class="m-label">MFP CSV</div>
+      <div class="m-val" style="color:{% if mfp_csv_ok %}var(--teal){% else %}var(--soft){% endif %}">{% if mfp_csv_ok %}OK{% else %}–{% endif %}</div>
+      <div class="m-small">{% if mfp_csv_ok %}Ordner vorhanden{% else %}Imports/MyFitnessPal/{% endif %}</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ API-AKTIONEN ═══════════════════════════════════════════ -->
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:14px">
+
+  <div class="card">
+    <div class="sh"><div class="sh-title">API-Abruf</div></div>
+    <div class="llist" style="margin-bottom:14px">
+      <div class="litem">
+        <span>Garmin + Withings{% if mfp_api_ok %} + MFP{% endif %} live</span>
+        {% if last_fetch %}<span style="font-size:11px;color:var(--soft)">Letzter: {{ last_fetch.strftime("%d.%m.%Y") }}</span>{% endif %}
       </div>
-      <div style="margin-top:.6rem;font-size:.8rem">
-        Aktuell in Datenbank: <strong>{{ total_logs }}</strong> Tages-Logs
+      {% if withings_configured %}
+      <div class="litem">
+        <span>Withings Backfill (90 Tage)</span>
+        <span style="font-size:11px;color:var(--gold)">PWV, Blutdruck, Körperzus.</span>
+      </div>
+      {% endif %}
+      {% if mfp_api_ok %}
+      <div class="litem">
+        <span>MFP seit letztem Abruf</span>
+        <span style="font-size:11px;color:var(--gold)">Kalorien, Protein, Carbs, Fett</span>
+      </div>
+      {% endif %}
+    </div>
+    {% if garmin_blocked_until %}
+    <div style="font-size:12px;color:var(--red);background:rgba(222,113,113,.08);border:1px solid rgba(222,113,113,.3);border-radius:10px;padding:10px 12px;margin-bottom:10px">
+      <div style="font-weight:700;margin-bottom:4px">Garmin IP-Sperre aktiv</div>
+      <div style="font-family:'JetBrains Mono',monospace;margin-bottom:6px">Freigabe: {{ garmin_blocked_until.strftime("%d.%m.%Y %H:%M") }} Uhr</div>
+      <div style="color:var(--soft);font-size:11px;margin-bottom:8px">Garmin/Cloudflare hat die IP gesperrt. Kein weiterer Login-Versuch bis zur Freigabe – sonst verlängert sich die Sperre.</div>
+      <form action="/import/clear-garmin-block" method="post" style="margin:0">
+        <button class="btn btn-sm" style="font-size:11px;padding:3px 10px;background:rgba(222,113,113,.15);border:1px solid rgba(222,113,113,.4);color:var(--red)">Sperre manuell aufheben (nur wenn Token importiert)</button>
+      </form>
+    </div>
+    {% endif %}
+    <div id="garmin-lock-info" style="display:none;font-size:12px;color:var(--red);background:rgba(222,113,113,.08);border:1px solid rgba(222,113,113,.2);border-radius:10px;padding:9px 12px;font-family:'JetBrains Mono',monospace"></div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      {% if mfp_api_ok %}
+      <form id="form-all-three" action="/import/fetch-all" method="post" onsubmit="setGarminLock()">
+        <button id="btn-all-three" class="btn btn-primary btn-sm" style="width:100%"
+          {% if (not garmin_configured and not withings_configured) or garmin_blocked_until %}disabled {% if garmin_blocked_until %}title="Garmin gesperrt bis {{ garmin_blocked_until.strftime('%d.%m. %H:%M') }}"{% else %}title="Zuerst .env konfigurieren"{% endif %}{% endif %}>
+          Alle heute (Garmin + Withings + MFP)
+        </button>
+      </form>
+      {% endif %}
+      <form id="form-garmin-both" action="/import/fetch-now" method="post" onsubmit="setGarminLock()">
+        <button id="btn-garmin-both" class="btn {% if mfp_api_ok %}btn-secondary{% else %}btn-primary{% endif %} btn-sm" style="width:100%"
+          {% if (not garmin_configured and not withings_configured) or garmin_blocked_until %}disabled {% if garmin_blocked_until %}title="Garmin gesperrt bis {{ garmin_blocked_until.strftime('%d.%m. %H:%M') }}"{% else %}title="Zuerst .env konfigurieren"{% endif %}{% endif %}>
+          Garmin + Withings heute
+        </button>
+      </form>
+      <form id="form-garmin-only" action="/import/fetch-garmin" method="post" onsubmit="setGarminLock()">
+        <button id="btn-garmin-only" class="btn btn-secondary btn-sm" style="width:100%"
+          {% if not garmin_configured or garmin_blocked_until %}disabled {% if garmin_blocked_until %}title="Garmin gesperrt bis {{ garmin_blocked_until.strftime('%d.%m. %H:%M') }}"{% else %}title="GARMIN_EMAIL in .env fehlt"{% endif %}{% endif %}>
+          Nur Garmin heute
+        </button>
+      </form>
+      <form action="/import/fetch-withings" method="post">
+        <button class="btn btn-secondary btn-sm" style="width:100%"
+          {% if not withings_configured %}disabled title=".withings_credentials.json fehlt"{% endif %}>
+          Nur Withings heute
+        </button>
+      </form>
+      {% if mfp_api_ok %}
+      <form action="/import/fetch-mfp" method="post">
+        <button class="btn btn-secondary btn-sm" style="width:100%">
+          MFP abrufen
+          {% if last_mfp_fetch %}<span style="display:block;font-size:10px;opacity:.6;font-weight:400">seit {{ last_mfp_fetch.strftime("%d.%m.%Y") }}</span>{% else %}<span style="display:block;font-size:10px;opacity:.6;font-weight:400">erster Abruf: 90 Tage</span>{% endif %}
+        </button>
+      </form>
+      {% endif %}
+      {% if withings_configured %}
+      <form action="/import/withings-backfill" method="post">
+        <button class="btn btn-secondary btn-sm" style="width:100%">
+          Withings Backfill
+          {% if last_withings_backfill %}<span style="display:block;font-size:10px;opacity:.6;font-weight:400">seit {{ last_withings_backfill.strftime("%d.%m.%Y") }}</span>{% endif %}
+        </button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="sh"><div class="sh-title">CSV/JSON aus Ordnern</div></div>
+    <div class="llist" style="margin-bottom:14px">
+      <div class="litem">
+        <span>Withings CSV</span>
+        <span style="font-size:11px;color:{% if withings_ok %}var(--teal){% else %}var(--soft){% endif %}">{% if withings_ok %}✓ Ordner gefunden{% else %}Ordner fehlt{% endif %}</span>
+      </div>
+      <div class="litem">
+        <span>Garmin JSON</span>
+        <span style="font-size:11px;color:{% if garmin_ok %}var(--teal){% else %}var(--soft){% endif %}">{% if garmin_ok %}✓ Ordner gefunden{% else %}Ordner fehlt{% endif %}</span>
+      </div>
+      <div class="litem">
+        <span>FatSecret CSV</span>
+        <span style="font-size:11px;color:{% if fatsecret_csv_ok %}var(--teal){% else %}var(--soft){% endif %}">{% if fatsecret_csv_ok %}✓ Ordner gefunden{% else %}Ordner fehlt{% endif %}</span>
       </div>
     </div>
-    <form action="/import/alles" method="post">
-      <button class="btn btn-primary" style="font-size:1rem;padding:.75rem 1.5rem">
-        🚀 Alles jetzt importieren
+    <div style="display:flex;flex-direction:column;gap:8px">
+      {% if withings_ok %}
+      <form action="/import/withings-bulk" method="post">
+        <button class="btn btn-secondary btn-sm" style="width:100%">Withings importieren</button>
+      </form>
+      {% endif %}
+      {% if garmin_ok %}
+      <form action="/import/garmin-bulk" method="post">
+        <button class="btn btn-secondary btn-sm" style="width:100%">Garmin importieren</button>
+      </form>
+      {% endif %}
+      <form action="/import/alles" method="post">
+        <button class="btn btn-secondary btn-sm" style="width:100%">Alles importieren</button>
+      </form>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ MYFITNESSPAL ═══════════════════════════════════════════════ -->
+<div class="card" style="margin-bottom:14px">
+  <div class="sh">
+    <div class="sh-title">MyFitnessPal – Ernährungsdaten</div>
+    <span class="pill" style="color:{% if mfp_api_ok %}var(--teal){% else %}var(--soft){% endif %}">
+      {% if mfp_api_ok %}API bereit{% else %}CSV-Import{% endif %}
+    </span>
+  </div>
+
+  {% if mfp_api_ok %}
+  <div style="font-size:13px;color:var(--soft);line-height:1.7;margin-bottom:14px">
+    Automatischer Abruf via <strong style="color:var(--muted)">python-myfitnesspal</strong>
+    — holt täglich alle Daten seit dem letzten Abruf.
+    {% if last_mfp_fetch %}
+    <br>Letzter Abruf: <strong style="color:var(--muted)">{{ last_mfp_fetch.strftime("%d.%m.%Y") }}</strong>
+    {% else %}
+    <br>Erster Abruf holt die letzten <strong style="color:var(--muted)">90 Tage</strong> nach.
+    {% endif %}
+  </div>
+  {% else %}
+  <div style="font-size:13px;color:var(--soft);line-height:1.7;margin-bottom:14px">
+    Für den automatischen Abruf im Browser (Chrome/Firefox) bei
+    <strong style="color:var(--muted)">myfitnesspal.com eingeloggt</strong> bleiben –
+    die App liest die Cookies automatisch aus.
+  </div>
+  {% endif %}
+
+  <div style="font-size:13px;color:var(--soft);line-height:1.7;margin-bottom:14px">
+    CSV-Export (historische Daten):
+    <strong style="color:var(--muted)">myfitnesspal.com → Einstellungen → Daten exportieren</strong>
+    → CSV per E-Mail → in
+    <code style="background:rgba(255,255,255,.06);padding:2px 6px;border-radius:6px;font-size:12px">Imports/MyFitnessPal/</code> ablegen
+    oder direkt hochladen.
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <form action="/import/mfp-csv" method="post">
+      <button class="btn btn-primary btn-sm"
+        {% if not mfp_csv_ok %}disabled title="Imports/MyFitnessPal/ Ordner fehlt oder leer"{% endif %}>
+        Ordner importieren
       </button>
     </form>
-  </div>
-</div>
-
-<!-- Status der Ordner -->
-<div class="grid-3" style="margin-bottom:1.5rem">
-
-  <!-- Withings -->
-  <div class="card">
-    <div class="section-header">
-      <div class="section-title">
-        {% if withings_ok %}
-          <span class="badge badge-ok">✓ Ordner gefunden</span>
-        {% else %}
-          <span class="badge badge-danger">✗ Ordner fehlt</span>
-        {% endif %}
-        Withings
-      </div>
-    </div>
-    <div style="font-size:.78rem;color:var(--gray-500);margin-bottom:.75rem;word-break:break-all">
-      {{ withings_dir }}
-    </div>
-    {% if withings_ok %}
-      <div style="font-size:.8rem;color:var(--green-700);margin-bottom:.75rem">
-        Wird importiert: Gewicht, Körperfett, Muskelmasse
-      </div>
-      <form action="/import/withings-bulk" method="post">
-        <button class="btn btn-secondary btn-sm">Nur Withings importieren</button>
-      </form>
-    {% else %}
-      <div style="font-size:.78rem;color:var(--gray-500)">
-        Extrahiertes Withings-ZIP in diesen Ordner legen.
-      </div>
-    {% endif %}
-  </div>
-
-  <!-- Garmin -->
-  <div class="card">
-    <div class="section-header">
-      <div class="section-title">
-        {% if garmin_ok %}
-          <span class="badge badge-ok">✓ Ordner gefunden</span>
-        {% else %}
-          <span class="badge badge-danger">✗ Ordner fehlt</span>
-        {% endif %}
-        Garmin
-      </div>
-    </div>
-    <div style="font-size:.78rem;color:var(--gray-500);margin-bottom:.75rem;word-break:break-all">
-      {{ garmin_dir }}
-    </div>
-    {% if garmin_ok %}
-      <div style="font-size:.8rem;color:var(--green-700);margin-bottom:.75rem">
-        Wird importiert: HRV, Herzfrequenz, Schlaf-Score, Tiefschlaf, REM, Atemfrequenz
-      </div>
-      <form action="/import/garmin-bulk" method="post">
-        <button class="btn btn-secondary btn-sm">Nur Garmin importieren</button>
-      </form>
-    {% else %}
-      <div style="font-size:.78rem;color:var(--gray-500)">
-        Extrahiertes Garmin-ZIP → DI_CONNECT/DI-Connect-Wellness muss vorhanden sein.
-      </div>
-    {% endif %}
-  </div>
-
-  <!-- MyFitnessPal -->
-  <div class="card">
-    <div class="section-header">
-      <div class="section-title">
-        {% if mfp_ok %}
-          <span class="badge badge-ok">✓ Ordner gefunden</span>
-        {% else %}
-          <span class="badge badge-danger">✗ Ordner fehlt</span>
-        {% endif %}
-        MyFitnessPal
-      </div>
-    </div>
-    <div style="font-size:.78rem;color:var(--gray-500);margin-bottom:.75rem;word-break:break-all">
-      {{ mfp_dir }}
-    </div>
-    {% if mfp_ok %}
-      <div style="font-size:.8rem;color:var(--green-700);margin-bottom:.75rem">
-        Wird importiert: Kalorien, Protein, Kohlenhydrate, Fett (täglich summiert)
-      </div>
-      <form action="/import/mfp-bulk" method="post">
-        <button class="btn btn-secondary btn-sm">Nur MFP importieren</button>
-      </form>
-    {% else %}
-      <div style="font-size:.78rem;color:var(--gray-500)">
-        MFP-Export-Ordner hier ablegen.
-      </div>
-    {% endif %}
-  </div>
-</div>
-
-<!-- Blutbilder -->
-<div class="card" style="margin-bottom:1.5rem">
-  <div class="section-header">
-    <div class="section-title">Blutbild-PDFs</div>
-    <form action="/import/blutbilder-scan" method="post">
-      <button class="btn btn-primary btn-sm">🔍 Ordner scannen</button>
+    <form action="/import/mfp-upload" method="post" enctype="multipart/form-data" style="display:flex;gap:6px;align-items:center">
+      <input type="file" name="file" accept=".csv" style="font-size:12px;color:var(--muted);background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:8px;padding:5px 8px;cursor:pointer">
+      <button type="submit" class="btn btn-secondary btn-sm">Hochladen</button>
     </form>
   </div>
-  <div style="font-size:.85rem;color:var(--gray-500)">
-    PDFs in <code>data/Blutbilder/</code> legen → Scanner erkennt Markernamen + Werte automatisch.
-    Alternativ direkt auf der <a href="/blutbilder/">Blutbilder-Seite</a> hochladen.
+</div>
+
+<!-- ══ SUPABASE KATALOG SYNC ═══════════════════════════════════ -->
+<div class="card" style="margin-bottom:14px">
+  <div class="sh">
+    <div class="sh-title">Zusatzpool → Supabase</div>
+    <span class="pill" style="color:{% if supabase_catalog_configured %}var(--teal){% else %}var(--red){% endif %}">
+      {% if supabase_catalog_configured %}SUPABASE_URL + KEY OK{% else %}SUPABASE ENV FEHLT{% endif %}
+    </span>
+  </div>
+  <div style="font-size:13px;color:var(--soft);line-height:1.6;margin-bottom:12px">
+    Lädt den lokalen Zusatzpool (gym80, Matrix Strength/Cardio, eGym) in die Tabelle
+    <code style="background:rgba(255,255,255,.06);padding:2px 6px;border-radius:6px;font-size:12px">ifl_device_catalog</code>.
+    Danach ist der Gerätekatalog in `training-preview.html` mobil verfügbar.
+  </div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:10px">
+    {% if supabase_catalog_status.ok %}
+      Supabase-Status: {{ supabase_catalog_status.total }} Einträge online
+      {% if supabase_catalog_status.by_brand %}
+        ·
+        {% for brand, count in supabase_catalog_status.by_brand.items() %}
+          {{ brand }}: {{ count }}{% if not loop.last %} · {% endif %}
+        {% endfor %}
+      {% endif %}
+    {% elif supabase_catalog_status.configured %}
+      Supabase-Status: Fehler – {{ supabase_catalog_status.error }}
+    {% else %}
+      Supabase-Status: noch nicht konfiguriert.
+    {% endif %}
+  </div>
+  <form action="/import/catalog/push-supabase" method="post">
+    <button class="btn btn-primary btn-sm" {% if not supabase_catalog_configured %}disabled title="SUPABASE_URL und SUPABASE_ANON_KEY in .env setzen"{% endif %}>
+      Katalog nach Supabase hochladen
+    </button>
+  </form>
+  <form action="/import/catalog/import-final-replace-and-push" method="post" style="margin-top:8px">
+    <button class="btn btn-secondary btn-sm" {% if not supabase_catalog_configured %}disabled title="SUPABASE_URL und SUPABASE_ANON_KEY in .env setzen"{% endif %}>
+      Finale SQLs importieren (ersetzen) + nach Supabase pushen
+    </button>
+  </form>
+</div>
+
+<!-- ══ BLUTBILD-PDFs ════════════════════════════════════════════ -->
+<div class="card" style="margin-bottom:14px">
+  <div class="sh">
+    <div class="sh-title">Blutbild-PDFs</div>
+    <form action="/import/blutbilder-scan" method="post">
+      <button class="btn btn-primary btn-sm">Ordner scannen</button>
+    </form>
+  </div>
+  <div style="font-size:13px;color:var(--soft);line-height:1.6">
+    PDFs in <code style="background:rgba(255,255,255,.06);padding:2px 6px;border-radius:6px;font-size:12px">data/Blutbilder/</code>
+    oder <code style="background:rgba(255,255,255,.06);padding:2px 6px;border-radius:6px;font-size:12px">Imports/Blutbilder/</code> ablegen →
+    Scanner erkennt Markernamen und Werte automatisch.
+    Alternativ direkt auf der <a href="/blutbilder/" style="color:var(--gold)">Blutbilder-Seite</a> hochladen.
   </div>
 </div>
 
-<!-- Wo sind die Ordner? Anleitung -->
+<!-- ══ EINRICHTUNG (nur wenn nicht konfiguriert) ════════════ -->
+{% if not garmin_configured or not withings_configured or not fatsecret_api_ok %}
 <div class="card">
-  <div class="section-title" style="margin-bottom:.75rem">Wo müssen die Dateien liegen?</div>
-  <div class="grid-3">
+  <div class="sh"><div class="sh-title">Einrichtung</div></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:18px;font-size:13px;color:var(--muted);line-height:1.6">
 
+    {% if not garmin_configured %}
     <div>
-      <div style="font-weight:700;color:var(--green-700);margin-bottom:.5rem">Withings</div>
-      <ol style="font-size:.8rem;line-height:2;color:var(--gray-700);padding-left:1.2rem">
-        <li>ZIP-Ordner entpacken</li>
-        <li>Alle Dateien in Ordner:<br>
-          <code style="font-size:.75rem">Imports\Withings\</code></li>
-        <li>Button "Alles importieren"</li>
-      </ol>
-      <div style="font-size:.75rem;color:var(--gray-500);margin-top:.4rem">
-        Wichtigste Datei: <code>weight.csv</code>
+      <div style="font-weight:700;color:var(--text);margin-bottom:6px">Garmin</div>
+      <div style="color:var(--soft)">In <code style="background:rgba(255,255,255,.06);padding:1px 5px;border-radius:4px">.env</code> eintragen:</div>
+      <div style="margin-top:6px;padding:10px 12px;background:rgba(255,255,255,.04);border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)">
+        GARMIN_EMAIL=deine@email.de<br>GARMIN_PASSWORD=deinpasswort
       </div>
     </div>
+    {% endif %}
 
+    {% if not withings_configured %}
     <div>
-      <div style="font-weight:700;color:var(--green-700);margin-bottom:.5rem">Garmin</div>
-      <ol style="font-size:.8rem;line-height:2;color:var(--gray-700);padding-left:1.2rem">
-        <li>ZIP-Ordner entpacken</li>
-        <li>Gesamten Inhalt in:<br>
-          <code style="font-size:.75rem">Imports\Garmin\</code></li>
-        <li>Struktur muss erhalten bleiben:<br>
-          <code style="font-size:.75rem">DI_CONNECT\DI-Connect-Wellness\</code></li>
-        <li>Button "Alles importieren"</li>
-      </ol>
+      <div style="font-weight:700;color:var(--text);margin-bottom:6px">Withings API</div>
+      <div style="color:var(--soft)">Einmalig ausführen:</div>
+      <div style="margin-top:6px;padding:10px 12px;background:rgba(255,255,255,.04);border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold)">
+        python withings_auth.py
+      </div>
+      <div style="margin-top:6px;font-size:12px;color:var(--soft)">Erstellt <code>.withings_credentials.json</code> im Projektordner.</div>
     </div>
+    {% endif %}
 
+    {% if not fatsecret_api_ok %}
     <div>
-      <div style="font-weight:700;color:var(--green-700);margin-bottom:.5rem">MyFitnessPal</div>
-      <ol style="font-size:.8rem;line-height:2;color:var(--gray-700);padding-left:1.2rem">
-        <li>MFP-Export-ZIP entpacken</li>
-        <li>Alle Dateien in:<br>
-          <code style="font-size:.75rem">Imports\Myfitnesspal\</code></li>
-        <li>Button "Alles importieren"</li>
-      </ol>
-      <div style="font-size:.75rem;color:var(--gray-500);margin-top:.4rem">
-        Datei: <code>Nährwerte-Übersicht-*.csv</code>
+      <div style="font-weight:700;color:var(--text);margin-bottom:6px">FatSecret API</div>
+      <div style="color:var(--soft)">Einmalig ausführen:</div>
+      <div style="margin-top:6px;padding:10px 12px;background:rgba(255,255,255,.04);border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold)">
+        python fatsecret_auth.py
+      </div>
+      <div style="margin-top:6px;font-size:12px;color:var(--soft)">
+        Consumer Key + Secret aus <a href="https://platform.fatsecret.com/api/" style="color:var(--gold)" target="_blank">platform.fatsecret.com</a> → My Account → App → in <code>.env</code>:<br>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)">FATSECRET_CLIENT_ID=...<br>FATSECRET_CLIENT_SECRET=...</span>
       </div>
     </div>
+    {% endif %}
 
-  </div>
-
-  <div style="margin-top:1rem;padding:.75rem;background:var(--green-50);border-radius:var(--radius-sm);font-size:.8rem;color:var(--green-900)">
-    <strong>Hinweis:</strong> Der Import ist idempotent – du kannst ihn beliebig oft starten.
-    Bereits vorhandene Einträge werden nicht doppelt angelegt, sondern mit neuen Werten ergänzt.
-    Manuell eingetragene Werte (z.B. subjektive Scores) bleiben erhalten.
   </div>
 </div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  const KEY = 'ifl_garmin_lock_until';
+  const LOCK_MS = 24 * 60 * 60 * 1000;
+  let countdownTimer = null;
+
+  function setGarminLock(){
+    localStorage.setItem(KEY, Date.now() + LOCK_MS);
+  }
+  window.setGarminLock = setGarminLock;
+
+  function applyLock(){
+    const until = parseInt(localStorage.getItem(KEY) || '0');
+    if(until <= Date.now()){ return; }
+
+    const btnAll  = document.getElementById('btn-all-three');
+    const btnBoth = document.getElementById('btn-garmin-both');
+    const btnOnly = document.getElementById('btn-garmin-only');
+    const info    = document.getElementById('garmin-lock-info');
+    if(btnAll)  btnAll.disabled  = true;
+    if(btnBoth) btnBoth.disabled = true;
+    if(btnOnly) btnOnly.disabled = true;
+
+    function tick(){
+      const rem = parseInt(localStorage.getItem(KEY)||'0') - Date.now();
+      if(rem <= 0){
+        clearInterval(countdownTimer);
+        if(btnAll  && !btnAll.hasAttribute('data-server-disabled'))  btnAll.disabled  = false;
+        if(btnBoth && !btnBoth.hasAttribute('data-server-disabled')) btnBoth.disabled = false;
+        if(btnOnly && !btnOnly.hasAttribute('data-server-disabled')) btnOnly.disabled = false;
+        if(info) info.style.display = 'none';
+        return;
+      }
+      const h = Math.floor(rem/3600000);
+      const m = Math.floor((rem%3600000)/60000);
+      const s = Math.floor((rem%60000)/1000);
+      const pad = n => String(n).padStart(2,'0');
+      if(info){
+        info.style.display = 'block';
+        info.textContent = `Garmin gesperrt – noch ${pad(h)}:${pad(m)}:${pad(s)} (Rate-Limit Schutz)`;
+      }
+    }
+    tick();
+    countdownTimer = setInterval(tick, 1000);
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    // Server-disabled Buttons markieren damit Lock-Ablauf sie nicht wieder aktiviert
+    ['btn-all-three','btn-garmin-both','btn-garmin-only'].forEach(id=>{
+      const b = document.getElementById(id);
+      if(b && b.disabled) b.setAttribute('data-server-disabled','1');
+    });
+    applyLock();
+  });
+})();
+</script>
 {% endblock %}

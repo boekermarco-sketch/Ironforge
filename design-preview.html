@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>IRON FORGE LAB</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,900;1,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:   #080808;
+  --s1:   #0f0f0f;
+  --s2:   #151515;
+  --s3:   #1c1c1c;
+  --acc:  #b8f027;          /* neon lime – exact from reference */
+  --ad:   rgba(184,240,39,.14);
+  --ab:   rgba(184,240,39,.28);
+  --txt:  #ffffff;
+  --t2:   #888888;
+  --t3:   #444444;
+  --bdr:  rgba(255,255,255,.07);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:15px}
+body{
+  font-family:'Inter',sans-serif;
+  background:var(--bg);color:var(--txt);
+  min-height:100vh;overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:var(--s3);border-radius:2px}
+::-webkit-scrollbar-thumb:hover{background:var(--acc)}
+
+/* ── NAV ─────────────────────────────────────────── */
+.nav{
+  position:sticky;top:0;z-index:200;
+  height:58px;padding:0 2rem;
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(8,8,8,.97);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--bdr);
+}
+.logo{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:1.15rem;letter-spacing:.2em;color:var(--txt);
+}
+.logo em{color:var(--acc);font-style:normal}
+.navlinks{display:flex}
+.navlinks a{
+  height:58px;padding:0 .95rem;
+  display:flex;align-items:center;
+  font-size:.62rem;font-weight:600;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--t3);text-decoration:none;
+  border-bottom:2px solid transparent;
+  transition:color .15s,border-color .15s;
+}
+.navlinks a:hover{color:var(--t2)}
+.navlinks a.on{color:var(--acc);border-bottom-color:var(--acc)}
+.navdate{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--t3)}
+
+/* ── PAGE ─────────────────────────────────────────── */
+.page{max-width:1440px;margin:0 auto;padding:1.75rem 2rem 4rem}
+
+/* ── HERO ─────────────────────────────────────────── */
+.hero{
+  display:grid;grid-template-columns:1fr 380px;
+  border-radius:20px;overflow:hidden;
+  background:var(--s1);border:1px solid var(--bdr);
+  min-height:380px;margin-bottom:1.25rem;
+}
+.hero-l{
+  padding:2.75rem 3rem 2.25rem;
+  display:flex;flex-direction:column;justify-content:space-between;
+  border-right:1px solid var(--bdr);
+}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:.55rem;
+  background:var(--ad);border:1px solid var(--ab);
+  border-radius:100px;padding:.28rem .9rem;
+  font-size:.6rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--acc);width:fit-content;margin-bottom:1.75rem;
+}
+.eyebrow::before{
+  content:'';width:6px;height:6px;border-radius:50%;
+  background:var(--acc);
+  animation:blink 2s ease-in-out infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+.h1{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(5rem,8.5vw,7.5rem);
+  line-height:.9;letter-spacing:.02em;
+  color:var(--txt);
+}
+.h1 em{
+  font-style:normal;color:var(--acc);
+  display:block;margin-top:.08em;
+}
+.h1 .unit{
+  font-family:'Inter',sans-serif;font-weight:300;
+  font-size:2.5rem;color:var(--t3);letter-spacing:-.01em;
+  vertical-align:.1em;margin-left:.25rem;
+}
+
+.hero-meta{
+  display:flex;align-items:flex-end;gap:3rem;
+  padding-top:1.5rem;
+  border-top:1px solid var(--bdr);
+  margin-top:2rem;
+}
+.hm{display:flex;flex-direction:column;gap:.18rem}
+.hm-v{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:1.65rem;line-height:1;color:var(--txt);
+}
+.hm-v small{
+  font-family:'Inter',sans-serif;font-weight:400;
+  font-size:.68rem;color:var(--t3);margin-left:.22rem;
+}
+.hm-l{font-size:.57rem;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--t3)}
+
+.blast{margin-top:1.5rem}
+.blast-hd{
+  display:flex;justify-content:space-between;
+  font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--t3);margin-bottom:.5rem;
+}
+.blast-hd span.hi{color:var(--acc)}
+.blast-track{height:3px;background:var(--s3);border-radius:2px}
+.blast-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,rgba(184,240,39,.35),var(--acc));width:43.75%}
+
+/* Photo panel */
+.hero-r{
+  position:relative;overflow:hidden;
+  background:
+    radial-gradient(ellipse 70% 90% at 55% 45%, #1a1a12 0%, #0a0a08 60%, var(--bg) 100%);
+}
+/* swap in: <img class="hero-img" src="path/to/foto.jpg"> */
+.hero-img{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;object-position:center top;
+  opacity:.8;filter:grayscale(15%) contrast(1.08);
+}
+.hero-r-fade{
+  position:absolute;inset:0;
+  background:
+    linear-gradient(to right,  rgba(15,15,15,.65) 0%,transparent 25%),
+    linear-gradient(to top,    rgba(8,8,8,.9) 0%,transparent 40%);
+}
+.hero-r-inner{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;justify-content:space-between;
+  padding:1.5rem 1.5rem;
+}
+.hr-topright{
+  align-self:flex-end;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:3.5rem;line-height:1;
+  color:rgba(255,255,255,.06);text-align:right;
+}
+.hr-topright em{font-style:normal;color:rgba(184,240,39,.2)}
+.hr-chips{display:flex;flex-direction:column;gap:.4rem;align-items:flex-start}
+.chip{
+  display:inline-flex;align-items:center;gap:.5rem;
+  background:rgba(8,8,8,.78);backdrop-filter:blur(12px);
+  border:1px solid var(--bdr);border-radius:9px;
+  padding:.48rem .8rem;
+  font-size:.65rem;font-weight:600;
+}
+.chip strong{color:var(--acc);margin-right:.15rem}
+.chip span{color:var(--t2)}
+.hr-hint{font-size:.53rem;color:var(--t3);letter-spacing:.08em;margin-top:.25rem}
+
+/* ── STAT STRIP ───────────────────────────────────── */
+.stats{
+  display:grid;grid-template-columns:repeat(5,1fr);
+  gap:.7rem;margin-bottom:1.25rem;
+}
+.sc{
+  background:var(--s1);border:1px solid var(--bdr);
+  border-radius:14px;padding:.9rem 1.1rem;
+  transition:border-color .2s,transform .18s;
+}
+.sc:hover{border-color:rgba(184,240,39,.18);transform:translateY(-2px)}
+.sc-lbl{font-size:.57rem;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--t3);margin-bottom:.3rem}
+.sc-v{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:1.85rem;line-height:1;color:var(--txt);
+}
+.sc-v small{font-family:'Inter',sans-serif;font-weight:400;font-size:.63rem;color:var(--t3);margin-left:.2rem}
+.sc-sub{font-size:.6rem;color:var(--t3);margin-top:.2rem}
+.up{color:#4ade80!important}.dn{color:#f87171!important}.ok{color:var(--acc)!important}
+
+/* ── BODY ─────────────────────────────────────────── */
+.body{
+  display:grid;grid-template-columns:1fr 1fr 260px;
+  gap:1rem;align-items:start;
+}
+.col{display:flex;flex-direction:column;gap:1rem}
+
+/* ── CARD ─────────────────────────────────────────── */
+.card{
+  background:var(--s1);border:1px solid var(--bdr);
+  border-radius:14px;overflow:hidden;
+  transition:border-color .18s;
+}
+.card:hover{border-color:rgba(184,240,39,.1)}
+.ch{
+  padding:.72rem 1.1rem;border-bottom:1px solid var(--bdr);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.ct{font-size:.6rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--t3)}
+.cb{
+  font-size:.57rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  padding:.13rem .55rem;border-radius:5px;
+  background:var(--ad);color:var(--acc);border:1px solid var(--ab);
+}
+.chart-box{height:148px;padding:.2rem .75rem .7rem}
+.tabs{display:flex;gap:.25rem}
+.tab{
+  padding:.16rem .5rem;
+  font-size:.57rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  background:transparent;border:1px solid var(--bdr);
+  border-radius:5px;color:var(--t3);cursor:pointer;
+  font-family:'Inter',sans-serif;transition:all .18s;
+}
+.tab:hover{color:var(--t2);border-color:rgba(255,255,255,.14)}
+.tab.on{background:var(--ad);border-color:var(--ab);color:var(--acc)}
+
+/* KPI row */
+.kpis{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  background:var(--s1);border:1px solid var(--bdr);
+  border-radius:14px;overflow:hidden;
+}
+.kpi{padding:1rem 1.1rem;border-right:1px solid var(--bdr)}
+.kpi:last-child{border-right:none}
+.kl{font-size:.56rem;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--t3);margin-bottom:.3rem}
+.kv{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:2.1rem;line-height:1;color:var(--txt);
+}
+.kv small{font-family:'Inter',sans-serif;font-weight:400;font-size:.72rem;color:var(--t3);margin-left:.2rem}
+.kt{font-size:.6rem;color:var(--t3);margin-top:.2rem}
+
+/* Stack */
+.slt{padding-bottom:.2rem}
+.st{padding:.5rem 1.1rem .2rem;font-size:.57rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--acc)}
+.sr{display:flex;align-items:center;gap:.6rem;padding:.42rem 1.1rem;transition:background .15s}
+.sr:hover{background:rgba(255,255,255,.025)}
+.sd{width:4px;height:4px;border-radius:50%;background:var(--acc);opacity:.5;flex-shrink:0}
+.sn{font-size:.77rem;color:#999;flex:1}
+.ss{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--t3)}
+
+/* Blood */
+.bg{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;padding:.75rem}
+.bv{background:var(--s2);border-radius:9px;padding:.55rem .7rem;border:1px solid transparent;transition:border-color .18s}
+.bv:hover{border-color:rgba(184,240,39,.12)}
+.bl{font-size:.56rem;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:.08rem}
+.bval{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:#ccc}
+.bval.ok{color:#4ade80}.bval.hi{color:#fb923c}.bval.lo{color:#60a5fa}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="logo">IRON <em>FORGE</em> LAB</div>
+  <div class="navlinks">
+    <a href="#" class="on">Dashboard</a>
+    <a href="#">Tageslog</a>
+    <a href="#">Stack</a>
+    <a href="#">Blutbild</a>
+    <a href="#">Check-in</a>
+    <a href="#">Journal</a>
+  </div>
+  <div class="navdate">Do 10. Apr 2026</div>
+</nav>
+
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-l">
+      <div>
+        <div class="eyebrow">Recomp Blast 2026 · Tag 47</div>
+        <div class="h1">
+          83.2<span class="unit">kg</span>
+          <em>Woche 7</em>
+        </div>
+      </div>
+      <div>
+        <div class="hero-meta">
+          <div class="hm">
+            <span class="hm-v">↓ 0.4<small>kg</small></span>
+            <span class="hm-l">Diese Woche</span>
+          </div>
+          <div class="hm">
+            <span class="hm-v">16.2<small>%</small></span>
+            <span class="hm-l">Körperfett</span>
+          </div>
+          <div class="hm">
+            <span class="hm-v">71.9<small>kg</small></span>
+            <span class="hm-l">Muskelmasse</span>
+          </div>
+        </div>
+        <div class="blast">
+          <div class="blast-hd">
+            <span>Start 23. Feb</span>
+            <span class="hi">7 / 16 Wochen · 44%</span>
+            <span>Ende 15. Jun</span>
+          </div>
+          <div class="blast-track"><div class="blast-fill"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-r">
+      <!-- FOTO einfügen: <img class="hero-img" src="Imports/CheckIn_Fotos/2026-04-03/foto.jpg"> -->
+      <div class="hero-r-fade"></div>
+      <div class="hero-r-inner">
+        <div class="hr-topright">W7<br><em>/16</em></div>
+        <div class="hr-chips">
+          <div class="chip"><strong>HRV</strong><span>58 ms</span></div>
+          <div class="chip"><strong>Body Battery</strong><span>74 %</span></div>
+          <div class="chip"><strong>Schlaf</strong><span>7h 12m</span></div>
+          <div class="hr-hint">← Check-in Foto hier einfügen</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STAT STRIP -->
+  <div class="stats">
+    <div class="sc">
+      <div class="sc-lbl">Schlaf-Score</div>
+      <div class="sc-v">82<small>/100</small></div>
+      <div class="sc-sub up">↑ +5 vs. Vorwoche</div>
+    </div>
+    <div class="sc">
+      <div class="sc-lbl">Ruhepuls</div>
+      <div class="sc-v">52<small>bpm</small></div>
+      <div class="sc-sub">→ Stabil</div>
+    </div>
+    <div class="sc">
+      <div class="sc-lbl">Stress-Avg</div>
+      <div class="sc-v">31<small>/100</small></div>
+      <div class="sc-sub ok">↓ Entspannt</div>
+    </div>
+    <div class="sc">
+      <div class="sc-lbl">Schritte</div>
+      <div class="sc-v">9.4k</div>
+      <div class="sc-sub dn">↓ Ziel 10.000</div>
+    </div>
+    <div class="sc">
+      <div class="sc-lbl">Training Ready</div>
+      <div class="sc-v">71<small>/100</small></div>
+      <div class="sc-sub dn">↓ Leicht müde</div>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="body">
+
+    <!-- COL 1: HRV + Sleep -->
+    <div class="col">
+      <div class="card">
+        <div class="ch"><span class="ct">HRV – 7 Tage</span><span class="cb">Ø 55 ms</span></div>
+        <div class="chart-box"><canvas id="cHrv"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="ch">
+          <span class="ct">Schlafphasen</span>
+          <div class="tabs"><button class="tab on">7T</button><button class="tab">30T</button></div>
+        </div>
+        <div class="chart-box"><canvas id="cSleep"></canvas></div>
+      </div>
+    </div>
+
+    <!-- COL 2: KPIs + Weight + Body -->
+    <div class="col">
+      <div class="kpis">
+        <div class="kpi">
+          <div class="kl">Tiefschlaf</div>
+          <div class="kv">82<small>min</small></div>
+          <div class="kt up">↑ +7 min</div>
+        </div>
+        <div class="kpi">
+          <div class="kl">Atemfreq.</div>
+          <div class="kv">14.2<small>/min</small></div>
+          <div class="kt">→ Normal</div>
+        </div>
+        <div class="kpi">
+          <div class="kl">Stress-Avg</div>
+          <div class="kv">31</div>
+          <div class="kt ok">↓ Ruhig</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch">
+          <span class="ct">Gewicht</span>
+          <div class="tabs">
+            <button class="tab on">7T</button>
+            <button class="tab">30T</button>
+            <button class="tab">Gesamt</button>
+          </div>
+        </div>
+        <div class="chart-box"><canvas id="cWeight"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="ch"><span class="ct">Körperzusammensetzung</span><span class="cb">KF ↓ 16.2%</span></div>
+        <div class="chart-box"><canvas id="cBody"></canvas></div>
+      </div>
+    </div>
+
+    <!-- COL 3: Stack + Blood -->
+    <div class="col">
+      <div class="card">
+        <div class="ch"><span class="ct">Heutiger Stack</span><span class="cb">8 Items</span></div>
+        <div class="slt">
+          <div class="st">07:00 – Nüchtern</div>
+          <div class="sr"><div class="sd"></div><div class="sn">Testosteron E</div><div class="ss">250 mg</div></div>
+          <div class="sr"><div class="sd"></div><div class="sn">Vitamin D3 + K2</div><div class="ss">5000 IE</div></div>
+          <div class="sr"><div class="sd"></div><div class="sn">Omega-3</div><div class="ss">3 g</div></div>
+        </div>
+        <div class="slt">
+          <div class="st">Pre-Workout</div>
+          <div class="sr"><div class="sd"></div><div class="sn">Creatin</div><div class="ss">5 g</div></div>
+          <div class="sr"><div class="sd"></div><div class="sn">Koffein</div><div class="ss">200 mg</div></div>
+        </div>
+        <div class="slt" style="margin-bottom:.6rem">
+          <div class="st">21:00 – Abend</div>
+          <div class="sr"><div class="sd"></div><div class="sn">Magnesium Glycinat</div><div class="ss">400 mg</div></div>
+          <div class="sr"><div class="sd"></div><div class="sn">Zink</div><div class="ss">25 mg</div></div>
+          <div class="sr"><div class="sd"></div><div class="sn">Ashwagandha</div><div class="ss">600 mg</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="ch">
+          <span class="ct">Blutbild</span>
+          <span style="font-size:.55rem;color:var(--t3);font-family:'JetBrains Mono',monospace">01.04.2026</span>
+        </div>
+        <div class="bg">
+          <div class="bv"><div class="bl">Testosteron</div><div class="bval hi">28.4 nmol</div></div>
+          <div class="bv"><div class="bl">Hämatokrit</div><div class="bval hi">49.2 %</div></div>
+          <div class="bv"><div class="bl">Hämoglobin</div><div class="bval ok">16.1 g/dl</div></div>
+          <div class="bv"><div class="bl">LDL</div><div class="bval hi">3.8</div></div>
+          <div class="bv"><div class="bl">Vitamin D</div><div class="bval lo">38 ng/ml</div></div>
+          <div class="bv"><div class="bl">PSA</div><div class="bval ok">0.8</div></div>
+          <div class="bv"><div class="bl">CRP</div><div class="bval ok">0.4</div></div>
+          <div class="bv"><div class="bl">Insulin</div><div class="bval ok">7.2</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const L=['4.Apr','5.Apr','6.Apr','7.Apr','8.Apr','9.Apr','10.Apr'];
+const A='#b8f027';
+const Af=t=>`rgba(184,240,39,${t})`;
+
+function grad(id,a,b){
+  const c=document.getElementById(id).getContext('2d');
+  const g=c.createLinearGradient(0,0,0,148);
+  g.addColorStop(0,a);g.addColorStop(1,b);return g;
+}
+
+const base={
+  responsive:true,maintainAspectRatio:false,
+  plugins:{
+    legend:{display:false},
+    tooltip:{
+      backgroundColor:'rgba(8,8,8,.97)',
+      borderColor:Af('.2'),borderWidth:1,
+      titleColor:A,bodyColor:'#888',padding:10,
+      titleFont:{family:'Inter',weight:'700',size:11},
+      bodyFont:{family:'JetBrains Mono',size:11},
+    }
+  },
+  scales:{
+    x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#333',font:{size:9,family:'JetBrains Mono'}}},
+    y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#333',font:{size:9,family:'JetBrains Mono'}}},
+  },
+  interaction:{mode:'index',intersect:false},
+};
+
+/* HRV */
+new Chart(document.getElementById('cHrv'),{
+  type:'line',
+  data:{labels:L,datasets:[{
+    data:[52,55,49,61,58,56,58],
+    borderColor:A,borderWidth:2,
+    backgroundColor:grad('cHrv',Af('.2'),Af('0')),
+    fill:true,tension:.4,pointRadius:3,pointHoverRadius:5,pointBackgroundColor:A,
+  }]},
+  options:{...base}
+});
+
+/* Sleep */
+new Chart(document.getElementById('cSleep'),{
+  type:'bar',
+  data:{labels:L,datasets:[
+    {label:'Tief',  data:[82,75,90,68,85,79,82], backgroundColor:Af('.85'),borderRadius:3,stack:'s'},
+    {label:'REM',   data:[95,88,102,79,98,91,95], backgroundColor:Af('.45'),borderRadius:3,stack:'s'},
+    {label:'Leicht',data:[180,165,190,155,178,168,175],backgroundColor:Af('.15'),borderRadius:3,stack:'s'},
+  ]},
+  options:{
+    ...base,
+    plugins:{
+      ...base.plugins,
+      legend:{display:true,labels:{color:'#444',boxWidth:8,font:{size:9,family:'Inter'},padding:8}},
+    },
+  }
+});
+
+/* Weight */
+new Chart(document.getElementById('cWeight'),{
+  type:'line',
+  data:{labels:L,datasets:[{
+    data:[84.1,83.9,83.8,83.6,83.4,83.3,83.2],
+    borderColor:A,borderWidth:2,
+    backgroundColor:grad('cWeight',Af('.2'),Af('0')),
+    fill:true,tension:.4,pointRadius:3,pointHoverRadius:5,pointBackgroundColor:A,
+  }]},
+  options:{...base,scales:{
+    x:{...base.scales.x},
+    y:{...base.scales.y,min:82.5,max:84.5},
+  }}
+});
+
+/* Body Comp */
+new Chart(document.getElementById('cBody'),{
+  type:'line',
+  data:{labels:L,datasets:[
+    {label:'KF %',   data:[16.8,16.7,16.5,16.4,16.3,16.2,16.2],borderColor:A,borderWidth:2,tension:.4,pointRadius:2,yAxisID:'yA',fill:false,pointBackgroundColor:A},
+    {label:'Muskel', data:[71.2,71.4,71.5,71.6,71.7,71.8,71.9],borderColor:Af('.45'),borderWidth:1.5,borderDash:[5,3],tension:.4,pointRadius:2,yAxisID:'yB',fill:false,pointBackgroundColor:Af('.45')},
+  ]},
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{
+      legend:{display:true,labels:{color:'#444',boxWidth:8,font:{size:9,family:'Inter'},padding:8}},
+      tooltip:{...base.plugins.tooltip},
+    },
+    scales:{
+      x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#333',font:{size:9,family:'JetBrains Mono'}}},
+      yA:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#333',font:{size:9,family:'JetBrains Mono'}},position:'left'},
+      yB:{grid:{display:false},ticks:{color:'#222',font:{size:9,family:'JetBrains Mono'}},position:'right'},
+    },
+    interaction:{mode:'index',intersect:false},
+  }
+});
+</script>
+</body>
+</html>

@@ -2,131 +2,240 @@
 {% block title %}Blutbild {{ panel.date.strftime("%d.%m.%Y") }}{% endblock %}
 
 {% block content %}
-<div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem;flex-wrap:wrap">
-  <a href="/blutbilder/" class="btn btn-secondary btn-sm">← Zurück</a>
-  <h1 class="page-title" style="margin:0">
-    Blutbild – {{ panel.date.strftime("%d.%m.%Y") }}
-    {% if panel.lab %}<span class="badge badge-gray" style="margin-left:.5rem">{{ panel.lab }}</span>{% endif %}
-  </h1>
-</div>
 
-{% if panel.notes %}
-<div class="alert alert-success" style="margin-bottom:1rem">{{ panel.notes }}</div>
-{% endif %}
-
-{% if prev_panel %}
-<div style="font-size:.8rem;color:var(--gray-500);margin-bottom:1rem">
-  Vergleich mit: {{ prev_panel.date.strftime("%d.%m.%Y") }}
-</div>
-{% endif %}
-
-<!-- Werte nach Kategorie -->
-{% for category, items in grouped.items() %}
-<div class="card" style="margin-bottom:1rem">
-  <div class="section-title" style="margin-bottom:.75rem">{{ category }}</div>
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Marker</th>
-          <th>Wert</th>
-          <th>Einheit</th>
-          <th>Referenz</th>
-          <th>Status</th>
-          {% if prev_panel %}<th>Vorher</th>{% endif %}
-          <th>Trend</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for item in items %}
-        {% set bv = item.bv %}
-        {% set bm = item.bm %}
-        {% set st = item.status %}
-        <tr class="blood-row-{{ st }}">
-          <td><strong>{{ bm.name }}</strong></td>
-          <td style="font-size:1rem;font-weight:700">{{ bv.value }}</td>
-          <td style="color:var(--gray-500)">{{ bv.unit or bm.unit or "" }}</td>
-          <td style="font-size:.8rem;color:var(--gray-500)">
-            {% if bv.ref_min or bv.ref_max %}
-              {{ bv.ref_min or "–" }} – {{ bv.ref_max or "–" }}
-            {% elif bm.ref_min or bm.ref_max %}
-              {{ bm.ref_min or "–" }} – {{ bm.ref_max or "–" }}
-            {% else %}
-              –
-            {% endif %}
-          </td>
-          <td>
-            {% if st == "kritisch" %}<span class="badge badge-danger">⚠️ Kritisch</span>
-            {% elif st == "warnung" %}<span class="badge badge-warn">~ Grenzwertig</span>
-            {% elif st == "optimal" %}<span class="badge badge-ok">✓ Optimal</span>
-            {% else %}<span class="badge badge-ok">✓ Normal</span>
-            {% endif %}
-          </td>
-          {% if prev_panel %}
-          <td style="font-size:.85rem;color:var(--gray-500)">
-            {% if prev_values.get(bm.id) is not none %}
-              {{ prev_values[bm.id] }}
-            {% else %}–{% endif %}
-          </td>
-          {% endif %}
-          <td style="font-size:.9rem">
-            {% if prev_values and prev_values.get(bm.id) is not none %}
-              {% set prev = prev_values[bm.id] %}
-              {% if bv.value > prev %}
-                <span style="color:var(--red-500)">↑ +{{ "%.1f"|format(bv.value - prev) }}</span>
-              {% elif bv.value < prev %}
-                <span style="color:var(--blue-500)">↓ {{ "%.1f"|format(bv.value - prev) }}</span>
-              {% else %}
-                <span style="color:var(--gray-400)">→</span>
-              {% endif %}
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+<!-- ══ PAGE TOP ══════════════════════════════════════════════════ -->
+<div class="page-top">
+  <div>
+    <div class="page-title">Blutbild</div>
+    <div class="page-meta">
+      {{ panel.date.strftime("%d.%m.%Y") }}
+      {% if panel.lab %} · {{ panel.lab }}{% endif %}
+      {% if prev_panel %} · Vergleich: {{ prev_panel.date.strftime("%d.%m.%Y") }}{% endif %}
+    </div>
   </div>
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <a href="/blutbilder/" class="btn btn-secondary btn-sm">← Alle Blutbilder</a>
+    <button class="btn btn-sm" style="background:rgba(222,113,113,.12);color:var(--red);border-color:rgba(222,113,113,.25)"
+      onclick="document.getElementById('modal-delete').style.display='flex'">Löschen</button>
+  </div>
+</div>
+
+<!-- ══ STATUS ÜBERSICHT ═════════════════════════════════════════ -->
+{% set total_vals = grouped.values() | sum(start=[]) | list %}
+{% set krit_count = namespace(n=0) %}{% set warn_count = namespace(n=0) %}
+{% for item in total_vals %}
+  {% if item.status == 'kritisch' %}{% set krit_count.n = krit_count.n + 1 %}{% endif %}
+  {% if item.status == 'warnung' %}{% set warn_count.n = warn_count.n + 1 %}{% endif %}
+{% endfor %}
+
+<div class="mg mg-4" style="margin-bottom:14px;border-radius:20px">
+  <div class="metric">
+    <div class="m-label">Datum</div>
+    <div class="m-val" style="font-size:20px;color:var(--gold)">{{ panel.date.strftime("%d.%m.%Y") }}</div>
+    <div class="m-small">{% if panel.lab %}{{ panel.lab }}{% else %}Labor unbekannt{% endif %}</div>
+  </div>
+  <div class="metric">
+    <div class="m-label">Marker gesamt</div>
+    <div class="m-val">{{ total_vals|length }}</div>
+    <div class="m-small">gemessene Werte</div>
+  </div>
+  <div class="metric">
+    <div class="m-label">Kritisch</div>
+    <div class="m-val" style="color:{% if krit_count.n > 0 %}var(--red){% else %}var(--teal){% endif %}">{{ krit_count.n }}</div>
+    <div class="m-small">außerhalb Referenz</div>
+  </div>
+  <div class="metric">
+    <div class="m-label">Grenzwertig</div>
+    <div class="m-val" style="color:{% if warn_count.n > 0 %}var(--gold){% else %}var(--teal){% endif %}">{{ warn_count.n }}</div>
+    <div class="m-small">im Grenzbereich</div>
+  </div>
+</div>
+
+<!-- ══ WERTE NACH KATEGORIE ═════════════════════════════════════ -->
+{% for category, items in grouped.items() %}
+<div class="card" style="margin-bottom:12px">
+  <div class="sh">
+    <div class="sh-title">{{ category }}</div>
+    <span class="pill">{{ items|length }} Werte</span>
+  </div>
+  <table class="btable">
+    <thead>
+      <tr>
+        <th>Marker</th>
+        <th>Wert</th>
+        <th>Einheit</th>
+        <th>Referenz</th>
+        <th>Status</th>
+        {% if prev_panel %}<th>Vorher</th><th>Trend</th>{% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      {% set bv = item.bv %}
+      {% set bm = item.bm %}
+      {% set st = item.status %}
+      {% set ref_min = bv.ref_min if bv.ref_min is not none else bm.ref_min %}
+      {% set ref_max = bv.ref_max if bv.ref_max is not none else bm.ref_max %}
+      <tr>
+        <td style="font-weight:600">{{ bm.name }}</td>
+        <td style="font-family:'JetBrains Mono',monospace;font-weight:700;color:{% if st == 'kritisch' %}var(--red){% elif st == 'warnung' %}var(--gold){% elif st == 'optimal' %}var(--teal){% else %}var(--text){% endif %}">
+          {{ bv.value }}
+        </td>
+        <td style="color:var(--soft);font-size:12px">{{ bv.unit or bm.unit or "–" }}</td>
+        <td style="font-size:12px;color:var(--soft)">
+          {% if ref_min is not none and ref_max is not none %}{{ ref_min }} – {{ ref_max }}
+          {% elif ref_max is not none %}&lt; {{ ref_max }}
+          {% elif ref_min is not none %}&gt; {{ ref_min }}
+          {% else %}–{% endif %}
+        </td>
+        <td>
+          {% if st == "kritisch" %}<span class="tag high">⚠ Kritisch</span>
+          {% elif st == "warnung" %}<span class="tag low">~ Grenzwertig</span>
+          {% elif st == "optimal" %}<span class="tag ok">✓ Optimal</span>
+          {% else %}<span class="tag ok">✓ Normal</span>
+          {% endif %}
+        </td>
+        {% if prev_panel %}
+        <td style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--soft)">
+          {% if prev_values.get(bm.id) is not none %}{{ prev_values[bm.id] }}{% else %}–{% endif %}
+        </td>
+        <td style="font-size:12px">
+          {% if prev_values and prev_values.get(bm.id) is not none %}
+            {% set prev = prev_values[bm.id] %}
+            {% if bv.value > prev %}<span style="color:var(--red)">↑ +{{ "%.1f"|format(bv.value - prev) }}</span>
+            {% elif bv.value < prev %}<span style="color:var(--teal)">↓ {{ "%.1f"|format(bv.value - prev) }}</span>
+            {% else %}<span style="color:var(--soft)">→</span>
+            {% endif %}
+          {% endif %}
+        </td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </div>
 {% endfor %}
 
-<!-- Einzelwert manuell hinzufügen -->
-<div class="card" style="margin-top:1.5rem">
-  <div class="section-title" style="margin-bottom:.75rem">+ Wert manuell hinzufügen</div>
-  <form action="/blutbilder/{{ panel.id }}/wert" method="post">
-    <div class="grid-4">
-      <div class="form-group">
-        <label>Marker</label>
-        <select name="biomarker_id" required>
-          {% for cat, items in grouped.items() %}
-            {% for item in items %}
-              {# skip already existing #}
-            {% endfor %}
-          {% endfor %}
-          <!-- Alle Biomarker laden via JS wenn nötig -->
-        </select>
+<!-- ══ AKTIVER STACK ZUM BLUTBILD-DATUM ══════════════════════ -->
+{% if tagesplan %}
+<div class="card" style="margin-bottom:12px">
+  <div class="sh">
+    <div class="sh-title">Stack zum Blutbild-Datum</div>
+    <span class="pill">{{ panel.date.strftime("%d.%m.%Y") }}</span>
+  </div>
+  {% set slot_icons = {"07:00":"☀","10-11":"🥣","17-18":"🥗","21-22":"🌙","Injektionen":"💉","Sonstiges":"⚙"} %}
+  <div class="stack-rows">
+    {% for slot, items in tagesplan.items() %}
+    <div class="stack-col">
+      <h4>{{ slot_icons.get(slot, "•") }} {{ slot }}</h4>
+      {% for item in items %}
+      <div class="dose">
+        <span>{{ item.name }}</span>
+        <b>{{ item.dose }}</b>
       </div>
-      <div class="form-group">
-        <label>Wert</label>
-        <input type="number" name="value" step="any" required>
-      </div>
-      <div class="form-group">
-        <label>Einheit</label>
-        <input type="text" name="unit">
-      </div>
-      <div class="form-group">
-        <label>Ref-Min</label>
-        <input type="number" name="ref_min" step="any">
-      </div>
-      <div class="form-group">
-        <label>Ref-Max</label>
-        <input type="number" name="ref_max" step="any">
-      </div>
-      <div class="form-group">
-        <label>Notiz</label>
-        <input type="text" name="notes">
-      </div>
+      {% endfor %}
     </div>
-    <button class="btn btn-primary">Wert speichern</button>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- ══ NOTIZEN ════════════════════════════════════════════════ -->
+<div class="card" style="margin-bottom:12px">
+  <div class="sh">
+    <div class="sh-title">Notizen</div>
+    <button class="btn btn-secondary btn-sm" onclick="fillStackText()" type="button">Stack einfügen</button>
+  </div>
+  <form action="/blutbilder/{{ panel.id }}/notizen" method="post">
+    <textarea name="notes" id="notesField" rows="8"
+      style="width:100%;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:14px;color:var(--text);font-size:13px;line-height:1.6;font-family:'JetBrains Mono',monospace;resize:vertical"
+      placeholder="Notizen, Kommentare, Auswertung...">{{ panel.notes or "" }}</textarea>
+    <button class="btn btn-primary btn-sm" style="margin-top:10px">Speichern</button>
   </form>
 </div>
+
+<!-- ══ WERT MANUELL HINZUFÜGEN ════════════════════════════════ -->
+<div class="card" style="cursor:pointer" onclick="toggleForm('form-add-val');this.querySelector('.pill').textContent=document.getElementById('form-add-val').style.display==='none'?'+':'−'">
+  <div style="display:flex;align-items:center;justify-content:space-between">
+    <div class="sh-title">+ Wert manuell hinzufügen</div>
+    <span class="pill">+</span>
+  </div>
+</div>
+<div id="form-add-val" style="display:none;margin-top:4px">
+<div class="card" style="padding:22px">
+  <form action="/blutbilder/{{ panel.id }}/wert" method="post">
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px">
+      <div class="form-group" style="margin:0;grid-column:span 3">
+        <label>Marker</label>
+        <select name="biomarker_id" required>
+          {% set existing_ids = grouped.values() | sum(start=[]) | map(attribute='bm') | map(attribute='id') | list %}
+          {% set ns = namespace(current_cat="") %}
+          {% for bm in all_biomarkers %}
+            {% if bm.category != ns.current_cat %}
+              {% if ns.current_cat != "" %}</optgroup>{% endif %}
+              <optgroup label="{{ bm.category or 'Sonstiges' }}">
+              {% set ns.current_cat = bm.category %}
+            {% endif %}
+            <option value="{{ bm.id }}">
+              {{ bm.name }}{% if bm.unit %} ({{ bm.unit }}){% endif %}{% if bm.id in existing_ids %} ✓{% endif %}
+            </option>
+          {% endfor %}
+          {% if ns.current_cat != "" %}</optgroup>{% endif %}
+        </select>
+      </div>
+      <div class="form-group" style="margin:0"><label>Wert</label><input type="number" name="value" step="any" required></div>
+      <div class="form-group" style="margin:0"><label>Einheit</label><input type="text" name="unit"></div>
+      <div class="form-group" style="margin:0"><label>Notiz</label><input type="text" name="notes"></div>
+      <div class="form-group" style="margin:0"><label>Ref-Min</label><input type="number" name="ref_min" step="any"></div>
+      <div class="form-group" style="margin:0"><label>Ref-Max</label><input type="number" name="ref_max" step="any"></div>
+    </div>
+    <button class="btn btn-primary btn-sm">Wert speichern</button>
+  </form>
+</div>
+</div>
+
+<!-- ══ LÖSCH-MODAL ════════════════════════════════════════════ -->
+<div id="modal-delete" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center">
+  <div class="card" style="max-width:400px;width:90%;padding:28px">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;margin-bottom:12px">Blutbild löschen?</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6">
+      Blutbild vom <strong style="color:var(--text)">{{ panel.date.strftime("%d.%m.%Y") }}</strong>
+      und alle {{ total_vals|length }} zugehörigen Werte werden unwiderruflich gelöscht.
+    </div>
+    <div style="display:flex;gap:10px">
+      <form action="/blutbilder/{{ panel.id }}/loeschen" method="post">
+        <button class="btn btn-sm" style="background:rgba(222,113,113,.2);color:var(--red);border-color:rgba(222,113,113,.4)">Ja, löschen</button>
+      </form>
+      <button class="btn btn-secondary btn-sm" onclick="document.getElementById('modal-delete').style.display='none'">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleForm(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+document.getElementById('modal-delete').addEventListener('click', function(e) {
+  if (e.target === this) this.style.display = 'none';
+});
+
+const stackText = `STACK – Stand: {{ panel.date.strftime("%d.%m.%Y") }}
+${"=".repeat(50)}
+
+{% if tagesplan %}{% for slot, items in tagesplan.items() %}{{ slot }}:
+{% for item in items %}  – {{ item.name }}: {{ item.dose }}{% if item.notes %} [{{ item.notes }}]{% endif %}
+{% endfor %}
+{% endfor %}{% endif %}`;
+
+function fillStackText() {
+  const field = document.getElementById('notesField');
+  if (field.value && !confirm('Aktuellen Inhalt überschreiben?')) return;
+  field.value = stackText.trim();
+}
+</script>
 {% endblock %}

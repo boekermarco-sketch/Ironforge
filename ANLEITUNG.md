@@ -281,42 +281,46 @@ Navigationspunkt: **Ereignisse**
 
 Navigationspunkt: **Import**
 
-### Withings CSV importieren
+### Ein-Klick Bulk-Import (empfohlen!)
 
-**Schritt 1 – Export von Withings anfordern:**
-1. Browser öffnen → `account.withings.com`
-2. Einloggen
-3. Klicke auf **Datenschutz** (links im Menü)
-4. Klicke auf **Meine persönlichen Daten herunterladen**
-5. Du erhältst eine E-Mail mit einem ZIP-Link (dauert ca. 10-30 Minuten)
-6. ZIP herunterladen und entpacken
+Die App kann alle drei Datenquellen auf einmal importieren – kein manuelles Hochladen jeder Datei nötig.
 
-**Schritt 2 – In der App importieren:**
-1. In der App: **Import** klicken
-2. Unter "Withings": **Datei auswählen**
-3. Die CSV-Datei aus dem Withings-ZIP auswählen (meist `weight.csv` oder ähnlich)
-4. Klicke **Withings importieren**
-5. Erfolgsmeldung zeigt: X neue Einträge, Y aktualisiert
+**Vorbereitung (einmalig):**
 
-### Garmin CSV importieren
+| Quelle | Export anfordern | Ordner auf dem PC |
+|--------|-----------------|-------------------|
+| Withings | `account.withings.com` → Datenschutz → Persönliche Daten herunterladen (per E-Mail, ~10-30 Min) | `Imports\Withings\` |
+| Garmin | `connect.garmin.com` → Profil → Konto → Daten exportieren (per E-Mail, ~24 Std) | `Imports\Garmin\` |
+| MyFitnessPal | `www.myfitnesspal.com` → Einstellungen → Meine Daten | `Imports\Myfitnesspal\` |
 
-**Schritt 1 – Export von Garmin anfordern:**
-1. Browser öffnen → `connect.garmin.com`
-2. Einloggen
-3. Profilbild oben rechts → **Konto**
-4. **Daten exportieren** → Anfrage stellen
-5. Du erhältst eine E-Mail (dauert bis zu 24 Stunden)
-6. ZIP herunterladen und entpacken
+**Dateien einlegen:**
+1. ZIP-Datei des jeweiligen Anbieters entpacken
+2. **Withings:** Alle Dateien in `Imports\Withings\` kopieren (wichtigste Datei: `weight.csv`)
+3. **Garmin:** Gesamten Inhalt in `Imports\Garmin\` kopieren – die Unterordnerstruktur `DI_CONNECT\DI-Connect-Wellness\` muss erhalten bleiben
+4. **MyFitnessPal:** Alle Dateien in `Imports\Myfitnesspal\` kopieren (Datei: `Nährwerte-Übersicht-*.csv`)
 
-**Schritt 2 – In der App importieren:**
-1. In der App: **Import** klicken
-2. Unter "Garmin Connect": **Datei auswählen**
-3. CSV aus dem Garmin-ZIP auswählen
-4. Klicke **Garmin importieren**
+**Import starten:**
+1. In der App: **Import** aufrufen
+2. Grüne Häkchen zeigen welche Ordner gefunden wurden
+3. Klicke **"Alles jetzt importieren"** – fertig!
+4. Die Erfolgsmeldung zeigt: X Gewichtseinträge, X Garmin-Tage, X Ernährungstage, Gesamt X Logs
+
+> **Idempotent:** Du kannst den Import beliebig oft wiederholen. Bereits vorhandene Daten werden nicht doppelt angelegt, fehlende Werte werden ergänzt.
+
+**Nur eine Quelle importieren:**
+Auf der Import-Seite gibt es auch Einzelbuttons: "Nur Withings importieren", "Nur Garmin importieren", "Nur MFP importieren".
+
+**Was wird importiert?**
+
+| Quelle | Daten |
+|--------|-------|
+| Withings | Gewicht, Körperfettanteil (%), Muskelmasse (kg) |
+| Garmin | HRV, Ruheherzfrequenz, Atemfrequenz, Schlaf-Score, Tiefschlaf-Minuten, REM-Minuten, Gesamt-Schlaf |
+| MyFitnessPal | Kalorien, Protein, Kohlenhydrate, Fett (täglich summiert) |
 
 ### Blutbild-PDFs aus Ordner scannen
 1. PDF-Datei(en) in den Ordner `data\Blutbilder\` kopieren
-2. In der App: **Import** → **Ordner jetzt scannen**
+2. In der App: **Import** → **Ordner scannen** oder direkt auf der Blutbilder-Seite per Upload
 3. Neue PDFs werden automatisch erkannt und eingelesen
 4. Bereits eingelesene PDFs werden nicht doppelt importiert
 

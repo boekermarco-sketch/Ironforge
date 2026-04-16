@@ -2,148 +2,158 @@
 {% block title %}Journal{% endblock %}
 
 {% block content %}
-<h1 class="page-title">Konsultations-Journal</h1>
-<p style="color:var(--gray-500);margin-bottom:1.25rem;font-size:.875rem">
-  Alle Analysen, Fortschrittsfotos und Gesprächsergebnisse – chronologisch, dauerhaft gespeichert.
-</p>
 
-<!-- Filter + Neuer Eintrag -->
-<div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center;margin-bottom:1.25rem">
-  <div style="display:flex;gap:.5rem;flex-wrap:wrap">
-    <a href="/journal/" class="btn {% if not active_filter %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">Alle</a>
-    {% for t in entry_types %}
-      <a href="/journal/?entry_type={{ t }}" class="btn {% if active_filter == t %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">{{ t }}</a>
-    {% endfor %}
+<!-- ══ PAGE TOP ══════════════════════════════════════════════════ -->
+<div class="page-top">
+  <div>
+    <div class="page-title">Journal</div>
+    <div class="page-meta">Einträge · Verlauf · Notizen</div>
   </div>
-  <button class="btn btn-primary" onclick="document.getElementById('modalNeu').classList.add('open')" style="margin-left:auto">
-    + Neuer Eintrag
-  </button>
+  <button class="btn btn-primary btn-sm" onclick="toggleForm('form-new-entry')">+ Neuer Eintrag</button>
 </div>
 
-<!-- Timeline -->
-{% if entries %}
-<div class="timeline">
-  {% for entry in entries %}
-  <div class="timeline-item">
-    <div class="timeline-dot"></div>
-    <div class="timeline-date">
-      {{ entry.date.strftime("%d.%m.%Y") }}
-      {% if entry.time %} · {{ entry.time }}{% endif %}
-      · <span class="badge badge-info">{{ entry.entry_type }}</span>
-      {% if entry.weight_at_time %}
-        · <span style="font-size:.75rem">{{ entry.weight_at_time }} kg</span>
-      {% endif %}
-      {% if entry.body_fat_at_time %}
-        <span style="font-size:.75rem">/ {{ entry.body_fat_at_time }}% KFA</span>
-      {% endif %}
-    </div>
-    <div class="timeline-card">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem">
-        <div style="font-weight:700;font-size:.95rem">{{ entry.title }}</div>
-        <form action="/journal/{{ entry.id }}/loeschen" method="post" onsubmit="return confirm('Eintrag löschen?')">
-          <button class="btn btn-danger btn-sm">✕</button>
-        </form>
-      </div>
-
-      {% if entry.image_path %}
-        <div style="margin-top:.75rem">
-          {% if entry.image_path.endswith('.pdf') %}
-            <a href="/data/{{ entry.image_path }}" target="_blank" class="btn btn-secondary btn-sm">📄 PDF öffnen</a>
-          {% else %}
-            <img src="/data/{{ entry.image_path }}" alt="{{ entry.title }}" class="timeline-image">
-          {% endif %}
-        </div>
-      {% endif %}
-
-      {% if entry.analysis_text %}
-        <div style="margin-top:.75rem;font-size:.875rem;line-height:1.6;white-space:pre-wrap;background:var(--green-50);padding:.75rem;border-radius:var(--radius-sm);border-left:3px solid var(--green-400)">{{ entry.analysis_text }}</div>
-      {% endif %}
-
-      {% if entry.notes %}
-        <div style="margin-top:.5rem;font-size:.8rem;color:var(--gray-500)">{{ entry.notes }}</div>
-      {% endif %}
-
-      {% if entry.tags %}
-        <div style="margin-top:.5rem">
-          {% for tag in entry.tags.split(',') %}
-            <span class="badge badge-gray" style="margin-right:.25rem">{{ tag.strip() }}</span>
-          {% endfor %}
-        </div>
-      {% endif %}
-    </div>
-  </div>
-  {% endfor %}
-</div>
-{% else %}
-<div class="card">
-  <p style="color:var(--gray-500)">Noch keine Journal-Einträge.
-    Füge deinen ersten Eintrag hinzu – z.B. ein Fortschrittsfoto oder die Zusammenfassung deines letzten Claude-Gesprächs.
-  </p>
-</div>
-{% endif %}
-
-<!-- Modal: Neuer Eintrag -->
-<div class="modal-overlay" id="modalNeu">
-  <div class="modal">
-    <div class="modal-title">
-      Neuer Journal-Eintrag
-      <button class="modal-close" onclick="document.getElementById('modalNeu').classList.remove('open')">×</button>
-    </div>
-    <form action="/journal/neu" method="post" enctype="multipart/form-data">
-      <div class="form-group">
+<!-- ══ NEUER EINTRAG (einklappbar) ════════════════════════════ -->
+<div id="form-new-entry" style="display:none;margin-bottom:14px">
+<div class="card" style="padding:22px">
+  <div class="sh-title" style="margin-bottom:14px;color:var(--gold)">Neuer Journal-Eintrag</div>
+  <form action="/journal/neu" method="post" enctype="multipart/form-data">
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:10px">
+      <div class="form-group" style="margin:0">
         <label>Datum</label>
         <input type="date" name="entry_date" value="{{ today.isoformat() }}">
       </div>
-      <div class="form-group">
+      <div class="form-group" style="margin:0">
         <label>Uhrzeit (optional)</label>
         <input type="time" name="entry_time">
       </div>
-      <div class="form-group">
-        <label>Titel *</label>
-        <input type="text" name="title" required placeholder="z.B. Freitag Check-in KW14 oder Fortschrittsfoto Woche 6">
-      </div>
-      <div class="form-group">
+      <div class="form-group" style="margin:0">
         <label>Typ</label>
         <select name="entry_type">
           {% for t in entry_types %}<option>{{ t }}</option>{% endfor %}
         </select>
       </div>
-      <div class="form-group">
-        <label>Bild oder PDF (optional)</label>
-        <input type="file" name="image" accept=".jpg,.jpeg,.png,.gif,.webp,.pdf" style="width:auto">
+      <div class="form-group" style="margin:0;grid-column:span 3">
+        <label>Titel *</label>
+        <input type="text" name="title" required placeholder="z.B. Freitag Check-in KW14">
       </div>
-      <div class="form-group">
-        <label>Analyse / KI-Meinung</label>
-        <textarea name="analysis_text" rows="5" placeholder="Hier die Claude-Analyse oder eigene Auswertung einfügen..."></textarea>
+      <div class="form-group" style="margin:0">
+        <label>Gewicht (kg)</label>
+        <input type="number" name="weight_at_time" step=".1">
       </div>
-      <div class="grid-2">
-        <div class="form-group">
-          <label>Gewicht zu diesem Zeitpunkt (kg)</label>
-          <input type="number" name="weight_at_time" step=".1">
-        </div>
-        <div class="form-group">
-          <label>KFA % zu diesem Zeitpunkt</label>
-          <input type="number" name="body_fat_at_time" step=".1">
-        </div>
+      <div class="form-group" style="margin:0">
+        <label>KFA %</label>
+        <input type="number" name="body_fat_at_time" step=".1">
       </div>
-      <div class="form-group">
+      <div class="form-group" style="margin:0">
+        <label>Bild / PDF (optional)</label>
+        <input type="file" name="image" accept=".jpg,.jpeg,.png,.gif,.webp,.pdf">
+      </div>
+      <div class="form-group" style="margin:0;grid-column:span 3">
+        <label>Analyse / Notiz</label>
+        <textarea name="analysis_text" rows="4" placeholder="Hier die Auswertung einfügen..."></textarea>
+      </div>
+      <div class="form-group" style="margin:0;grid-column:span 2">
         <label>Tags (kommagetrennt)</label>
-        <input type="text" name="tags" placeholder="Blutbild, Aderlass, Check-in">
+        <input type="text" name="tags" placeholder="Blutbild, Check-in, Aderlass">
       </div>
-      <div class="form-group">
+      <div class="form-group" style="margin:0">
         <label>Weitere Notizen</label>
-        <textarea name="notes" rows="2"></textarea>
+        <input type="text" name="notes">
       </div>
-      <button class="btn btn-primary">Eintrag speichern</button>
-    </form>
-  </div>
+    </div>
+    <button class="btn btn-primary btn-sm">Eintrag speichern</button>
+    <button type="button" class="btn btn-secondary btn-sm" style="margin-left:8px" onclick="toggleForm('form-new-entry')">Abbrechen</button>
+  </form>
 </div>
+</div>
+
+<!-- ══ FILTER-CHIPS ════════════════════════════════════════════ -->
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+  <a href="/journal/" class="chip {% if not active_filter %}active{% endif %}" style="text-decoration:none">Alle</a>
+  {% for t in entry_types %}
+  <a href="/journal/?entry_type={{ t }}" class="chip {% if active_filter == t %}active{% endif %}" style="text-decoration:none">{{ t }}</a>
+  {% endfor %}
+</div>
+
+<!-- ══ EINTRÄGE ════════════════════════════════════════════════ -->
+{% if entries %}
+
+<div style="display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:18px;align-items:start">
+
+  <!-- Hauptliste -->
+  <div style="display:grid;gap:12px">
+    {% for entry in entries %}
+    <div class="card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px">
+        <div>
+          <div style="font-size:13px;font-weight:800;color:var(--gold);letter-spacing:.08em;margin-bottom:4px">
+            {{ entry.date.strftime("%d.%m.%Y") }}{% if entry.time %} · {{ entry.time }}{% endif %}
+          </div>
+          <div style="font-size:15px;font-weight:700;color:var(--text)">{{ entry.title }}</div>
+          <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
+            <span class="tag ok">{{ entry.entry_type }}</span>
+            {% if entry.weight_at_time %}<span class="tag" style="background:rgba(208,163,90,.1);color:var(--gold)">{{ entry.weight_at_time }} kg</span>{% endif %}
+            {% if entry.body_fat_at_time %}<span class="tag" style="background:rgba(88,185,176,.08);color:var(--teal)">{{ entry.body_fat_at_time }}% KFA</span>{% endif %}
+            {% if entry.tags %}{% for tag in entry.tags.split(',') %}<span class="tag" style="background:rgba(255,255,255,.06);color:var(--muted)">{{ tag.strip() }}</span>{% endfor %}{% endif %}
+          </div>
+        </div>
+        <form action="/journal/{{ entry.id }}/loeschen" method="post" onsubmit="return confirm('Eintrag löschen?')">
+          <button class="btn btn-sm" style="background:rgba(222,113,113,.12);color:var(--red);border-color:rgba(222,113,113,.25);flex-shrink:0">✕</button>
+        </form>
+      </div>
+
+      {% if entry.image_path %}
+      <div style="margin-bottom:12px">
+        {% if entry.image_path.endswith('.pdf') %}
+        <a href="/data/{{ entry.image_path }}" target="_blank" class="btn btn-secondary btn-sm">📄 PDF öffnen</a>
+        {% else %}
+        <img src="/data/{{ entry.image_path }}" alt="{{ entry.title }}"
+             style="max-width:100%;max-height:300px;object-fit:contain;border-radius:14px;background:#0a0c0f">
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {% if entry.analysis_text %}
+      <div style="padding:14px 16px;background:rgba(208,163,90,.05);border-radius:14px;border-left:3px solid rgba(208,163,90,.4);font-size:13px;color:var(--muted);line-height:1.7;white-space:pre-wrap">{{ entry.analysis_text }}</div>
+      {% endif %}
+
+      {% if entry.notes %}
+      <div style="margin-top:8px;font-size:12px;color:var(--soft)">{{ entry.notes }}</div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Chronologie-Sidebar -->
+  <div class="card" style="position:sticky;top:22px">
+    <div class="sh"><div class="sh-title">Chronologie</div><span class="pill">{{ entries|length }}</span></div>
+    <div class="llist">
+      {% for entry in entries %}
+      <div class="litem">
+        <span style="font-size:12px;font-weight:700;color:var(--gold)">{{ entry.date.strftime("%d.%m.%Y") }}</span>
+        <span style="font-size:11px;color:var(--soft)">{{ entry.entry_type }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+
+{% else %}
+<div class="card" style="text-align:center;padding:2.5rem">
+  <div style="font-family:'Cormorant Garamond',serif;font-size:2rem;color:var(--soft);margin-bottom:8px">Keine Einträge</div>
+  <div style="font-size:13px;color:var(--soft);margin-bottom:16px">Noch keine Journal-Einträge vorhanden.</div>
+  <button class="btn btn-primary btn-sm" onclick="toggleForm('form-new-entry')">+ Ersten Eintrag erstellen</button>
+</div>
+{% endif %}
+
 {% endblock %}
 
 {% block scripts %}
 <script>
-document.getElementById("modalNeu").addEventListener("click", function(e) {
-  if (e.target === this) this.classList.remove("open");
-});
+function toggleForm(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
 </script>
 {% endblock %}

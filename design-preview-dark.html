@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IRON FORGE – Vorschau Dark</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:      #050608;
+  --panel:   #101317;
+  --panel2:  #13171c;
+  --line:    rgba(214,198,169,.08);
+  --text:    #fbf7ef;
+  --muted:   #b9b1a2;
+  --soft:    #898174;
+  --gold:    #d0a35a;
+  --goldSoft:rgba(208,163,90,.08);
+  --teal:    #58b9b0;
+  --red:     #de7171;
+  --radius:  28px;
+  --shadow:  0 30px 90px rgba(0,0,0,.38);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+body{font-family:Manrope,sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden}
+
+/* ── SHELL ── */
+.shell{display:grid;grid-template-columns:280px minmax(0,1fr);min-height:100vh}
+
+/* ── SIDEBAR ── */
+.side{
+  padding:28px 24px;
+  background:linear-gradient(160deg,var(--panel),var(--panel2));
+  border-right:1px solid var(--line);
+  display:flex;flex-direction:column;gap:20px;
+  position:sticky;top:0;height:100vh;overflow:auto;
+}
+.brand{font-family:"Cormorant Garamond",serif;font-size:46px;line-height:.88;letter-spacing:-.03em}
+.brand span{color:var(--gold)}
+.brand-sub{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--soft);font-weight:700;margin-top:6px}
+
+.nav{display:grid;gap:6px;margin-top:4px}
+.nav button{
+  all:unset;cursor:pointer;
+  padding:13px 16px;border-radius:14px;
+  background:rgba(255,255,255,.03);border:1px solid var(--line);
+  color:var(--muted);font-size:11px;font-weight:800;
+  letter-spacing:.16em;text-transform:uppercase;
+  transition:.2s all;
+}
+.nav button:hover{background:var(--goldSoft);color:var(--text);transform:translateX(4px)}
+.nav button.active{background:var(--goldSoft);color:var(--gold);border-color:rgba(208,163,90,.2);transform:translateX(4px)}
+
+.blast-widget{
+  margin-top:auto;
+  padding:20px;
+  border:1px solid var(--line);
+  border-radius:20px;
+  background:rgba(255,255,255,.03);
+}
+.blast-label{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--soft);font-weight:800;margin-bottom:10px}
+.blast-main{font-family:"Cormorant Garamond",serif;font-size:42px;line-height:.9;margin-bottom:4px}
+.blast-main span{font-size:.45em;color:var(--soft);font-family:Manrope}
+.blast-sub{font-size:11px;color:var(--soft);margin-bottom:12px}
+.blast-bar{height:4px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden}
+.blast-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold),rgba(208,163,90,.4));border-radius:4px;width:43.75%}
+
+/* ── MAIN ── */
+.main{padding:22px;min-width:0;overflow:auto}
+.page{display:none}.page.active{display:block}
+
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.title{font-family:"Cormorant Garamond",serif;font-size:clamp(32px,4vw,42px);line-height:1}
+.meta{font-size:11px;color:var(--soft);letter-spacing:.14em;text-transform:uppercase;margin-top:2px}
+.pill{
+  display:inline-flex;align-items:center;padding:8px 14px;
+  border-radius:999px;border:1px solid var(--line);
+  background:rgba(255,255,255,.04);
+  color:var(--muted);font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+  white-space:nowrap;
+}
+.pill.gold{background:var(--goldSoft);color:var(--gold);border-color:rgba(208,163,90,.25)}
+.pill.teal{background:rgba(88,185,176,.08);color:var(--teal);border-color:rgba(88,185,176,.2)}
+.pill.red{background:rgba(222,113,113,.08);color:var(--red);border-color:rgba(222,113,113,.2)}
+
+/* ── GRID ── */
+.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:18px}
+.s12{grid-column:span 12}.s8{grid-column:span 8}.s6{grid-column:span 6}
+.s5{grid-column:span 5}.s4{grid-column:span 4}.s3{grid-column:span 3}.s2{grid-column:span 2}
+
+/* ── CARD ── */
+.card{
+  background:linear-gradient(145deg,var(--panel),var(--panel2));
+  border:1px solid var(--line);
+  border-radius:24px;
+  box-shadow:var(--shadow);
+  padding:22px;
+  overflow:hidden;
+  position:relative;
+  min-width:0;
+}
+.card::before{
+  content:"";position:absolute;left:0;right:0;top:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  opacity:.55;
+}
+
+/* ── HERO ── */
+.hero{display:flex;flex-direction:column;justify-content:space-between;min-height:300px}
+.hero-weight{
+  font-family:"Cormorant Garamond",serif;
+  font-size:clamp(68px,9vw,120px);
+  line-height:.88;
+  letter-spacing:-.06em;
+}
+.hero-unit{font-size:.32em;font-family:Manrope;color:var(--soft);vertical-align:.15em;letter-spacing:.05em}
+.kicker{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);font-weight:800}
+.delta{color:var(--teal);font-weight:800;font-size:1rem}
+.delta.neg{color:var(--red)}
+
+/* ── METRIC GRID ── */
+.mg{display:grid;gap:2px;background:var(--line);border-radius:20px;overflow:hidden}
+.mg-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.mg-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.mg-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.metric{padding:18px;background:linear-gradient(145deg,var(--panel),var(--panel2));min-width:0}
+.m-label{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);font-weight:800;margin-bottom:8px}
+.m-val{font-family:"JetBrains Mono",monospace;font-size:clamp(22px,2.5vw,32px);font-weight:700;word-break:break-word}
+.m-small{font-size:11px;color:var(--soft);margin-top:3px}
+
+/* ── SECTION HEAD ── */
+.sh{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.sh-title{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);font-weight:800}
+
+/* ── LIST ── */
+.list{display:grid;gap:8px}
+.item{
+  padding:13px 16px;border-radius:16px;border:1px solid var(--line);
+  background:rgba(255,255,255,.03);
+  display:flex;justify-content:space-between;gap:12px;align-items:center;
+  min-width:0;
+}
+.item strong{font-size:13px;font-weight:700}
+
+/* ── CHART BOX ── */
+.chart-box{height:240px;margin-top:14px;position:relative}
+
+/* ── STACK ── */
+.stack-rows{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:14px}
+.stack-col{
+  padding:16px;border:1px solid var(--line);border-radius:20px;
+  background:rgba(255,255,255,.04);min-width:0;position:relative;overflow:hidden;
+}
+.stack-col::before{
+  content:"";position:absolute;inset:0;
+  background:radial-gradient(circle at 20% 10%,rgba(208,163,90,.07),transparent 40%),
+             radial-gradient(circle at 85% 20%,rgba(88,185,176,.04),transparent 30%);
+  pointer-events:none;
+}
+.stack-col h4{
+  font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--soft);
+  font-weight:800;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--line);
+}
+.dose{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-top:1px solid rgba(255,255,255,.04)}
+.dose:first-of-type{border-top:none;padding-top:0}
+.dose span{font-size:12.5px;color:var(--muted);min-width:0}
+.dose b{font-family:"JetBrains Mono",monospace;color:var(--gold);font-size:12px;text-align:right;white-space:nowrap}
+
+/* ── FLOATING ICONS ── */
+.float-wrap{position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:24px;z-index:0}
+.fi{
+  position:absolute;font-size:30px;
+  filter:drop-shadow(0 0 16px rgba(208,163,90,.4));
+  animation:floaty 12s ease-in-out infinite;
+}
+.fi:nth-child(1){top:12%;left:8%;animation-duration:13s}
+.fi:nth-child(2){top:22%;right:9%;animation-duration:16s}
+.fi:nth-child(3){bottom:16%;left:17%;animation-duration:14s}
+.fi:nth-child(4){bottom:20%;right:18%;animation-duration:17s}
+@keyframes floaty{
+  0%,100%{transform:translate3d(0,0,0) rotate(0deg)}
+  25%{transform:translate3d(10px,-12px,0) rotate(8deg)}
+  50%{transform:translate3d(-8px,10px,0) rotate(-6deg)}
+  75%{transform:translate3d(14px,4px,0) rotate(6deg)}
+}
+
+/* ── CHIPS / TABS ── */
+.tabsRow{display:flex;gap:8px;flex-wrap:wrap}
+.chip{
+  padding:8px 14px;border-radius:999px;
+  background:linear-gradient(135deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
+  border:1px solid rgba(255,255,255,.08);
+  color:var(--muted);font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+  white-space:nowrap;cursor:default;
+}
+.chip.active{background:var(--goldSoft);color:var(--gold);border-color:rgba(208,163,90,.3)}
+
+/* ── DAY CHIPS ── */
+.day-chip{
+  padding:10px 14px;border-radius:999px;
+  background:linear-gradient(135deg,rgba(13,132,255,.18),rgba(255,255,255,.03));
+  border:1px solid rgba(255,255,255,.08);
+  color:var(--muted);font-size:11px;font-weight:800;letter-spacing:.1em;
+}
+.day-chip.today{
+  background:linear-gradient(135deg,rgba(208,163,90,.28),rgba(208,163,90,.10));
+  border-color:rgba(208,163,90,.55);color:var(--text);
+  box-shadow:0 0 0 1px rgba(208,163,90,.14) inset, 0 0 28px rgba(208,163,90,.12);
+}
+
+/* ── NAV ARROW ── */
+.nav-arrow{
+  padding:8px 10px;border-radius:12px;
+  background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.02));
+  border:1px solid rgba(255,255,255,.06);
+  color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
+}
+
+/* ── METRIC GRID 5 ── */
+.mg-5{grid-template-columns:repeat(5,minmax(0,1fr))}
+.mg-1{grid-template-columns:1fr}
+
+/* ── BLOOD TABLE ── */
+.btable{width:100%;border-collapse:collapse;font-size:13px}
+.btable th{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--soft);font-weight:800;text-align:left;padding:10px 12px 8px;border-bottom:1px solid var(--line)}
+.btable td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04)}
+.btable tr:last-child td{border-bottom:none}
+.btable tr:hover td{background:rgba(255,255,255,.02)}
+.tag{display:inline-block;padding:3px 8px;border-radius:6px;font-size:10px;font-weight:800;letter-spacing:.08em}
+.tag.ok{background:rgba(88,185,176,.1);color:var(--teal)}
+.tag.high{background:rgba(222,113,113,.12);color:var(--red)}
+.tag.low{background:rgba(245,158,11,.1);color:#f59e0b}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1100px){
+  .shell{grid-template-columns:1fr}
+  .side{position:relative;height:auto;border-right:none;border-bottom:1px solid var(--line)}
+  .grid>.card{grid-column:span 12 !important}
+  .stack-rows,.mg-4,.mg-5,.mg-3{grid-template-columns:1fr 1fr}
+  .hero{min-height:auto}
+}
+@media(max-width:720px){
+  .shell{grid-template-columns:1fr}
+  .main{padding:12px}
+  .grid{gap:10px}
+  .card{padding:16px;border-radius:20px}
+  .mg-4,.mg-5,.mg-3,.mg-2,.stack-rows{grid-template-columns:1fr}
+  .fi{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <!-- ════════════════ SIDEBAR ════════════════ -->
+  <aside class="side">
+    <div>
+      <div class="brand">IRON<br><span>FORGE</span></div>
+      <div class="brand-sub">Lab · Recomp-Blast 2026</div>
+    </div>
+
+    <div class="nav" id="nav">
+      <button class="active" data-page="dashboard">Dashboard</button>
+      <button data-page="tageslog">Tageslog</button>
+      <button data-page="stack">Stack</button>
+      <button data-page="blutbild">Blutbild</button>
+      <button data-page="checkin">Check-in</button>
+      <button data-page="journal">Journal</button>
+      <button data-page="import">Import</button>
+    </div>
+
+    <div class="blast-widget">
+      <div class="blast-label">Aktuelle Phase</div>
+      <div class="blast-main">W7<span> / 16</span></div>
+      <div class="blast-sub">Tag 47 · 23.02 – 15.06.2026</div>
+      <div class="blast-bar"><div class="blast-bar-fill"></div></div>
+    </div>
+  </aside>
+
+  <!-- ════════════════ MAIN ════════════════ -->
+  <main class="main">
+
+    <!-- ── DASHBOARD ─────────────────────────── -->
+    <section class="page active" id="dashboard">
+      <div class="top">
+        <div>
+          <div class="title">Dashboard</div>
+          <div class="meta">Übersicht · Recovery · Trends</div>
+        </div>
+        <span class="pill gold">08.04.2026</span>
+      </div>
+
+      <div class="grid">
+
+        <!-- HERO WEIGHT -->
+        <div class="card s8 hero" style="position:relative;overflow:hidden">
+          <div class="float-wrap">
+            <div class="fi">⚡</div><div class="fi">💉</div>
+            <div class="fi">🧬</div><div class="fi">📈</div>
+          </div>
+          <div style="position:relative;z-index:1">
+            <div class="kicker">Recomp-Blast 2026 · Woche 7 · Tag 47</div>
+            <div class="hero-weight" style="margin-top:12px">
+              71.62<span class="hero-unit">KG</span>
+            </div>
+            <div style="margin-top:10px;display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+              <span class="delta">↓ 1.36 kg</span>
+              <span style="color:var(--soft);font-size:13px">vs. Vorwoche</span>
+              <span class="pill teal" style="margin-left:auto">KFA 13.7 %</span>
+            </div>
+          </div>
+          <div style="position:relative;z-index:1">
+            <div class="mg mg-4" style="margin-top:18px">
+              <div class="metric">
+                <div class="m-label">Muskelmasse</div>
+                <div class="m-val" style="color:var(--teal)">58.7</div>
+                <div class="m-small">kg</div>
+              </div>
+              <div class="metric">
+                <div class="m-label">Fettmasse</div>
+                <div class="m-val">9.81</div>
+                <div class="m-small">kg</div>
+              </div>
+              <div class="metric">
+                <div class="m-label">Körperwasser</div>
+                <div class="m-val">61.2</div>
+                <div class="m-small">%</div>
+              </div>
+              <div class="metric">
+                <div class="m-label">BMI</div>
+                <div class="m-val">23.1</div>
+                <div class="m-small">kg/m²</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RECOVERY -->
+        <div class="card s4">
+          <div class="sh">
+            <div class="sh-title">Recovery</div>
+            <span class="pill red">Regeneration nötig</span>
+          </div>
+          <div class="list">
+            <div class="item">
+              <strong>HRV</strong>
+              <span style="font-family:'JetBrains Mono';color:var(--teal);font-weight:700">29 ms</span>
+            </div>
+            <div class="item">
+              <strong>Body Battery</strong>
+              <span style="font-family:'JetBrains Mono';color:var(--gold);font-weight:700">62</span>
+            </div>
+            <div class="item">
+              <strong>Sleep Score</strong>
+              <span style="font-family:'JetBrains Mono';color:var(--red);font-weight:700">54</span>
+            </div>
+            <div class="item">
+              <strong>Ruhepuls</strong>
+              <span style="font-family:'JetBrains Mono';color:var(--muted);font-weight:700">83 bpm</span>
+            </div>
+            <div class="item">
+              <strong>Training Readiness</strong>
+              <span style="font-family:'JetBrains Mono';color:var(--red);font-weight:700">33</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- WEIGHT CHART -->
+        <div class="card s8">
+          <div class="sh">
+            <div class="sh-title">Gewichtsverlauf · 14 Tage</div>
+            <span class="pill">23.03 – 08.04</span>
+          </div>
+          <div class="chart-box"><canvas id="weightChart"></canvas></div>
+        </div>
+
+        <!-- VITALS -->
+        <div class="card s4">
+          <div class="sh">
+            <div class="sh-title">Vitals</div>
+            <span class="pill">Körper</span>
+          </div>
+          <div class="mg mg-2" style="border-radius:16px">
+            <div class="metric">
+              <div class="m-label">Blutdruck</div>
+              <div class="m-val" style="color:var(--gold);font-size:22px">129/71</div>
+              <div class="m-small">mmHg</div>
+            </div>
+            <div class="metric">
+              <div class="m-label">PWV</div>
+              <div class="m-val" style="color:var(--teal);font-size:22px">6.35</div>
+              <div class="m-small">m/s</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- HRV + BODY BATTERY CHART -->
+        <div class="card s6">
+          <div class="sh">
+            <div class="sh-title">HRV &amp; Body Battery · 14 Tage</div>
+          </div>
+          <div class="chart-box" style="height:220px"><canvas id="recoveryChart"></canvas></div>
+        </div>
+
+        <!-- TRAINING READINESS CHART -->
+        <div class="card s6">
+          <div class="sh">
+            <div class="sh-title">Training Readiness · 14 Tage</div>
+          </div>
+          <div class="chart-box" style="height:220px"><canvas id="readinessChart"></canvas></div>
+        </div>
+
+      </div><!-- /grid -->
+    </section>
+
+    <!-- ── TAGESLOG ───────────────────────────── -->
+    <section class="page" id="tageslog">
+      <div class="top"><div><div class="title">Tageslog</div><div class="meta">Chronologisch / Einträge / Check-ins</div></div><span class="pill">Daily Log</span></div>
+      <div class="grid">
+
+        <div class="card s12">
+          <!-- Kalender-Header -->
+          <div class="sh">
+            <div class="sh-title">Kalender</div>
+            <div class="tabsRow" style="gap:6px">
+              <span class="nav-arrow">⟪</span>
+              <span class="nav-arrow">⟨</span>
+              <span class="chip" style="border-radius:14px">APR 2026</span>
+              <span class="nav-arrow">⟩</span>
+              <span class="nav-arrow">⟫</span>
+            </div>
+          </div>
+
+          <!-- Datums-Hero + Wochentag-Chips -->
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:20px">
+            <div>
+              <div class="title" style="font-size:clamp(28px,4vw,52px);margin:0;letter-spacing:-.04em">Saturday, 11. April 2026</div>
+              <div style="margin-top:8px">
+                <span class="pill" style="background:rgba(13,132,255,.18);border-color:rgba(13,132,255,.35);color:#58a9ff">HEUTE</span>
+              </div>
+              <div class="tabsRow" style="margin-top:14px">
+                <span class="day-chip">MO 6</span>
+                <span class="day-chip">DI 7</span>
+                <span class="day-chip">MI 8</span>
+                <span class="day-chip">DO 9</span>
+                <span class="day-chip">FR 10</span>
+                <span class="day-chip today">SA 11</span>
+                <span class="day-chip">SO 12</span>
+              </div>
+            </div>
+            <div class="tabsRow"><span class="chip">KG → %</span></div>
+          </div>
+
+          <!-- Zwei Daten-Karten nebeneinander -->
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px">
+
+            <!-- Körper / Withings -->
+            <div class="card" style="padding:18px">
+              <div class="sh"><div class="sh-title">Körper · Withings</div><span class="pill">Letzter Wert: 08.04.2026</span></div>
+              <div class="mg mg-4" style="margin-bottom:2px">
+                <div class="metric"><div class="m-label">Gewicht</div><div class="m-val" style="color:var(--teal)">71.6</div><div class="m-small">kg · Ø 72.5</div></div>
+                <div class="metric"><div class="m-label">Körperfett</div><div class="m-val">13.7</div><div class="m-small">% · Ø 13.8</div></div>
+                <div class="metric"><div class="m-label">Muskelmasse</div><div class="m-val" style="color:var(--teal)">58.7</div><div class="m-small">kg</div></div>
+                <div class="metric"><div class="m-label">Körperwasser</div><div class="m-val">61.2</div><div class="m-small">%</div></div>
+              </div>
+              <div class="mg mg-4" style="margin-bottom:2px">
+                <div class="metric"><div class="m-label">Blutdruck</div><div class="m-val" style="color:var(--gold);font-size:20px">129/71</div><div class="m-small">mmHg · Ziel &lt;120/80</div></div>
+                <div class="metric"><div class="m-label">Ruhepuls</div><div class="m-val">83</div><div class="m-small">bpm</div></div>
+                <div class="metric"><div class="m-label">BMI</div><div class="m-val">23.1</div><div class="m-small">kg/m²</div></div>
+                <div class="metric"><div class="m-label">Gefäßalter</div><div class="m-val">—</div><div class="m-small">Jahre</div></div>
+              </div>
+              <div class="mg mg-1" style="width:28%">
+                <div class="metric"><div class="m-label">Pulswellen (PWV)</div><div class="m-val" style="color:var(--gold)">6.3</div><div class="m-small">m/s · Ziel &lt;7.0</div></div>
+              </div>
+            </div>
+
+            <!-- Erholung & Schlaf / Garmin -->
+            <div class="card" style="padding:18px">
+              <div class="sh"><div class="sh-title">Erholung &amp; Schlaf · Garmin</div><span class="pill">Letzter Wert: 01.04.2026</span></div>
+              <div class="mg mg-5" style="margin-bottom:2px">
+                <div class="metric"><div class="m-label">HRV</div><div class="m-val" style="color:var(--gold)">29</div><div class="m-small">ms · Ziel &gt;35</div></div>
+                <div class="metric"><div class="m-label">HF Nacht</div><div class="m-val" style="color:var(--teal)">62</div><div class="m-small">bpm · Ziel &lt;62</div></div>
+                <div class="metric"><div class="m-label">Body Battery</div><div class="m-val" style="color:var(--red)">31</div><div class="m-small">/ 100 · Ziel &gt;55</div></div>
+                <div class="metric"><div class="m-label">Schlaf-Score</div><div class="m-val" style="color:var(--red)">54</div><div class="m-small">/ 100 · Ziel &gt;75</div></div>
+                <div class="metric"><div class="m-label">Gesamtschlaf</div><div class="m-val">7H51M</div><div class="m-small">Ziel &gt;7h</div></div>
+              </div>
+              <div class="mg mg-5" style="margin-bottom:2px">
+                <div class="metric"><div class="m-label">Tiefschlaf</div><div class="m-val" style="color:var(--red)">38</div><div class="m-small">min · Ziel &gt;60</div></div>
+                <div class="metric"><div class="m-label">REM</div><div class="m-val">67</div><div class="m-small">min</div></div>
+                <div class="metric"><div class="m-label">Leichtschlaf</div><div class="m-val">366</div><div class="m-small">min</div></div>
+                <div class="metric"><div class="m-label">Atemfreq.</div><div class="m-val" style="color:var(--red)">17.5</div><div class="m-small">brpm · Ziel &lt;15</div></div>
+                <div class="metric"><div class="m-label">Schritte</div><div class="m-val">17k</div><div class="m-small"></div></div>
+              </div>
+              <div class="mg mg-2" style="width:42%">
+                <div class="metric"><div class="m-label">Stress</div><div class="m-val" style="color:var(--teal)">21</div><div class="m-small">/ 100</div></div>
+                <div class="metric"><div class="m-label">Trainings-Bereitschaft</div><div class="m-val" style="color:var(--gold)">58</div><div class="m-small">/ 100</div></div>
+              </div>
+            </div>
+
+          </div><!-- /zwei-karten -->
+        </div><!-- /card s12 -->
+
+        <!-- Manuellen Eintrag Bar -->
+        <div class="card s12" style="display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:62px;cursor:pointer">
+          <div class="sh-title">Manuellen Eintrag erstellen</div>
+          <span class="pill">+</span>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── STACK ──────────────────────────────── -->
+    <section class="page" id="stack">
+      <div class="top">
+        <div>
+          <div class="title">Stack</div>
+          <div class="meta">16 Wochen Recomp-Blast · W7</div>
+        </div>
+        <span class="pill gold">Aktiv</span>
+      </div>
+
+      <div class="grid">
+        <!-- HERO STACK CARD -->
+        <div class="card s12" style="position:relative;overflow:hidden">
+          <div class="float-wrap">
+            <div class="fi">⚡</div><div class="fi">💉</div>
+            <div class="fi">🧬</div><div class="fi">🔬</div>
+          </div>
+          <div style="position:relative;z-index:1">
+            <div class="sh">
+              <div class="sh-title">Aktueller Stack</div>
+              <span class="pill">16 Wochen Recomp-Blast · 23.02 – 15.06.2026</span>
+            </div>
+            <div class="mg mg-4" style="margin-bottom:18px">
+              <div class="metric"><div class="m-label">Modus</div><div class="m-val" style="color:var(--teal)">Cut</div></div>
+              <div class="metric"><div class="m-label">Phase</div><div class="m-val">W 7</div></div>
+              <div class="metric"><div class="m-label">Substanzen</div><div class="m-val">35</div></div>
+              <div class="metric"><div class="m-label">Status</div><div class="m-val" style="color:var(--gold)">ON</div></div>
+            </div>
+
+            <div class="stack-rows">
+              <div class="stack-col">
+                <h4>☀ 07:00 – Nüchtern</h4>
+                <div class="dose"><span>T3 (Liothyronin)</span><b>25 mcg</b></div>
+                <div class="dose"><span>Clenbuterol</span><b>40 mcg</b></div>
+                <div class="dose"><span>Ivabradin</span><b>5 mg</b></div>
+                <div class="dose"><span>Telmisartan</span><b>40 mg</b></div>
+                <div class="dose"><span>Yohimbin</span><b>15 mg</b></div>
+                <div class="dose"><span>Mariendistel</span><b>300 mg</b></div>
+              </div>
+              <div class="stack-col">
+                <h4>🥣 10–11 Uhr mit Essen</h4>
+                <div class="dose"><span>Cialis (Tadalafil)</span><b>5 mg</b></div>
+                <div class="dose"><span>Exemestan</span><b>12.5 mg (EOD)</b></div>
+                <div class="dose"><span>NAC</span><b>800 mg</b></div>
+                <div class="dose"><span>Essetil Forte</span><b>600 mg</b></div>
+                <div class="dose"><span>CoQ10</span><b>100 mg</b></div>
+                <div class="dose"><span>Cholin</span><b>375 mg</b></div>
+                <div class="dose"><span>Astaxanthin</span><b>12 mg</b></div>
+                <div class="dose"><span>Kalium</span><b>300 mg</b></div>
+                <div class="dose"><span>Nattokinase</span><b>2000 FU</b></div>
+                <div class="dose"><span>Omega-3</span><b>2 Kapseln</b></div>
+              </div>
+              <div class="stack-col">
+                <h4>🥗 17–18 Uhr mit Essen</h4>
+                <div class="dose"><span>T3 (Liothyronin)</span><b>12.5 mcg</b></div>
+                <div class="dose"><span>Ivabradin</span><b>5 mg</b></div>
+                <div class="dose"><span>Metformin</span><b>1000 mg</b></div>
+                <div class="dose"><span>NAC</span><b>800 mg</b></div>
+                <div class="dose"><span>Essetil Forte</span><b>600 mg</b></div>
+                <div class="dose"><span>TUDCA</span><b>375 mg</b></div>
+                <div class="dose"><span>Citrus Bergamot</span><b>500 mg</b></div>
+                <div class="dose"><span>Taurin</span><b>1 g</b></div>
+                <div class="dose"><span>Vitamin B12</span><b>1000 mcg</b></div>
+                <div class="dose"><span>Zink</span><b>37.5 mg</b></div>
+                <div class="dose"><span>Mariendistel</span><b>500 mg</b></div>
+                <div class="dose"><span>Omega-3</span><b>2 Kapseln</b></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 21–22 + HGH -->
+        <div class="card s6">
+          <div class="sh"><div class="sh-title">🌙 21–22 Uhr</div><span class="pill">6 Positionen</span></div>
+          <div class="list">
+            <div class="item"><strong>HGH (Wachstumshormon)</strong><span style="font-family:'JetBrains Mono';color:var(--gold)">4 IU subkutan</span></div>
+            <div class="item"><strong>Ketotifen</strong><span style="font-family:'JetBrains Mono';color:var(--muted)">1 mg</span></div>
+            <div class="item"><strong>Trazodon</strong><span style="font-family:'JetBrains Mono';color:var(--muted)">50 mg</span></div>
+            <div class="item"><strong>Magnesium-Komplex</strong><span style="font-family:'JetBrains Mono';color:var(--muted)">300 mg</span></div>
+            <div class="item"><strong>Melatonin</strong><span style="font-family:'JetBrains Mono';color:var(--muted)">1 mg</span></div>
+          </div>
+        </div>
+
+        <!-- INJEKTIONEN -->
+        <div class="card s6">
+          <div class="sh"><div class="sh-title">💉 Injektionen &amp; Peptide</div><span class="pill">4 Substanzen</span></div>
+          <div class="list">
+            <div class="item"><strong>Testosteron Enanthat</strong><span style="font-family:'JetBrains Mono';color:var(--gold)">500 mg / Woche</span></div>
+            <div class="item"><strong>Drostanolon Enanthat</strong><span style="font-family:'JetBrains Mono';color:var(--gold)">400 mg / Woche</span></div>
+            <div class="item"><strong>Retatrutid</strong><span style="font-family:'JetBrains Mono';color:var(--teal)">2 mg Do. morgens</span></div>
+            <div class="item"><strong>Cabergolin</strong><span style="font-family:'JetBrains Mono';color:var(--muted)">0.25 mg Mi. abends</span></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── BLUTBILD ───────────────────────────── -->
+    <section class="page" id="blutbild">
+      <div class="top"><div><div class="title">Blutbild</div><div class="meta">Labor · Verlauf · Bewertung</div></div><span class="pill">01.04.2026</span></div>
+      <div class="grid">
+        <div class="card s8">
+          <div class="sh"><div class="sh-title">Letztes Blutbild · 01.04.2026</div></div>
+          <table class="btable">
+            <thead><tr><th>Marker</th><th>Wert</th><th>Einheit</th><th>Ref.</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>Hämatokrit</td><td style="font-family:'JetBrains Mono'">45.0</td><td>%</td><td>&lt; 50</td><td><span class="tag ok">OK</span></td></tr>
+              <tr><td>GOT (ASAT)</td><td style="font-family:'JetBrains Mono';color:var(--red)">67.0</td><td>U/L</td><td>&lt; 50</td><td><span class="tag high">Erhöht</span></td></tr>
+              <tr><td>GPT (ALAT)</td><td style="font-family:'JetBrains Mono';color:var(--red)">105.0</td><td>U/L</td><td>&lt; 50</td><td><span class="tag high">Erhöht</span></td></tr>
+              <tr><td>HDL-Cholesterin</td><td style="font-family:'JetBrains Mono';color:#f59e0b">33.0</td><td>mg/dL</td><td>&gt; 40</td><td><span class="tag low">Niedrig</span></td></tr>
+              <tr><td>fT4</td><td style="font-family:'JetBrains Mono'">6.3</td><td>ng/L</td><td>6–13</td><td><span class="tag ok">OK</span></td></tr>
+              <tr><td>Prolaktin</td><td style="font-family:'JetBrains Mono'">0.9</td><td>µg/L</td><td>2–18</td><td><span class="tag low">Niedrig</span></td></tr>
+              <tr><td>Estradiol</td><td style="font-family:'JetBrains Mono';color:#f59e0b">99.0</td><td>ng/L</td><td>&lt; 52</td><td><span class="tag high">Erhöht</span></td></tr>
+              <tr><td>IGF-1</td><td style="font-family:'JetBrains Mono';color:var(--gold)">301.0</td><td>µg/L</td><td>60–200</td><td><span class="tag high">Erhöht</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card s4">
+          <div class="sh"><div class="sh-title">Bewertung</div></div>
+          <div class="list">
+            <div class="item"><strong>Leberwerte</strong><span class="pill red">Erhöht – beobachten</span></div>
+            <div class="item"><strong>Hämatokrit</strong><span class="pill teal">Hoch-normal</span></div>
+            <div class="item"><strong>HDL</strong><span style="color:#f59e0b;font-size:12px;font-weight:700">Niedrig</span></div>
+            <div class="item"><strong>Prolaktin</strong><span style="color:var(--soft);font-size:12px">Niedrig – Caber wirkt</span></div>
+            <div class="item"><strong>IGF-1</strong><span style="color:var(--gold);font-size:12px;font-weight:700">Hoch – HGH wirkt</span></div>
+            <div class="item"><strong>Nächstes Blutbild</strong><span style="color:var(--soft);font-size:12px">ca. 10.05.2026</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── CHECK-IN ───────────────────────────── -->
+    <section class="page" id="checkin">
+      <div class="top"><div><div class="title">Check-in</div><div class="meta">Foto · Analyse · Verlauf</div></div><span class="pill">W7</span></div>
+      <div class="grid">
+        <div class="card s8">
+          <div class="sh"><div class="sh-title">Letzter Check-in · 03.04.2026</div><span class="pill">Tag 40 · W6</span></div>
+          <div class="mg mg-3" style="border-radius:16px">
+            <div class="metric"><div class="m-label">Separiert</div><div class="m-val" style="color:var(--teal)">✓</div></div>
+            <div class="metric"><div class="m-label">Fülle</div><div class="m-val" style="color:var(--gold)">Hoch</div></div>
+            <div class="metric"><div class="m-label">Definition</div><div class="m-val" style="color:var(--teal)">Gut</div></div>
+          </div>
+          <div style="margin-top:14px;padding:16px;border:1px solid var(--line);border-radius:16px;font-size:13px;color:var(--muted);line-height:1.6">
+            Körper wirkt klar separiert, gute Fülle und Dichte, Quads und Hamstrings gut sichtbar. Vaskularität klar präsent. Recomp schreitet gut voran – Fazit positiv für W6/7 Übergang.
+          </div>
+        </div>
+        <div class="card s4">
+          <div class="sh"><div class="sh-title">Fortschritt</div></div>
+          <div class="list">
+            <div class="item"><strong>W5 – 29.03</strong><span style="color:var(--soft)">Erste Analyse</span></div>
+            <div class="item"><strong>W6 – 03.04</strong><span style="color:var(--teal)">Positiv</span></div>
+            <div class="item"><strong>W7 – nächster</strong><span style="color:var(--soft)">ca. 11.04</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── JOURNAL ────────────────────────────── -->
+    <section class="page" id="journal">
+      <div class="top"><div><div class="title">Journal</div><div class="meta">Einträge · Verlauf · Notizen</div></div></div>
+      <div class="grid">
+        <div class="card s8">
+          <div class="sh"><div class="sh-title">Letzter Eintrag · 03.04.2026</div><span class="pill">Check-in W6</span></div>
+          <div style="font-size:13px;color:var(--muted);line-height:1.7">
+            Tag 40 des Recomp-Blasts. Körper zeigt gute Rekomp-Zeichen: Muskeln separiert, gute Fülle trotz Kaloriendefizit. Blutbild vom 01.04 analysiert – Leberwerte erhöht, werden beobachtet. Nächstes Blutbild in ~5 Wochen geplant. Gesamtfazit Woche 6: auf Kurs.
+          </div>
+        </div>
+        <div class="card s4">
+          <div class="sh"><div class="sh-title">Chronologie</div></div>
+          <div class="list">
+            <div class="item"><strong>03.04.2026</strong><span style="color:var(--soft)">Check-in W6</span></div>
+            <div class="item"><strong>01.04.2026</strong><span style="color:var(--soft)">Blutbild</span></div>
+            <div class="item"><strong>29.03.2026</strong><span style="color:var(--soft)">Check-in W5</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── IMPORT ─────────────────────────────── -->
+    <section class="page" id="import">
+      <div class="top"><div><div class="title">Import</div><div class="meta">Garmin · Withings · PDF · API</div></div></div>
+      <div class="grid">
+        <div class="card s12">
+          <div class="sh"><div class="sh-title">Status</div></div>
+          <div class="mg mg-4">
+            <div class="metric"><div class="m-label">Garmin API</div><div class="m-val" style="color:var(--teal)">OK</div><div class="m-small">Letzter Abruf 07.04</div></div>
+            <div class="metric"><div class="m-label">Withings</div><div class="m-val" style="color:var(--teal)">OK</div><div class="m-small">Backfill verfügbar</div></div>
+            <div class="metric"><div class="m-label">Blutbild-PDF</div><div class="m-val" style="color:var(--gold)">1</div><div class="m-small">01.04.2026 importiert</div></div>
+            <div class="metric"><div class="m-label">Backfill</div><div class="m-val">90T</div><div class="m-small">Withings ausstehend</div></div>
+          </div>
+        </div>
+        <div class="card s6"><div class="sh"><div class="sh-title">API-Aktionen</div></div><div class="list"><div class="item"><strong>Heute abrufen</strong><span style="color:var(--soft)">Garmin + Withings</span></div><div class="item"><strong>Withings Backfill</strong><span style="color:var(--gold)">90 Tage nachholen</span></div></div></div>
+        <div class="card s6"><div class="sh"><div class="sh-title">Manuell</div></div><div class="list"><div class="item"><strong>Blutbild-PDF</strong><span style="color:var(--soft)">data/Blutbilder/ scannen</span></div><div class="item"><strong>Withings-ZIP</strong><span style="color:var(--soft)">Imports/ Ordner</span></div></div></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+// ── NAV ──
+const btns  = [...document.querySelectorAll('.nav button')];
+const pages = [...document.querySelectorAll('.page')];
+btns.forEach(b => b.addEventListener('click', () => {
+  btns.forEach(x => x.classList.remove('active'));
+  pages.forEach(p => p.classList.remove('active'));
+  b.classList.add('active');
+  document.getElementById(b.dataset.page).classList.add('active');
+}));
+
+// ── CHART HELPERS ──
+const GOLD   = '#d0a35a';
+const TEAL   = '#58b9b0';
+const RED    = '#de7171';
+const SOFT   = '#898174';
+const PANEL  = '#101317';
+
+function gradDown(ctx, color, a1 = .35, a2 = .02) {
+  const g = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
+  g.addColorStop(0, color.replace(')', `,${a1})`).replace('rgb', 'rgba'));
+  g.addColorStop(1, color.replace(')', `,${a2})`).replace('rgb', 'rgba'));
+  return g;
+}
+
+// weight labels + data (chronological, 14 entries)
+const wLabels = ['23.03','24.03','25.03','26.03','27.03','28.03','29.03','30.03','31.03','01.04','02.04','05.04','06.04','08.04'];
+const wData   = [71.55, 71.26, 71.66, 70.94, 70.77, 70.82, 70.59, 70.72, 70.14, 70.20, 69.93, 72.80, 72.98, 71.62];
+
+// ── WEIGHT CHART ──
+(function(){
+  const canvas = document.getElementById('weightChart');
+  const ctx = canvas.getContext('2d');
+  const fill = ctx.createLinearGradient(0, 0, 0, 240);
+  fill.addColorStop(0, 'rgba(208,163,90,.28)');
+  fill.addColorStop(1, 'rgba(208,163,90,.02)');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: wLabels,
+      datasets: [{
+        data: wData,
+        borderColor: GOLD,
+        borderWidth: 2.5,
+        tension: 0.35,
+        pointRadius: 3,
+        pointBackgroundColor: GOLD,
+        pointBorderColor: PANEL,
+        pointBorderWidth: 2,
+        fill: true,
+        backgroundColor: fill,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(16,19,23,.97)',
+          borderColor: 'rgba(208,163,90,.25)', borderWidth: 1,
+          titleColor: GOLD, bodyColor: '#b9b1a2', padding: 10,
+          callbacks: { label: c => ` ${c.raw} kg` }
+        }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(214,198,169,.05)' }, ticks: { color: SOFT, font: { size: 10 } } },
+        y: { grid: { color: 'rgba(214,198,169,.05)' }, ticks: { color: SOFT, font: { size: 10 }, callback: v => v + ' kg' }, min: 69, max: 74 }
+      }
+    }
+  });
+})();
+
+// ── RECOVERY CHART (HRV line + Body Battery bar) ──
+(function(){
+  const labels = ['23.03','24.03','25.03','26.03','27.03','28.03','29.03','30.03','31.03'];
+  const hrv    = [27, 32, 30, 35, 33, 30, 31, 31, 29];
+  const bb     = [64, 59, 85, 98, 81, 70, 75, 72, 62];
+  const ctx = document.getElementById('recoveryChart').getContext('2d');
+  new Chart(ctx, {
+    data: {
+      labels,
+      datasets: [
+        {
+          type: 'bar',
+          label: 'Body Battery',
+          data: bb,
+          backgroundColor: 'rgba(88,185,176,.22)',
+          borderColor: 'rgba(88,185,176,.5)',
+          borderWidth: 1,
+          borderRadius: 6,
+          yAxisID: 'yBB',
+        },
+        {
+          type: 'line',
+          label: 'HRV (ms)',
+          data: hrv,
+          borderColor: GOLD,
+          borderWidth: 2.5,
+          tension: 0.35,
+          pointRadius: 3,
+          pointBackgroundColor: GOLD,
+          pointBorderColor: PANEL,
+          pointBorderWidth: 2,
+          fill: false,
+          yAxisID: 'yHRV',
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, labels: { color: SOFT, font: { size: 10 }, boxWidth: 12, padding: 14 } },
+        tooltip: { backgroundColor: 'rgba(16,19,23,.97)', borderColor: 'rgba(208,163,90,.25)', borderWidth: 1, titleColor: GOLD, bodyColor: '#b9b1a2', padding: 10 }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(214,198,169,.05)' }, ticks: { color: SOFT, font: { size: 10 } } },
+        yHRV: { position: 'left',  grid: { color: 'rgba(214,198,169,.05)' }, ticks: { color: GOLD, font: { size: 10 }, callback: v => v + ' ms' }, min: 20, max: 45 },
+        yBB:  { position: 'right', grid: { display: false }, ticks: { color: TEAL, font: { size: 10 } }, min: 0, max: 100 }
+      }
+    }
+  });
+})();
+
+// ── TRAINING READINESS ──
+(function(){
+  const labels = ['23.03','24.03','25.03','26.03','27.03','28.03','29.03','30.03','31.03','01.04'];
+  const data   = [59, 79, 77, 91, 88, 60, 50, 77, 33, 58];
+  const ctx = document.getElementById('readinessChart').getContext('2d');
+  const fill = ctx.createLinearGradient(0, 0, 0, 220);
+  fill.addColorStop(0, 'rgba(88,185,176,.22)');
+  fill.addColorStop(1, 'rgba(88,185,176,.02)');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Training Readiness',
+        data,
+        borderColor: TEAL,
+        borderWidth: 2.5,
+        tension: 0.35,
+        pointRadius: 3,
+        pointBackgroundColor: TEAL,
+        pointBorderColor: PANEL,
+        pointBorderWidth: 2,
+        fill: true,
+        backgroundColor: fill,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { backgroundColor: 'rgba(16,19,23,.97)', borderColor: 'rgba(88,185,176,.25)', borderWidth: 1, titleColor: TEAL, bodyColor: '#b9b1a2', padding: 10 }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(214,198,169,.05)' }, ticks: { color: SOFT, font: { size: 10 } } },
+        y: { grid: { color: 'rgba(214,198,169,.05)' }, ticks: { color: SOFT, font: { size: 10 } }, min: 0, max: 100 }
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MARCO BOEKER · FITNESS OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@600;700;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+/* ═══════════════════════════════════════════════════════════
+   TOKENS
+═══════════════════════════════════════════════════════════ */
+:root {
+  --accent:      #f97316;
+  --accent-dim:  rgba(249,115,22,.12);
+  --accent-mid:  rgba(249,115,22,.22);
+  --green:       #22c55e;
+  --red:         #ef4444;
+  --blue:        #38bdf8;
+
+  --bg:          #080808;
+  --bg-1:        #0f0f0f;
+  --bg-2:        #171717;
+  --bg-3:        #202020;
+  --bg-4:        #2a2a2a;
+  --border:      rgba(255,255,255,.06);
+  --border-md:   rgba(255,255,255,.10);
+  --border-hi:   rgba(255,255,255,.18);
+
+  --txt:         #f0f0f0;
+  --txt-2:       #999;
+  --txt-3:       #484848;
+
+  --radius:      6px;
+  --radius-lg:   10px;
+
+  --font-hero:   'Bebas Neue', sans-serif;
+  --font-head:   'Barlow Condensed', sans-serif;
+  --font-body:   'Inter', sans-serif;
+  --font-mono:   'JetBrains Mono', monospace;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RESET
+═══════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--txt);
+  font-family: var(--font-body);
+  font-size: .875rem;
+  line-height: 1.55;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; border: none; background: none; font: inherit; color: inherit; }
+input, textarea, select {
+  font: inherit;
+  color: var(--txt);
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 9px 12px;
+  width: 100%;
+  outline: none;
+  transition: border-color .15s;
+}
+input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+label {
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--txt-3);
+  display: block;
+  margin-bottom: 5px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════════════════ */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  height: 56px;
+  background: rgba(8,8,8,.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 28px;
+  gap: 0;
+}
+
+.nav-brand {
+  font-family: var(--font-hero);
+  font-size: 1.45rem;
+  letter-spacing: .14em;
+  color: var(--txt);
+  margin-right: 40px;
+  flex-shrink: 0;
+}
+.nav-brand em {
+  color: var(--accent);
+  font-style: normal;
+}
+
+.nav-tabs {
+  display: flex;
+  height: 100%;
+  gap: 0;
+}
+.nav-tab {
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  font-family: var(--font-head);
+  font-size: .95rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--txt-3);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+  position: relative;
+}
+.nav-tab:hover { color: var(--txt-2); }
+.nav-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.nav-end {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.nav-theme-btn {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: var(--bg-2);
+  border: 1px solid var(--border-md);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .8rem;
+  transition: border-color .15s;
+}
+.nav-theme-btn:hover { border-color: var(--border-hi); }
+
+/* ═══════════════════════════════════════════════════════════
+   PAGE WRAPPER
+═══════════════════════════════════════════════════════════ */
+.page { display: none; }
+.page.active { display: block; }
+.page-inner {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0 28px 60px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   HERO SECTION
+═══════════════════════════════════════════════════════════ */
+.hero-section {
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+  position: relative;
+}
+/* Linker vertikaler Akzentstreifen */
+.hero-section::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--accent);
+}
+.hero-inner {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 36px 28px 32px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 24px;
+  align-items: end;
+}
+/* Ghost-Zahl im Hintergrund */
+.hero-ghost {
+  position: absolute;
+  right: -20px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--font-hero);
+  font-size: clamp(8rem, 22vw, 18rem);
+  line-height: 1;
+  color: rgba(255,255,255,.018);
+  pointer-events: none;
+  user-select: none;
+  letter-spacing: -.02em;
+}
+
+.hero-label {
+  font-family: var(--font-head);
+  font-size: .8rem;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--txt-3);
+  margin-bottom: 6px;
+}
+.hero-weight-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.hero-weight {
+  font-family: var(--font-hero);
+  font-size: clamp(5.5rem, 16vw, 11rem);
+  line-height: .88;
+  color: var(--txt);
+  letter-spacing: -.01em;
+}
+.hero-unit {
+  font-family: var(--font-hero);
+  font-size: clamp(2.2rem, 5vw, 4rem);
+  color: var(--txt-3);
+}
+.hero-delta {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  font-weight: 600;
+  margin-left: 4px;
+}
+.hero-delta.down { background: rgba(34,197,94,.14); color: var(--green); }
+.hero-delta.up   { background: rgba(239,68,68,.14); color: var(--red); }
+.hero-delta.flat { background: var(--bg-3); color: var(--txt-3); }
+.hero-sub {
+  margin-top: 10px;
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  color: var(--txt-3);
+  letter-spacing: .04em;
+}
+
+/* Rechts: Blast-Counter */
+.hero-blast {
+  text-align: right;
+  padding-right: 4px;
+}
+.hero-blast-num {
+  font-family: var(--font-hero);
+  font-size: clamp(3.5rem, 9vw, 7rem);
+  color: var(--accent);
+  line-height: .9;
+  letter-spacing: .02em;
+}
+.hero-blast-tag {
+  font-family: var(--font-head);
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--txt-3);
+  margin-top: 6px;
+}
+.hero-blast-week {
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  color: var(--txt-2);
+  margin-top: 3px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BLAST PROGRESS BAR
+═══════════════════════════════════════════════════════════ */
+.blast-bar-section {
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--border);
+}
+.blast-bar-inner {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 12px 28px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.blast-bar-badge {
+  font-family: var(--font-head);
+  font-size: .8rem;
+  font-weight: 900;
+  letter-spacing: .18em;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.blast-pips {
+  flex: 1;
+  display: flex;
+  gap: 2px;
+}
+.pip {
+  flex: 1;
+  height: 5px;
+  border-radius: 2px;
+  background: var(--bg-3);
+  transition: background .3s;
+}
+.pip.done    { background: var(--accent); }
+.pip.current { background: var(--accent); opacity: .45; }
+.blast-pct {
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  color: var(--txt-3);
+  flex-shrink: 0;
+  letter-spacing: .04em;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SECTION HEADER
+═══════════════════════════════════════════════════════════ */
+.section-head {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin: 40px 0 16px;
+}
+.section-title {
+  font-family: var(--font-head);
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--txt);
+}
+.section-sub {
+  font-size: .75rem;
+  color: var(--txt-3);
+  letter-spacing: .04em;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   VITALS STRIP  – asymmetrisches Layout
+═══════════════════════════════════════════════════════════ */
+.vitals-strip {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 32px;
+}
+@media (max-width: 860px) {
+  .vitals-strip { grid-template-columns: 1fr 1fr; }
+  .vitals-strip .vital-main { grid-column: span 2; }
+}
+.vital-cell {
+  background: var(--bg-1);
+  padding: 20px 22px;
+  position: relative;
+  overflow: hidden;
+}
+.vital-cell::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0;
+  height: 2px;
+  width: 0;
+  background: var(--accent);
+  transition: width .4s ease;
+}
+.vital-cell:hover::after { width: 100%; }
+
+.vital-main {
+  padding: 24px 28px;
+}
+.vital-cap {
+  font-family: var(--font-head);
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--txt-3);
+  margin-bottom: 8px;
+}
+.vital-val {
+  font-family: var(--font-hero);
+  font-size: clamp(2.2rem, 4vw, 3.2rem);
+  line-height: 1;
+  letter-spacing: .02em;
+}
+.vital-unit {
+  font-size: .7rem;
+  color: var(--txt-3);
+  font-family: var(--font-mono);
+  margin-top: 3px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CONTENT GRID
+═══════════════════════════════════════════════════════════ */
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 960px) { .content-grid { grid-template-columns: 1fr; } }
+
+/* ═══════════════════════════════════════════════════════════
+   PANEL / CARD
+═══════════════════════════════════════════════════════════ */
+.panel {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.panel-head {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.panel-title {
+  font-family: var(--font-head);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--txt-2);
+}
+.panel-body { padding: 20px; }
+
+/* ═══════════════════════════════════════════════════════════
+   BUTTONS
+═══════════════════════════════════════════════════════════ */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 20px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: var(--radius);
+  font-family: var(--font-head);
+  font-size: .95rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  transition: opacity .15s, transform .1s;
+  width: 100%;
+  margin-top: 12px;
+}
+.btn-primary:hover { opacity: .88; }
+.btn-primary:active { transform: scale(.98); }
+
+.btn-ghost {
+  padding: 6px 12px;
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius);
+  font-family: var(--font-head);
+  font-size: .82rem;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--txt-3);
+  background: transparent;
+  transition: border-color .15s, color .15s;
+}
+.btn-ghost:hover { border-color: var(--border-hi); color: var(--txt-2); }
+
+/* ═══════════════════════════════════════════════════════════
+   LOG FORM
+═══════════════════════════════════════════════════════════ */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.form-grid .span2 { grid-column: span 2; }
+.form-group { display: flex; flex-direction: column; }
+
+/* ═══════════════════════════════════════════════════════════
+   DATA TABLE
+═══════════════════════════════════════════════════════════ */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.data-table th {
+  text-align: left;
+  font-family: var(--font-head);
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--txt-3);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.data-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: .85rem;
+  vertical-align: middle;
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--bg-2); }
+.mono { font-family: var(--font-mono); font-size: .82rem; }
+.accent-val { color: var(--accent); font-family: var(--font-mono); font-weight: 600; }
+.del-btn {
+  width: 26px; height: 26px;
+  border-radius: 4px;
+  color: var(--txt-3);
+  font-size: .75rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s, color .15s;
+}
+.del-btn:hover { background: rgba(239,68,68,.14); color: var(--red); }
+
+/* ═══════════════════════════════════════════════════════════
+   CHART
+═══════════════════════════════════════════════════════════ */
+.chart-wrap { position: relative; }
+
+/* ═══════════════════════════════════════════════════════════
+   STACK PAGE
+═══════════════════════════════════════════════════════════ */
+.stack-page-header {
+  padding: 32px 0 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0;
+  background: var(--bg-1);
+  margin: 0 -28px;
+  padding: 32px 28px 0;
+}
+.stack-page-title {
+  font-family: var(--font-hero);
+  font-size: clamp(2.5rem, 7vw, 5rem);
+  letter-spacing: .06em;
+  line-height: 1;
+  color: var(--txt);
+  margin-bottom: 4px;
+}
+.stack-page-date {
+  font-family: var(--font-mono);
+  font-size: .75rem;
+  color: var(--txt-3);
+  letter-spacing: .06em;
+  padding-bottom: 20px;
+}
+.stack-progress-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+  border-top: 1px solid var(--border);
+  margin-top: 12px;
+}
+.stack-overall-pct {
+  font-family: var(--font-hero);
+  font-size: 1.6rem;
+  color: var(--accent);
+  flex-shrink: 0;
+  line-height: 1;
+}
+.stack-progress-track {
+  flex: 1;
+  height: 4px;
+  background: var(--bg-3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.stack-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width .4s ease;
+}
+.stack-progress-label {
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  color: var(--txt-3);
+  flex-shrink: 0;
+}
+
+/* Slot section */
+.slot-block {
+  margin-top: 36px;
+}
+.slot-block-head {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.slot-time-label {
+  font-family: var(--font-hero);
+  font-size: 2.2rem;
+  color: var(--accent);
+  letter-spacing: .04em;
+  line-height: 1;
+}
+.slot-context-label {
+  font-family: var(--font-head);
+  font-size: .82rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--txt-3);
+}
+.slot-count {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  color: var(--txt-3);
+}
+
+.check-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 6px;
+}
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  user-select: none;
+  transition: border-color .15s, background .15s;
+}
+.check-row:hover { border-color: var(--border-md); }
+.check-row.done {
+  border-color: rgba(34,197,94,.25);
+  background: rgba(34,197,94,.04);
+}
+.check-row.done .check-name { color: var(--txt-3); text-decoration: line-through; }
+.check-box {
+  width: 18px; height: 18px;
+  border: 2px solid var(--border-hi);
+  border-radius: 3px;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .65rem;
+  transition: all .15s;
+}
+.check-row.done .check-box {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
+.check-info { flex: 1; min-width: 0; }
+.check-name {
+  font-size: .88rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color .15s;
+}
+.check-dose {
+  font-size: .72rem;
+  color: var(--txt-3);
+  font-family: var(--font-mono);
+  margin-top: 1px;
+}
+.check-cat {
+  font-family: var(--font-head);
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  padding: 2px 7px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.cat-s   { background: rgba(239,68,68,.14);  color: #ef4444; }
+.cat-h   { background: rgba(249,115,22,.14); color: var(--accent); }
+.cat-p   { background: rgba(234,179,8,.14);  color: #eab308; }
+.cat-m   { background: rgba(56,189,248,.14); color: var(--blue); }
+.cat-sup { background: var(--bg-3);          color: var(--txt-3); }
+
+/* ═══════════════════════════════════════════════════════════
+   VERLAUF PAGE
+═══════════════════════════════════════════════════════════ */
+.period-bar {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 28px;
+}
+.period-btn {
+  padding: 7px 18px;
+  border-radius: 4px;
+  font-family: var(--font-head);
+  font-size: .88rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  border: 1px solid var(--border-md);
+  color: var(--txt-3);
+  background: transparent;
+  transition: all .15s;
+  cursor: pointer;
+}
+.period-btn.active, .period-btn:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.chart-panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+@media (max-width: 720px) { .chart-panels { grid-template-columns: 1fr; } }
+
+/* ═══════════════════════════════════════════════════════════
+   MINI STACK STATUS
+═══════════════════════════════════════════════════════════ */
+.slot-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 12px;
+}
+.slot-pill {
+  font-family: var(--font-mono);
+  font-size: .68rem;
+  padding: 3px 9px;
+  border-radius: 4px;
+  background: var(--bg-3);
+  color: var(--txt-3);
+}
+.slot-pill.all-done { background: rgba(34,197,94,.14); color: var(--green); }
+
+/* ═══════════════════════════════════════════════════════════
+   EMPTY STATE
+═══════════════════════════════════════════════════════════ */
+.empty-state {
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--txt-3);
+}
+.empty-state-icon {
+  font-size: 2rem;
+  display: block;
+  margin-bottom: 12px;
+}
+.empty-state-txt {
+  font-family: var(--font-head);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════════════════ */
+.toast {
+  position: fixed;
+  bottom: 24px; right: 24px;
+  background: var(--bg-3);
+  border: 1px solid var(--border-hi);
+  border-radius: var(--radius);
+  padding: 10px 18px;
+  font-family: var(--font-head);
+  font-size: .9rem;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  z-index: 999;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: all .25s;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+
+/* ═══════════════════════════════════════════════════════════
+   LIGHT MODE
+═══════════════════════════════════════════════════════════ */
+[data-theme="light"] {
+  --bg:       #f5f5f4;
+  --bg-1:     #ffffff;
+  --bg-2:     #f0f0ef;
+  --bg-3:     #e5e5e3;
+  --bg-4:     #d4d4d2;
+  --border:   rgba(0,0,0,.07);
+  --border-md:rgba(0,0,0,.12);
+  --border-hi:rgba(0,0,0,.20);
+  --txt:      #111110;
+  --txt-2:    #555553;
+  --txt-3:    #aaa;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  .nav { padding: 0 16px; }
+  .nav-brand { margin-right: 16px; font-size: 1.2rem; }
+  .nav-tab { padding: 0 12px; font-size: .82rem; }
+  .page-inner { padding: 0 16px 48px; }
+  .hero-inner { padding: 24px 16px 20px; }
+  .blast-bar-inner { padding: 10px 16px; }
+  .stack-page-header { margin: 0 -16px; padding: 24px 16px 0; }
+  .form-grid { grid-template-columns: 1fr; }
+  .form-grid .span2 { grid-column: span 1; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ NAV ═══════════════════════════════════════════════ -->
+<nav class="nav">
+  <div class="nav-brand">MB<em>·</em>OS</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('heute')">Heute</button>
+    <button class="nav-tab" onclick="showPage('stack')">Stack</button>
+    <button class="nav-tab" onclick="showPage('logbuch')">Logbuch</button>
+    <button class="nav-tab" onclick="showPage('verlauf')">Verlauf</button>
+  </div>
+  <div class="nav-end">
+    <button class="nav-theme-btn" onclick="toggleTheme()" id="theme-btn">☀</button>
+  </div>
+</nav>
+
+<!-- ═══ PAGE: HEUTE ════════════════════════════════════════ -->
+<div class="page active" id="page-heute">
+
+  <!-- Hero -->
+  <div class="hero-section">
+    <div class="hero-ghost" id="hero-ghost">–</div>
+    <div class="hero-inner">
+      <div>
+        <div class="hero-label">Körpergewicht</div>
+        <div class="hero-weight-row">
+          <div class="hero-weight" id="hero-weight">–––</div>
+          <div class="hero-unit">KG</div>
+          <div class="hero-delta flat" id="hero-delta" style="display:none"></div>
+        </div>
+        <div class="hero-sub" id="hero-sub">Noch kein Eintrag – Messung eintragen</div>
+      </div>
+      <div class="hero-blast">
+        <div class="hero-blast-num" id="blast-day-num">–</div>
+        <div class="hero-blast-tag">Blast · Tag</div>
+        <div class="hero-blast-week" id="blast-week-label"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Blast-Fortschritt -->
+  <div class="blast-bar-section">
+    <div class="blast-bar-inner">
+      <span class="blast-bar-badge">RECOMP BLAST 2026</span>
+      <div class="blast-pips" id="blast-pips"></div>
+      <span class="blast-pct" id="blast-pct"></span>
+    </div>
+  </div>
+
+  <div class="page-inner">
+
+    <!-- Vitals -->
+    <div class="section-head" style="margin-top:32px">
+      <div class="section-title">Heutige Werte</div>
+      <div class="section-sub" id="vitals-date"></div>
+    </div>
+    <div class="vitals-strip">
+      <div class="vital-cell vital-main">
+        <div class="vital-cap">HRV</div>
+        <div class="vital-val" id="v-hrv" style="color:var(--green)">–</div>
+        <div class="vital-unit">Millisekunden</div>
+      </div>
+      <div class="vital-cell">
+        <div class="vital-cap">Schlaf</div>
+        <div class="vital-val" id="v-sleep">–</div>
+        <div class="vital-unit">Stunden</div>
+      </div>
+      <div class="vital-cell">
+        <div class="vital-cap">KFA</div>
+        <div class="vital-val" id="v-kfa" style="color:var(--accent)">–</div>
+        <div class="vital-unit">Prozent</div>
+      </div>
+      <div class="vital-cell">
+        <div class="vital-cap">Schritte</div>
+        <div class="vital-val" id="v-steps" style="font-size:1.9rem">–</div>
+        <div class="vital-unit">heute</div>
+      </div>
+      <div class="vital-cell">
+        <div class="vital-cap">Body Bat.</div>
+        <div class="vital-val" id="v-bb">–</div>
+        <div class="vital-unit">von 100</div>
+      </div>
+    </div>
+
+    <!-- Content Grid -->
+    <div class="content-grid">
+
+      <!-- Links: Chart + letzte Einträge -->
+      <div>
+        <div class="panel">
+          <div class="panel-head">
+            <span class="panel-title">Gewicht · 30 Tage</span>
+          </div>
+          <div class="panel-body">
+            <div class="chart-wrap" style="height:190px"><canvas id="weightChartHero"></canvas></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <span class="panel-title">Letzte Einträge</span>
+          </div>
+          <div id="recent-table">
+            <div class="empty-state">
+              <span class="empty-state-icon">–</span>
+              <div class="empty-state-txt">Noch keine Daten</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rechts: Eingabe + Mini-Stack -->
+      <div>
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">Eintrag</span></div>
+          <div class="panel-body">
+            <form onsubmit="saveEntry(event)">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Datum</label>
+                  <input type="date" id="f-date" required>
+                </div>
+                <div class="form-group">
+                  <label>Gewicht kg</label>
+                  <input type="number" id="f-weight" step=".1" placeholder="91.5">
+                </div>
+                <div class="form-group">
+                  <label>KFA %</label>
+                  <input type="number" id="f-kfa" step=".1" placeholder="14.2">
+                </div>
+                <div class="form-group">
+                  <label>HRV ms</label>
+                  <input type="number" id="f-hrv" placeholder="52">
+                </div>
+                <div class="form-group">
+                  <label>Schlaf h</label>
+                  <input type="number" id="f-sleep" step=".25" placeholder="7.0">
+                </div>
+                <div class="form-group">
+                  <label>Schritte</label>
+                  <input type="number" id="f-steps" placeholder="8500">
+                </div>
+                <div class="form-group">
+                  <label>Body Bat.</label>
+                  <input type="number" id="f-bb" placeholder="72">
+                </div>
+                <div class="form-group">
+                  <label>TR Score</label>
+                  <input type="number" id="f-tr" placeholder="65">
+                </div>
+                <div class="form-group span2">
+                  <label>Notiz</label>
+                  <input type="text" id="f-note" placeholder="Wie war der Tag?">
+                </div>
+              </div>
+              <button type="submit" class="btn-primary">Speichern</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <span class="panel-title">Stack heute</span>
+            <button class="btn-ghost" onclick="showPage('stack')">Alle</button>
+          </div>
+          <div class="panel-body" id="mini-stack-panel"></div>
+        </div>
+      </div>
+
+    </div><!-- /content-grid -->
+  </div><!-- /page-inner -->
+</div>
+
+<!-- ═══ PAGE: STACK ════════════════════════════════════════ -->
+<div class="page" id="page-stack">
+  <div class="page-inner">
+    <div class="stack-page-header">
+      <div class="stack-page-title">TAGES STACK</div>
+      <div class="stack-page-date" id="stack-date-label"></div>
+      <div class="stack-progress-bar-wrap">
+        <div class="stack-overall-pct" id="stack-pct-big">0%</div>
+        <div class="stack-progress-track">
+          <div class="stack-progress-fill" id="stack-bar-fill"></div>
+        </div>
+        <div class="stack-progress-label" id="stack-count-label"></div>
+        <button class="btn-ghost" onclick="resetChecks()">Reset</button>
+      </div>
+    </div>
+    <div id="stack-list"></div>
+  </div>
+</div>
+
+<!-- ═══ PAGE: LOGBUCH ═════════════════════════════════════ -->
+<div class="page" id="page-logbuch">
+  <div class="page-inner">
+    <div class="section-head">
+      <div class="section-title">Logbuch</div>
+      <div class="section-sub" id="log-count-label"></div>
+    </div>
+    <div class="panel">
+      <div id="log-table-wrap">
+        <div class="empty-state">
+          <span class="empty-state-icon">–</span>
+          <div class="empty-state-txt">Noch keine Einträge</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PAGE: VERLAUF ════════════════════════════════════ -->
+<div class="page" id="page-verlauf">
+  <div class="page-inner">
+    <div class="section-head" style="justify-content:space-between;flex-wrap:wrap">
+      <div class="section-title">Verlauf</div>
+      <span style="font-family:var(--font-mono);font-size:.72rem;color:var(--txt-3)" id="chart-range-label"></span>
+    </div>
+    <div class="period-bar">
+      <button class="period-btn active" onclick="setPeriod(7,this)">7T</button>
+      <button class="period-btn" onclick="setPeriod(14,this)">14T</button>
+      <button class="period-btn" onclick="setPeriod(30,this)">30T</button>
+      <button class="period-btn" onclick="setPeriod(60,this)">60T</button>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">Körpergewicht</span></div>
+      <div class="panel-body">
+        <div class="chart-wrap" style="height:220px"><canvas id="weightChart2"></canvas></div>
+      </div>
+    </div>
+
+    <div class="chart-panels">
+      <div class="panel" style="margin:0">
+        <div class="panel-head"><span class="panel-title">HRV</span></div>
+        <div class="panel-body">
+          <div class="chart-wrap" style="height:180px"><canvas id="hrvChart"></canvas></div>
+        </div>
+      </div>
+      <div class="panel" style="margin:0">
+        <div class="panel-head"><span class="panel-title">KFA %</span></div>
+        <div class="panel-body">
+          <div class="chart-wrap" style="height:180px"><canvas id="kfaChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:16px">
+      <div class="panel-head"><span class="panel-title">Schlaf</span></div>
+      <div class="panel-body">
+        <div class="chart-wrap" style="height:180px"><canvas id="sleepChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TOAST ══════════════════════════════════════════════ -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════
+   CONSTANTS
+══════════════════════════════════════════════════════════ */
+const BLAST_START = new Date('2026-02-23');
+const BLAST_WEEKS = 16;
+
+const STACK = [
+  { slot:'07:00', id:'y01', name:'Yohimbin',          dose:'15 mg nüchtern',            cat:'M' },
+  { slot:'07:00', id:'y02', name:'Clenbuterol',        dose:'40 mcg nüchtern',           cat:'M' },
+  { slot:'07:00', id:'y03', name:'Telmisartan',        dose:'40 mg nüchtern',            cat:'M' },
+  { slot:'07:00', id:'y04', name:'T3 Liothyronin',     dose:'25 mcg morgens',            cat:'H' },
+
+  { slot:'10–11', id:'a01', name:'Exemestan',          dose:'25 mg mit Essen',           cat:'M' },
+  { slot:'10–11', id:'a02', name:'Cialis / Tadalafil', dose:'5 mg mit Essen',            cat:'M' },
+  { slot:'10–11', id:'a03', name:'NAC',                dose:'800 mg (1. Dosis)',         cat:'SUP' },
+  { slot:'10–11', id:'a04', name:'Omega-3',            dose:'2 Kaps (1. Dosis)',         cat:'SUP' },
+  { slot:'10–11', id:'a05', name:'Essetil Forte',      dose:'600 mg (1. Dosis)',         cat:'SUP' },
+  { slot:'10–11', id:'a06', name:'CoQ10',              dose:'100 mg mit Essen',          cat:'SUP' },
+  { slot:'10–11', id:'a07', name:'Nattokinase',        dose:'2000 FU mit Essen',         cat:'SUP' },
+  { slot:'10–11', id:'a08', name:'Cholin',             dose:'375 mg mit Essen',          cat:'SUP' },
+  { slot:'10–11', id:'a09', name:'Kalium',             dose:'300 mg mit Essen',          cat:'SUP' },
+  { slot:'10–11', id:'a10', name:'Astaxanthin',        dose:'12 mg mit Essen',           cat:'SUP' },
+  { slot:'10–11', id:'a11', name:'Mariendistel',       dose:'300 mg (1. Dosis)',         cat:'SUP' },
+
+  { slot:'17–18', id:'b01', name:'T3 Liothyronin',     dose:'12,5 mcg (2. Dosis)',      cat:'H' },
+  { slot:'17–18', id:'b02', name:'Metformin',           dose:'1000 mg mit Mahlzeit',     cat:'M' },
+  { slot:'17–18', id:'b03', name:'NAC',                 dose:'800 mg (2. Dosis)',        cat:'SUP' },
+  { slot:'17–18', id:'b04', name:'Omega-3',             dose:'2 Kaps (2. Dosis)',        cat:'SUP' },
+  { slot:'17–18', id:'b05', name:'Essetil Forte',       dose:'600 mg (2. Dosis)',        cat:'SUP' },
+  { slot:'17–18', id:'b06', name:'Vitamin B12',         dose:'1000 mcg mit Mahlzeit',   cat:'SUP' },
+  { slot:'17–18', id:'b07', name:'Zink',                dose:'37,5 mg mit Mahlzeit',    cat:'SUP' },
+  { slot:'17–18', id:'b08', name:'Citrus Bergamot',     dose:'500 mg mit Mahlzeit',     cat:'SUP' },
+  { slot:'17–18', id:'b09', name:'TUDCA',               dose:'375 mg mit Mahlzeit',     cat:'SUP' },
+  { slot:'17–18', id:'b10', name:'Taurin',              dose:'1 g mit Mahlzeit',        cat:'SUP' },
+  { slot:'17–18', id:'b11', name:'Mariendistel',        dose:'500 mg (2. Dosis)',        cat:'SUP' },
+
+  { slot:'21–22', id:'c01', name:'Magnesium-Komplex',   dose:'300 mg',                  cat:'SUP' },
+  { slot:'21–22', id:'c02', name:'Melatonin',           dose:'1 mg',                    cat:'SUP' },
+  { slot:'21–22', id:'c03', name:'Ketotifen',           dose:'1 mg',                    cat:'M' },
+  { slot:'21–22', id:'c04', name:'Trazodon',            dose:'50 mg',                   cat:'M' },
+  { slot:'21–22', id:'c05', name:'HGH',                 dose:'4 IU subkutan',           cat:'H' },
+  { slot:'21–22', id:'c06', name:'Eisen',               dose:'nach Arzt (Ferritin)',    cat:'SUP' },
+
+  { slot:'Mi+So', id:'d01', name:'Testosteron E',       dose:'250 mg i.m.',             cat:'S' },
+  { slot:'Mi+So', id:'d02', name:'Masteron E',          dose:'200 mg i.m.',             cat:'S' },
+  { slot:'Mi+So', id:'d03', name:'Trenbolon E',         dose:'100 mg i.m.',             cat:'S' },
+  { slot:'Mi+So', id:'d04', name:'Cabergolin',          dose:'0,25 mg Mi-Abend',        cat:'M' },
+  { slot:'Do',    id:'d05', name:'Retatrutide',         dose:'2 mg s.c. nüchtern',      cat:'P' },
+];
+
+const SLOTS = ['07:00','10–11','17–18','21–22','Mi+So','Do'];
+const SLOT_LABELS = {
+  '07:00': 'Nüchtern / Morgens',
+  '10–11': 'Mit Frühstück',
+  '17–18': 'Mit Mahlzeit',
+  '21–22': 'Zur Nacht',
+  'Mi+So': 'Injektion Mi + So',
+  'Do':    'Injektion Donnerstag',
+};
+const CAT_CLASS = { S:'cat-s', H:'cat-h', P:'cat-p', M:'cat-m', SUP:'cat-sup' };
+const CAT_LABEL = { S:'AAS', H:'HOR', P:'PEP', M:'MED', SUP:'SUP' };
+
+/* ══════════════════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════════════════ */
+let entries = JSON.parse(localStorage.getItem('fos_log') || '[]');
+let checks  = JSON.parse(localStorage.getItem('fos_checks') || '{}');
+let period  = 7;
+let charts  = {};
+
+function persist() {
+  localStorage.setItem('fos_log',    JSON.stringify(entries));
+  localStorage.setItem('fos_checks', JSON.stringify(checks));
+}
+
+function todayStr() {
+  return new Date().toISOString().slice(0,10);
+}
+
+/* ══════════════════════════════════════════════════════════
+   BLAST
+══════════════════════════════════════════════════════════ */
+function blastInfo() {
+  const now = new Date();
+  now.setHours(0,0,0,0);
+  const diff = Math.floor((now - BLAST_START) / 86400000);
+  return {
+    day:  diff + 1,
+    week: Math.floor(diff / 7) + 1,
+    pct:  Math.min(100, Math.round((diff / (BLAST_WEEKS * 7)) * 100)),
+    gone: diff < 0,
+  };
+}
+
+function renderBlast() {
+  const b = blastInfo();
+  document.getElementById('blast-day-num').textContent    = b.gone ? '–' : b.day;
+  document.getElementById('blast-week-label').textContent = b.gone ? '' : `Woche ${b.week} / ${BLAST_WEEKS}`;
+
+  const wrap = document.getElementById('blast-pips');
+  wrap.innerHTML = '';
+  for (let w = 1; w <= BLAST_WEEKS; w++) {
+    const p = document.createElement('div');
+    p.className = 'pip';
+    if (w < b.week)      p.classList.add('done');
+    else if (w === b.week) p.classList.add('current');
+    wrap.appendChild(p);
+  }
+  document.getElementById('blast-pct').textContent = `${b.pct}%`;
+}
+
+/* ══════════════════════════════════════════════════════════
+   ENTRIES
+══════════════════════════════════════════════════════════ */
+function saveEntry(e) {
+  e.preventDefault();
+  const d = {
+    date:   document.getElementById('f-date').value,
+    weight: parseFloat(document.getElementById('f-weight').value) || null,
+    kfa:    parseFloat(document.getElementById('f-kfa').value)    || null,
+    hrv:    parseInt(document.getElementById('f-hrv').value)      || null,
+    sleep:  parseFloat(document.getElementById('f-sleep').value)  || null,
+    steps:  parseInt(document.getElementById('f-steps').value)    || null,
+    bb:     parseInt(document.getElementById('f-bb').value)       || null,
+    tr:     parseInt(document.getElementById('f-tr').value)       || null,
+    note:   document.getElementById('f-note').value || '',
+  };
+  if (!d.date) return;
+  const idx = entries.findIndex(x => x.date === d.date);
+  if (idx >= 0) entries[idx] = d; else entries.push(d);
+  entries.sort((a, b) => b.date.localeCompare(a.date));
+  persist();
+  e.target.reset();
+  document.getElementById('f-date').value = todayStr();
+  renderAll();
+  toast('Gespeichert');
+}
+
+function deleteEntry(date) {
+  entries = entries.filter(x => x.date !== date);
+  persist(); renderAll();
+  toast('Eintrag gelöscht');
+}
+
+function getLatest() { return entries[0] || null; }
+
+function filtered(days) {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  return entries.filter(x => new Date(x.date) >= cutoff).reverse();
+}
+
+/* ══════════════════════════════════════════════════════════
+   HERO
+══════════════════════════════════════════════════════════ */
+function renderHero() {
+  const latest = getLatest();
+  const prev   = entries[1] || null;
+
+  if (latest?.weight) {
+    const w = latest.weight.toFixed(1);
+    document.getElementById('hero-weight').textContent = w;
+    document.getElementById('hero-ghost').textContent  = String(w).replace('.','').slice(0,3);
+    document.getElementById('hero-sub').textContent =
+      new Date(latest.date).toLocaleDateString('de-DE', {weekday:'long',day:'2-digit',month:'long'}) + ' · letzter Eintrag';
+
+    if (prev?.weight) {
+      const diff = (latest.weight - prev.weight).toFixed(1);
+      const el = document.getElementById('hero-delta');
+      el.style.display = 'flex';
+      el.className = 'hero-delta ' + (diff < 0 ? 'down' : diff > 0 ? 'up' : 'flat');
+      el.textContent = (diff > 0 ? '+' : '') + diff + ' kg';
+    }
+  }
+
+  const latest2 = getLatest();
+  if (latest2) {
+    if (latest2.hrv)   document.getElementById('v-hrv').textContent   = latest2.hrv;
+    if (latest2.sleep) document.getElementById('v-sleep').textContent = latest2.sleep.toFixed(1);
+    if (latest2.kfa)   document.getElementById('v-kfa').textContent   = latest2.kfa.toFixed(1);
+    if (latest2.steps) document.getElementById('v-steps').textContent = latest2.steps.toLocaleString('de-DE');
+    if (latest2.bb)    document.getElementById('v-bb').textContent    = latest2.bb;
+    document.getElementById('vitals-date').textContent =
+      new Date(latest2.date).toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'numeric'});
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   RECENT TABLE
+══════════════════════════════════════════════════════════ */
+function renderRecentTable() {
+  const wrap = document.getElementById('recent-table');
+  const last5 = entries.slice(0, 5);
+  if (!last5.length) {
+    wrap.innerHTML = '<div class="empty-state"><span class="empty-state-icon">–</span><div class="empty-state-txt">Noch keine Daten</div></div>';
+    return;
+  }
+  wrap.innerHTML = `
+    <table class="data-table">
+      <thead><tr>
+        <th>Datum</th><th>Gewicht</th><th>KFA</th><th>HRV</th><th>Schlaf</th>
+      </tr></thead>
+      <tbody>${last5.map(r => `
+        <tr>
+          <td class="mono">${new Date(r.date).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})}</td>
+          <td class="accent-val">${r.weight ? r.weight.toFixed(1)+' kg' : '–'}</td>
+          <td class="mono">${r.kfa ? r.kfa.toFixed(1)+'%' : '–'}</td>
+          <td class="mono">${r.hrv || '–'}</td>
+          <td class="mono">${r.sleep ? r.sleep+'h' : '–'}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+/* ══════════════════════════════════════════════════════════
+   FULL LOG TABLE
+══════════════════════════════════════════════════════════ */
+function renderLogTable() {
+  const wrap = document.getElementById('log-table-wrap');
+  const lbl  = document.getElementById('log-count-label');
+  if (lbl) lbl.textContent = entries.length ? `${entries.length} Einträge` : '';
+  if (!entries.length) {
+    wrap.innerHTML = '<div class="empty-state"><span class="empty-state-icon">–</span><div class="empty-state-txt">Noch keine Einträge</div></div>';
+    return;
+  }
+  wrap.innerHTML = `
+    <table class="data-table">
+      <thead><tr>
+        <th>Datum</th><th>Gewicht</th><th>KFA</th><th>HRV</th><th>Schlaf</th><th>Schritte</th><th>BB</th><th>Notiz</th><th></th>
+      </tr></thead>
+      <tbody>${entries.map(r => `
+        <tr>
+          <td class="mono">${new Date(r.date).toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit',year:'2-digit'})}</td>
+          <td class="accent-val">${r.weight ? r.weight.toFixed(1)+' kg' : '–'}</td>
+          <td class="mono">${r.kfa ? r.kfa.toFixed(1)+'%' : '–'}</td>
+          <td class="mono">${r.hrv||'–'}</td>
+          <td class="mono">${r.sleep ? r.sleep+'h' : '–'}</td>
+          <td class="mono">${r.steps ? r.steps.toLocaleString('de-DE') : '–'}</td>
+          <td class="mono">${r.bb||'–'}</td>
+          <td style="font-size:.78rem;color:var(--txt-3);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.note||''}</td>
+          <td><button class="del-btn" onclick="deleteEntry('${r.date}')">x</button></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+/* ══════════════════════════════════════════════════════════
+   CHARTS
+══════════════════════════════════════════════════════════ */
+const mkChart = (label, color, data, labels) => ({
+  type: 'line',
+  data: {
+    labels,
+    datasets: [{
+      label,
+      data,
+      borderColor: color,
+      backgroundColor: color + '14',
+      borderWidth: 2,
+      pointRadius: data.length < 20 ? 3 : 1,
+      pointBackgroundColor: color,
+      tension: .35,
+      fill: true,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#141414',
+        borderColor: 'rgba(255,255,255,.1)',
+        borderWidth: 1,
+        titleColor: '#f0f0f0',
+        bodyColor: '#888',
+        padding: 10,
+      }
+    },
+    scales: {
+      x: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#484848', font: { size: 10 } } },
+      y: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#484848', font: { size: 10 } } },
+    }
+  }
+});
+
+function renderHeroChart() {
+  const data   = filtered(30);
+  const labels = data.map(r => new Date(r.date).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'}));
+  const vals   = data.map(r => r.weight);
+  const ctx    = document.getElementById('weightChartHero').getContext('2d');
+  if (charts.heroWeight) charts.heroWeight.destroy();
+  charts.heroWeight = new Chart(ctx, mkChart('kg', '#f97316', vals, labels));
+}
+
+function renderAllCharts() {
+  const data   = filtered(period);
+  const labels = data.map(r => new Date(r.date).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'}));
+
+  const mk = (id, key, label, color) => {
+    const ctx = document.getElementById(id)?.getContext('2d');
+    if (!ctx) return;
+    if (charts[id]) charts[id].destroy();
+    charts[id] = new Chart(ctx, mkChart(label, color, data.map(r => r[key]||null), labels));
+  };
+  mk('weightChart2', 'weight', 'Gewicht kg', '#f97316');
+  mk('hrvChart',     'hrv',    'HRV ms',     '#22c55e');
+  mk('kfaChart',     'kfa',    'KFA %',      '#f97316');
+  mk('sleepChart',   'sleep',  'Schlaf h',   '#38bdf8');
+  renderHeroChart();
+
+  const lbl = document.getElementById('chart-range-label');
+  if (lbl) lbl.textContent = `${data.length} Einträge · letzte ${period} Tage`;
+}
+
+function setPeriod(p, btn) {
+  period = p;
+  document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAllCharts();
+}
+
+/* ══════════════════════════════════════════════════════════
+   CHECKLIST
+══════════════════════════════════════════════════════════ */
+function todayChecks() {
+  return checks[todayStr()] || [];
+}
+
+function toggleCheck(id) {
+  const t = todayStr();
+  if (!checks[t]) checks[t] = [];
+  const i = checks[t].indexOf(id);
+  if (i >= 0) checks[t].splice(i, 1); else checks[t].push(id);
+  persist();
+  renderStack();
+  renderMiniStack();
+}
+
+function resetChecks() {
+  checks[todayStr()] = [];
+  persist(); renderStack(); renderMiniStack();
+  toast('Reset');
+}
+
+function renderStack() {
+  const done    = todayChecks();
+  const dateEl  = document.getElementById('stack-date-label');
+  if (dateEl) dateEl.textContent =
+    new Date().toLocaleDateString('de-DE', {weekday:'long', day:'2-digit', month:'long', year:'numeric'});
+
+  const total    = STACK.length;
+  const doneCount = STACK.filter(s => done.includes(s.id)).length;
+  const pct       = Math.round((doneCount / total) * 100);
+
+  const bigPct = document.getElementById('stack-pct-big');
+  if (bigPct) bigPct.textContent = pct + '%';
+  const fill = document.getElementById('stack-bar-fill');
+  if (fill) fill.style.width = pct + '%';
+  const countLbl = document.getElementById('stack-count-label');
+  if (countLbl) countLbl.textContent = `${doneCount} / ${total}`;
+
+  let html = '';
+  for (const slot of SLOTS) {
+    const items = STACK.filter(s => s.slot === slot);
+    if (!items.length) continue;
+    const dc = items.filter(s => done.includes(s.id)).length;
+    html += `
+      <div class="slot-block">
+        <div class="slot-block-head">
+          <div class="slot-time-label">${slot}</div>
+          <div class="slot-context-label">${SLOT_LABELS[slot]}</div>
+          <div class="slot-count">${dc}/${items.length}</div>
+        </div>
+        <div class="check-grid">`;
+    for (const item of items) {
+      const checked = done.includes(item.id);
+      html += `
+          <div class="check-row ${checked ? 'done' : ''}" onclick="toggleCheck('${item.id}')">
+            <div class="check-box">${checked ? '&#10003;' : ''}</div>
+            <div class="check-info">
+              <div class="check-name">${item.name}</div>
+              <div class="check-dose">${item.dose}</div>
+            </div>
+            <div class="check-cat ${CAT_CLASS[item.cat]}">${CAT_LABEL[item.cat]}</div>
+          </div>`;
+    }
+    html += `</div></div>`;
+  }
+  const wrap = document.getElementById('stack-list');
+  if (wrap) wrap.innerHTML = html;
+}
+
+function renderMiniStack() {
+  const wrap      = document.getElementById('mini-stack-panel');
+  if (!wrap) return;
+  const done      = todayChecks();
+  const total     = STACK.length;
+  const doneCount = STACK.filter(s => done.includes(s.id)).length;
+  const pct       = Math.round((doneCount / total) * 100);
+
+  const slotPills = SLOTS.slice(0,4).map(slot => {
+    const items = STACK.filter(s => s.slot === slot);
+    const dc    = items.filter(s => done.includes(s.id)).length;
+    const all   = dc === items.length;
+    return `<span class="slot-pill ${all ? 'all-done' : ''}">${slot} ${dc}/${items.length}</span>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span style="font-size:.82rem;color:var(--txt-2)">${doneCount} von ${total} eingenommen</span>
+      <span style="font-family:var(--font-mono);font-size:.82rem;color:var(--accent);font-weight:600">${pct}%</span>
+    </div>
+    <div style="height:4px;background:var(--bg-3);border-radius:2px;overflow:hidden;margin-bottom:12px">
+      <div style="height:100%;width:${pct}%;background:var(--accent);border-radius:2px;transition:width .3s"></div>
+    </div>
+    <div class="slot-pills">${slotPills}</div>`;
+}
+
+/* ══════════════════════════════════════════════════════════
+   UI
+══════════════════════════════════════════════════════════ */
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  const map = { heute: 0, stack: 1, logbuch: 2, verlauf: 3 };
+  document.querySelectorAll('.nav-tab')[map[id]]?.classList.add('active');
+  if (id === 'verlauf') renderAllCharts();
+}
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const next = html.dataset.theme === 'dark' ? 'light' : 'dark';
+  html.dataset.theme = next;
+  document.getElementById('theme-btn').textContent = next === 'dark' ? '☀' : '&#9790;';
+  localStorage.setItem('fos_theme', next);
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+function renderAll() {
+  renderBlast();
+  renderHero();
+  renderRecentTable();
+  renderHeroChart();
+  renderLogTable();
+  renderStack();
+  renderMiniStack();
+}
+
+/* ══════════════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════════════ */
+(function init() {
+  const theme = localStorage.getItem('fos_theme') || 'dark';
+  document.documentElement.dataset.theme = theme;
+  document.getElementById('theme-btn').textContent = theme === 'dark' ? '☀' : '&#9790;';
+
+  document.getElementById('f-date').value = todayStr();
+
+  Chart.defaults.color          = '#484848';
+  Chart.defaults.borderColor    = 'rgba(255,255,255,.05)';
+  Chart.defaults.font.family    = "'Inter', sans-serif";
+  Chart.defaults.font.size      = 11;
+
+  renderAll();
+})();
+</script>
+</body>
+</html>

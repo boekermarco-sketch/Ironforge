@@ -7,7 +7,7 @@ from pathlib import Path
 import shutil
 
 from app.database import get_db
-from app.models import BloodPanel, BloodValue, Biomarker, Stack
+from app.models import BloodPanel, BloodValue, Biomarker, Stack, DoseEvent, Substance
 from app.services.blood_pdf_parser import scan_folder_for_new_pdfs, parse_pdf
 
 router = APIRouter()
@@ -44,6 +44,7 @@ async def blood_overview(request: Request, db: Session = Depends(get_db)):
         "panels": panels,
         "biomarkers": biomarkers,
         "stacks": stacks,
+        "today": date.today(),
     })
 
 
@@ -81,12 +82,18 @@ async def blood_panel_detail(panel_id: int, request: Request, db: Session = Depe
         for pv in db.query(BloodValue).filter(BloodValue.panel_id == prev_panel.id).all():
             prev_values[pv.biomarker_id] = pv.value
 
+    all_biomarkers = db.query(Biomarker).order_by(Biomarker.category, Biomarker.name).all()
+    tagesplan = _get_tagesplan(panel.date, db)
+
     return templates.TemplateResponse("blood_panel.html", {
         "request": request,
         "panel": panel,
         "grouped": grouped,
         "prev_panel": prev_panel,
         "prev_values": prev_values,
+        "all_biomarkers": all_biomarkers,
+        "tagesplan": tagesplan,
+        "today": date.today(),
     })
 
 
@@ -156,6 +163,106 @@ async def add_blood_value(
     ))
     db.commit()
     return RedirectResponse(f"/blutbilder/{panel_id}", status_code=303)
+
+
+@router.post("/{panel_id}/loeschen", include_in_schema=False)
+async def delete_blood_panel(panel_id: int, db: Session = Depends(get_db)):
+    panel = db.query(BloodPanel).filter(BloodPanel.id == panel_id).first()
+    if not panel:
+        raise HTTPException(status_code=404, detail="Blutbild nicht gefunden")
+    db.delete(panel)
+    db.commit()
+    return RedirectResponse("/blutbilder/", status_code=303)
+
+
+@router.post("/{panel_id}/notizen", include_in_schema=False)
+async def update_panel_notes(
+    panel_id: int,
+    notes: str = Form(""),
+    db: Session = Depends(get_db)
+):
+    panel = db.query(BloodPanel).filter(BloodPanel.id == panel_id).first()
+    if not panel:
+        raise HTTPException(status_code=404, detail="Blutbild nicht gefunden")
+    panel.notes = notes or None
+    db.commit()
+    return RedirectResponse(f"/blutbilder/{panel_id}", status_code=303)
+
+
+def _get_tagesplan(panel_date: date, db: Session) -> dict:
+    """
+    Gibt aktuelle DoseEvents gruppiert nach Tageszeit zurück.
+    Zeitfenster: morgens, mittag, abend, nacht + injektionen
+    """
+    stack = (
+        db.query(Stack)
+        .filter(Stack.start_date <= panel_date)
+        .filter((Stack.end_date == None) | (Stack.end_date >= panel_date))
+        .filter(Stack.status == "aktiv")
+        .first()
+    )
+    if not stack:
+        return {}
+
+    rows = (
+        db.query(DoseEvent, Substance)
+        .join(Substance, DoseEvent.substance_id == Substance.id)
+        .filter(DoseEvent.stack_id == stack.id)
+        .filter(DoseEvent.start_date <= panel_date)
+        .filter((DoseEvent.end_date == None) | (DoseEvent.end_date >= panel_date))
+        .order_by(Substance.name)
+        .all()
+    )
+
+    SLOT_ORDER = ["07:00", "10-11", "17-18", "21-22", "Injektionen"]
+    plan: dict[str, list] = {s: [] for s in SLOT_ORDER}
+    plan["Sonstiges"] = []
+
+    def _slot(timing: str) -> str:
+        t = (timing or "").lower()
+        # Injektionen zuerst prüfen (Subkutan/IM schlägt Zeitangaben)
+        if any(k in t for k in ["intramuskulär", "intramuskulaer", "subkutan", "i.m.", "pin-tag",
+                                 "mi abend", "so morgen", "donnerstag morgen", "mittwoch abend",
+                                 "sonntag morgen"]):
+            return "Injektionen"
+        if "07" in t or ("nüchtern" in t and "abend" not in t):
+            return "07:00"
+        if "10" in t or "11" in t or "erst" in t:
+            return "10-11"
+        if "17" in t or "18" in t:
+            return "17-18"
+        if "21" in t or "22" in t or "schlaf" in t or "nacht" in t:
+            return "21-22"
+        return "Sonstiges"
+
+    for de, sub in rows:
+        slot = _slot(de.timing or "")
+        plan[slot].append({
+            "name": sub.name,
+            "dose": f"{de.dose_amount:g} {de.dose_unit}",
+            "timing": de.timing or "",
+            "notes": de.notes or "",
+        })
+
+    # Injektionen extra behandeln (Steroide sind meist 2x/Woche)
+    inj_rows = (
+        db.query(DoseEvent, Substance)
+        .join(Substance, DoseEvent.substance_id == Substance.id)
+        .filter(DoseEvent.stack_id == stack.id)
+        .filter(DoseEvent.start_date <= panel_date)
+        .filter((DoseEvent.end_date == None) | (DoseEvent.end_date >= panel_date))
+        .filter(Substance.route.in_(["intramuskulaer", "subkutan"]))
+        .order_by(Substance.name)
+        .all()
+    )
+    if inj_rows:
+        plan["Injektionen"] = [
+            {"name": sub.name, "dose": f"{de.dose_amount:g} {de.dose_unit}",
+             "timing": de.timing or "", "notes": de.notes or ""}
+            for de, sub in inj_rows
+        ]
+
+    return {k: v for k, v in plan.items() if v}
 
 
 @router.get("/api/verlauf/{biomarker_id}")

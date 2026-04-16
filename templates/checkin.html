@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+{% block title %}Check-in{% endblock %}
+
+{% block content %}
+
+<!-- ══ PAGE TOP ══════════════════════════════════════════════════ -->
+<div class="page-top">
+  <div>
+    <div class="page-title">Check-in</div>
+    <div class="page-meta">Foto · Analyse · Verlauf</div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    {% if today %}
+    <span class="pill">W{{ ((today - blast_start).days // 7) + 1 if today >= blast_start else "–" }}</span>
+    {% endif %}
+    <form action="/checkin/scan" method="post">
+      <button class="btn btn-secondary btn-sm">↺ Ordner scannen</button>
+    </form>
+  </div>
+</div>
+
+{% if not grouped %}
+<div class="card" style="text-align:center;padding:2.5rem">
+  <div style="font-family:'Cormorant Garamond',serif;font-size:2rem;color:var(--soft);margin-bottom:8px">Noch keine Fotos</div>
+  <div style="font-size:13px;color:var(--soft)">Bilder in <code>Imports/CheckIn_Fotos/DD.MM.YYYY/</code> ablegen und scannen.</div>
+</div>
+{% else %}
+
+<!-- ══ TIMELINE NAVIGATION ════════════════════════════════════ -->
+<div class="card" style="padding:16px;margin-bottom:12px;overflow-x:auto">
+  <div style="display:flex;gap:8px;min-width:max-content">
+    {% for d, entries in grouped.items() %}
+    {% set d_str = d.strftime("%Y-%m-%d") %}
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;min-width:80px"
+         onclick="showDate('{{ d_str }}')" id="dot-{{ d_str }}">
+      {% if entries[0].image_path %}
+      <div style="width:64px;height:64px;border-radius:14px;overflow:hidden;border:2px solid {% if loop.first %}var(--gold){% else %}var(--line){% endif %};flex-shrink:0" id="dot-img-{{ d_str }}">
+        <img src="/imports/{{ entries[0].image_path }}" style="width:100%;height:100%;object-fit:cover">
+      </div>
+      {% else %}
+      <div style="width:64px;height:64px;border-radius:14px;border:2px solid var(--line);background:rgba(255,255,255,.04);display:flex;align-items:center;justify-content:center;color:var(--soft)" id="dot-img-{{ d_str }}">📷</div>
+      {% endif %}
+      <div style="font-size:11px;font-weight:800;letter-spacing:.08em;color:{% if loop.first %}var(--gold){% else %}var(--muted){% endif %}" id="dot-lbl-{{ d_str }}">
+        {{ d.strftime("%d.%m") }}
+      </div>
+      {% if logs.get(d) and logs[d].weight %}
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--soft)">{{ "%.1f"|format(logs[d].weight) }}kg</div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- ══ HAUPTANSICHT ═══════════════════════════════════════════ -->
+{% for d, entries in grouped.items() %}
+{% set d_str = d.strftime("%Y-%m-%d") %}
+{% set log = logs.get(d) %}
+{% set panel = panels.get(d) %}
+
+<div id="day-{{ d_str }}" {% if not loop.first %}style="display:none"{% endif %}>
+
+  <!-- Datum + Stats -->
+  <div class="card" style="margin-bottom:12px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap">
+      <div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:clamp(22px,3vw,36px);line-height:1;letter-spacing:-.04em">
+          {{ d.strftime("%A, %d. %B %Y") }}
+        </div>
+        <div style="margin-top:6px;font-size:12px;color:var(--soft);font-weight:700;letter-spacing:.15em;text-transform:uppercase">
+          {% if d >= blast_start %}Woche {{ ((d - blast_start).days // 7) + 1 }} · Tag {{ (d - blast_start).days + 1 }}{% endif %}
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        {% if log and log.weight %}<span class="pill">{{ "%.1f"|format(log.weight) }} kg</span>{% endif %}
+        {% if log and log.body_fat %}<span class="pill">{{ "%.1f"|format(log.body_fat) }}% KFA</span>{% endif %}
+        {% if log and log.hrv %}<span class="pill">HRV {{ log.hrv }}</span>{% endif %}
+        {% if panel %}<a href="/blutbilder/{{ panel.id }}" class="pill" style="text-decoration:none;color:var(--red)">🩸 {{ panel.date.strftime("%d.%m") }}</a>{% endif %}
+        <button class="btn btn-secondary btn-sm" onclick="stepDate(-1)">← Zurück</button>
+        <button class="btn btn-secondary btn-sm" onclick="stepDate(1)">Vor →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fotos + Analyse -->
+  {% if entries|length == 1 %}
+  <div style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:18px;margin-bottom:12px">
+    <div class="card" style="padding:0;overflow:hidden">
+      <img src="/imports/{{ entries[0].image_path }}"
+           style="width:100%;height:auto;display:block;border-radius:24px">
+    </div>
+    <div class="card" style="display:flex;flex-direction:column">
+      <div class="sh"><div class="sh-title">Analyse</div></div>
+      <form action="/checkin/{{ entries[0].id }}/analyse" method="post" style="flex:1;display:flex;flex-direction:column">
+        <textarea name="analysis_text"
+          style="flex:1;width:100%;min-height:220px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:14px;color:var(--text);font-size:13px;line-height:1.6;resize:vertical;font-family:Manrope,sans-serif"
+          placeholder="Analyse, Vergleich, Notizen...">{{ entries[0].analysis_text or "" }}</textarea>
+        <button class="btn btn-primary btn-sm" style="margin-top:10px;align-self:flex-start">Speichern</button>
+      </form>
+    </div>
+  </div>
+  {% else %}
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px;margin-bottom:12px">
+    {% for entry in entries %}
+    <div class="card" style="padding:0;overflow:hidden">
+      <img src="/imports/{{ entry.image_path }}"
+           style="width:100%;height:280px;object-fit:cover;display:block">
+      <div style="padding:16px">
+        <form action="/checkin/{{ entry.id }}/analyse" method="post">
+          <textarea name="analysis_text"
+            style="width:100%;min-height:100px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:10px;padding:10px;color:var(--text);font-size:12px;line-height:1.5;resize:vertical;font-family:Manrope,sans-serif"
+            placeholder="Analyse...">{{ entry.analysis_text or "" }}</textarea>
+          <button class="btn btn-primary btn-sm" style="margin-top:8px">Speichern</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+</div><!-- /ci-day -->
+{% endfor %}
+
+<!-- ══ DIREKTVERGLEICH ════════════════════════════════════════ -->
+{% if grouped|length >= 2 %}
+<div class="card" style="margin-top:18px">
+  <div class="sh">
+    <div class="sh-title">Direktvergleich</div>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px">
+    <div class="form-group" style="margin:0;min-width:150px">
+      <label>Datum A</label>
+      <select id="cmpA" onchange="renderCompare()">
+        {% for d in grouped.keys() %}
+        <option value="{{ d.strftime('%Y-%m-%d') }}">{{ d.strftime('%d.%m.%Y') }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group" style="margin:0;min-width:150px">
+      <label>Datum B</label>
+      <select id="cmpB" onchange="renderCompare()">
+        {% for d in grouped.keys() %}
+        <option value="{{ d.strftime('%Y-%m-%d') }}" {% if loop.index == 2 %}selected{% endif %}>{{ d.strftime('%d.%m.%Y') }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+  <div id="compareResult" style="display:grid;grid-template-columns:1fr 1fr;gap:12px"></div>
+</div>
+{% endif %}
+
+<!-- ══ FORTLAUFENDER VERLAUF ══════════════════════════════════ -->
+<div class="card" style="margin-top:18px">
+  <div class="sh">
+    <div class="sh-title">Fortlaufender Verlauf</div>
+    <span class="pill">wird bei jedem Check-in aktualisiert</span>
+  </div>
+  <form action="/checkin/verlauf" method="post">
+    <textarea name="verlauf_text"
+      style="width:100%;min-height:360px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:16px;padding:18px;color:var(--text);font-size:13px;line-height:1.7;resize:vertical;font-family:Manrope,sans-serif"
+      placeholder="Noch kein Verlaufsprotokoll vorhanden.">{{ verlauf or "" }}</textarea>
+    <button class="btn btn-primary btn-sm" style="margin-top:10px">Speichern</button>
+  </form>
+</div>
+
+{% endif %}{# /grouped #}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const DATE_LIST = {{ date_list | tojson }};
+let currentIdx = 0;
+
+function showDate(dateStr) {
+  document.querySelectorAll('[id^="day-"]').forEach(el => el.style.display = 'none');
+  const target = document.getElementById('day-' + dateStr);
+  if (target) target.style.display = 'block';
+
+  // Update dot styles
+  DATE_LIST.forEach(d => {
+    const img = document.getElementById('dot-img-' + d);
+    const lbl = document.getElementById('dot-lbl-' + d);
+    if (img) img.style.borderColor = d === dateStr ? 'var(--gold)' : 'var(--line)';
+    if (lbl) lbl.style.color = d === dateStr ? 'var(--gold)' : 'var(--muted)';
+  });
+
+  currentIdx = DATE_LIST.indexOf(dateStr);
+}
+
+function stepDate(dir) {
+  const next = currentIdx + dir;
+  if (next >= 0 && next < DATE_LIST.length) {
+    showDate(DATE_LIST[next]);
+  }
+}
+
+{% if grouped|length >= 2 %}
+const CI_ENTRIES = {};
+{% for d, entries in grouped.items() %}
+{% if entries[0].image_path %}
+CI_ENTRIES['{{ d.strftime("%Y-%m-%d") }}'] = '/imports/{{ entries[0].image_path }}';
+{% endif %}
+{% endfor %}
+
+function renderCompare() {
+  const a = document.getElementById('cmpA').value;
+  const b = document.getElementById('cmpB').value;
+  const cont = document.getElementById('compareResult');
+  const style = 'width:100%;height:360px;object-fit:contain;border-radius:16px;background:#0a0c0f';
+  cont.innerHTML = [a,b].map(d =>
+    CI_ENTRIES[d]
+      ? `<div class="card" style="padding:0;overflow:hidden"><img src="${CI_ENTRIES[d]}" style="${style}"></div>`
+      : `<div class="card" style="text-align:center;padding:2rem;color:var(--soft)">Kein Foto für ${d}</div>`
+  ).join('');
+}
+renderCompare();
+{% endif %}
+</script>
+{% endblock %}

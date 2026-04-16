@@ -1,1 +1,40 @@
+# Secrets & Credentials
+.env
+.withings_credentials.json
+.garth/
+
+# Lokale Datenbank (bleibt lokal, Daten in Supabase)
+fitness.db
+*.db
+
+# State-Dateien (Garmin Lock, Fetch-Timestamps)
+.garmin_blocked.json
+.last_fetch.json
+.last_withings_*.json
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Aider
 .aider*
+
+# Import-Daten (persönliche Gesundheitsdaten, nicht ins Repo)
+Imports/Withings/*.zip
+Imports/Withings/*.csv
+Imports/Myfitnesspal/*.zip
+Imports/Myfitnesspal/*.csv
+Imports/Blutbilder/
+Imports/CheckIn_Fotos/
+Imports/Sonstiges/
+Imports/data_MAR_*/
+Imports/Updates.md
+data_MAR_*/
+
+# Externe Katalog-Downloads
+Downloads/
+
+# Falsch erstellte Dateien
+\!DOCTYPE.html

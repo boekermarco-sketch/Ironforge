@@ -2,204 +2,400 @@
 {% block title %}Tageslog{% endblock %}
 
 {% block content %}
-<h1 class="page-title">Tageslog</h1>
+{%- set L = current_log -%}
+{%- set W = withings_log -%}
+{%- set G = garmin_log -%}
+{%- set A = avg7 -%}
 
-<div class="grid-2" style="margin-bottom:1.25rem">
+{# ── Hilfsmakros ──────────────────────────────────────────────── #}
+{% macro val(v, fmt="{}") %}{% if v is not none %}{{ fmt.format(v) }}{% else %}–{% endif %}{% endmacro %}
+{% macro hms(mins) %}{% if mins %}{{ mins // 60 }}H{{ mins % 60 }}M{% else %}–{% endif %}{% endmacro %}
 
-  <!-- Eingabe-Formular (Freitag Check-in kompatibel) -->
-  <div class="card">
-    <div class="section-title" style="margin-bottom:.75rem">Neuer Eintrag (Freitag Check-in)</div>
+{# ── Farbstile (inline CSS vars) ──────────────────────────────── #}
+{% macro c_hrv(v) %}{% if v %}{% if v >= 35 %}color:var(--teal){% elif v >= 28 %}color:var(--gold){% else %}color:var(--red){% endif %}{% endif %}{% endmacro %}
+{% macro c_hf(v)  %}{% if v %}{% if v <= 62 %}color:var(--teal){% elif v <= 68 %}color:var(--gold){% else %}color:var(--red){% endif %}{% endif %}{% endmacro %}
+{% macro c_ss(v)  %}{% if v %}{% if v >= 80 %}color:var(--teal){% elif v >= 65 %}color:var(--gold){% else %}color:var(--red){% endif %}{% endif %}{% endmacro %}
+{% macro c_ds(v)  %}{% if v %}{% if v >= 60 %}color:var(--teal){% elif v >= 40 %}color:var(--gold){% else %}color:var(--red){% endif %}{% endif %}{% endmacro %}
+{% macro c_bb(v)  %}{% if v %}{% if v >= 70 %}color:var(--teal){% elif v >= 45 %}color:var(--gold){% else %}color:var(--red){% endif %}{% endif %}{% endmacro %}
+{% macro c_af(v)  %}{% if v %}{% if v < 15 %}color:var(--teal){% elif v <= 16 %}color:var(--gold){% else %}color:var(--red){% endif %}{% endif %}{% endmacro %}
+{% macro c_bp(v)  %}{% if v %}{% if v <= 120 %}color:var(--teal){% elif v <= 130 %}color:var(--gold){% else %}color:var(--red){% endif %}{% endif %}{% endmacro %}
+{% macro c_str(v) %}{% if v %}{% if v < 30 %}color:var(--teal){% elif v <= 50 %}color:var(--gold){% else %}color:var(--red){% endif %}{% endif %}{% endmacro %}
+{% macro c_tr(v)  %}{% if v %}{% if v >= 70 %}color:var(--teal){% elif v >= 45 %}color:var(--gold){% else %}color:var(--red){% endif %}{% endif %}{% endmacro %}
+
+<!-- ══ PAGE TOP ══════════════════════════════════════════════════ -->
+<div class="page-top">
+  <div>
+    <div class="page-title">Tageslog</div>
+    <div class="page-meta">Chronologisch / Einträge / Check-ins</div>
+  </div>
+  <span class="pill">Daily Log</span>
+</div>
+
+<!-- ══ HAUPT-CARD ════════════════════════════════════════════════ -->
+<div class="card" style="margin-bottom:18px">
+
+  <!-- Kalender-Navigation -->
+  <div class="sh">
+    <div class="sh-title">Kalender</div>
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+      <a href="/tageslog/?d={{ prev_week_start.isoformat() }}" class="nav-arrow" title="Vorwoche">⟪</a>
+      <a href="/tageslog/?d={{ prev_date.isoformat() }}" class="nav-arrow">⟨</a>
+      <span class="chip" style="border-radius:14px">{{ view_date.strftime("%b %Y").upper() }}</span>
+      <a href="/tageslog/?d={{ next_date.isoformat() }}" class="nav-arrow"
+         {% if next_date > today %}style="opacity:.3;pointer-events:none"{% endif %}>⟩</a>
+      <a href="/tageslog/?d={{ next_week_start.isoformat() }}" class="nav-arrow"
+         {% if next_week_start > today %}style="opacity:.3;pointer-events:none"{% endif %} title="Nächste Woche">⟫</a>
+    </div>
+  </div>
+
+  <!-- Datum-Hero + Wochentag-Chips -->
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:22px">
+    <div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:clamp(26px,4vw,50px);line-height:1;letter-spacing:-.04em">
+        {{ view_date.strftime("%A, %d. %B %Y") }}
+      </div>
+      <div style="margin-top:8px">
+        {% if is_today %}
+        <span class="pill" style="background:rgba(13,132,255,.18);border-color:rgba(13,132,255,.35);color:#58a9ff">HEUTE</span>
+        {% else %}
+        <span class="pill">{{ view_date.strftime("%d.%m.%Y") }}</span>
+        {% endif %}
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+        {% for wd in week_dates %}
+        {% set wl = week_logs.get(wd) %}
+        {% set has_data = wl is not none and (wl.weight or wl.hrv or wl.sleep_score) %}
+        <a href="/tageslog/?d={{ wd.isoformat() }}"
+           class="day-chip {% if wd == view_date %}today{% endif %}"
+           style="position:relative;text-decoration:none">
+          {{ wochentage[wd.weekday()] }} {{ wd.day }}
+          {% if has_data %}<span style="position:absolute;top:4px;right:6px;width:5px;height:5px;border-radius:50%;background:var(--gold)"></span>{% endif %}
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Zwei Datenkarten nebeneinander -->
+  <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px">
+
+    <!-- ── WITHINGS / KÖRPER ── -->
+    <div class="card" style="padding:18px">
+      <div class="sh">
+        <div class="sh-title">Körper · Withings</div>
+        {% if withings_date %}
+        <span class="pill">Letzter Wert: {{ withings_date.strftime("%d.%m.%Y") }}</span>
+        {% endif %}
+      </div>
+
+      <div class="mg mg-5" style="margin-bottom:2px">
+        <div class="metric">
+          <div class="m-label">Gewicht</div>
+          <div class="m-val" style="{% if W and W.weight and A.weight and W.weight < A.weight %}color:var(--teal){% endif %}">
+            {{ "%.1f"|format(W.weight) if W and W.weight else "–" }}
+          </div>
+          <div class="m-small">kg{% if A.weight %} · Ø{{ "%.1f"|format(A.weight) }}{% endif %}</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Körperfett</div>
+          <div class="m-val">{{ "%.1f"|format(W.body_fat) if W and W.body_fat else "–" }}</div>
+          <div class="m-small">%{% if A.body_fat %} · Ø{{ "%.1f"|format(A.body_fat) }}%{% endif %}</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Fettmasse</div>
+          <div class="m-val">{{ "%.1f"|format(W.fat_mass_kg) if W and W.fat_mass_kg else "–" }}</div>
+          <div class="m-small">kg</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Muskelmasse</div>
+          <div class="m-val" style="color:var(--teal)">{{ "%.1f"|format(W.muscle_mass) if W and W.muscle_mass else "–" }}</div>
+          <div class="m-small">kg</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Körperwasser</div>
+          <div class="m-val">{{ "%.1f"|format(W.water_percent) if W and W.water_percent else "–" }}</div>
+          <div class="m-small">%</div>
+        </div>
+      </div>
+
+      <div class="mg mg-4" style="margin-bottom:2px">
+        <div class="metric">
+          <div class="m-label">Blutdruck</div>
+          <div class="m-val" style="{{ c_bp(W.bp_systolic if W else none) }};font-size:18px">
+            {% if W and W.bp_systolic and W.bp_diastolic %}{{ W.bp_systolic }}/{{ W.bp_diastolic }}{% else %}–{% endif %}
+          </div>
+          <div class="m-small">mmHg · Ziel &lt;120/80</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Ruhepuls</div>
+          <div class="m-val">{{ W.resting_pulse if W and W.resting_pulse else "–" }}</div>
+          <div class="m-small">bpm</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">BMI</div>
+          <div class="m-val">
+            {% if W and W.bmi %}{{ "%.1f"|format(W.bmi) }}
+            {% elif W and W.weight %}{{ "%.1f"|format(W.weight / (1.78 * 1.78)) }}
+            {% else %}–{% endif %}
+          </div>
+          <div class="m-small">kg/m²</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Gefäßalter</div>
+          <div class="m-val" style="{% if W and W.vascular_age %}{% if W.vascular_age > 45 %}color:var(--gold){% else %}color:var(--teal){% endif %}{% endif %}">
+            {{ W.vascular_age if W and W.vascular_age else "–" }}
+          </div>
+          <div class="m-small">Jahre</div>
+        </div>
+      </div>
+
+      <div class="mg mg-1" style="width:32%;border-radius:12px">
+        <div class="metric">
+          <div class="m-label">Pulswellen (PWV)</div>
+          <div class="m-val" style="{% if W and W.pulse_wave_velocity %}{% if W.pulse_wave_velocity > 7 %}color:var(--red){% elif W.pulse_wave_velocity > 6 %}color:var(--gold){% else %}color:var(--teal){% endif %}{% endif %}">
+            {{ "%.1f"|format(W.pulse_wave_velocity) if W and W.pulse_wave_velocity else "–" }}
+          </div>
+          <div class="m-small">m/s · Ziel &lt;7,0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── GARMIN / ERHOLUNG ── -->
+    <div class="card" style="padding:18px">
+      <div class="sh">
+        <div class="sh-title">Erholung &amp; Schlaf · Garmin</div>
+        {% if garmin_date %}
+        <span class="pill">Letzter Wert: {{ garmin_date.strftime("%d.%m.%Y") }}</span>
+        {% endif %}
+      </div>
+
+      <div class="mg mg-5" style="margin-bottom:2px">
+        <div class="metric">
+          <div class="m-label">HRV</div>
+          <div class="m-val" style="{{ c_hrv(G.hrv if G else none) }}">{{ val(G.hrv if G else none, "{:.0f}") }}</div>
+          <div class="m-small">ms · Ziel &gt;35{% if A.hrv %} · Ø{{ A.hrv }}{% endif %}</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">HF Nacht</div>
+          <div class="m-val" style="{{ c_hf(G.heart_rate_night if G else none) }}">
+            {{ "%.0f"|format(G.heart_rate_night) if G and G.heart_rate_night else "–" }}
+          </div>
+          <div class="m-small">bpm · Ziel &lt;62</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Body Battery</div>
+          <div class="m-val" style="{{ c_bb(G.body_battery if G else none) }}">{{ G.body_battery if G and G.body_battery else "–" }}</div>
+          <div class="m-small">/ 100 · Ziel &gt;55</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Schlaf-Score</div>
+          <div class="m-val" style="{{ c_ss(G.sleep_score if G else none) }}">{{ G.sleep_score if G and G.sleep_score else "–" }}</div>
+          <div class="m-small">/ 100 · Ziel &gt;75</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Gesamtschlaf</div>
+          <div class="m-val" style="font-size:18px">{{ hms(G.total_sleep_min if G else none) }}</div>
+          <div class="m-small">Ziel &gt;7h</div>
+        </div>
+      </div>
+
+      <div class="mg mg-5" style="margin-bottom:2px">
+        <div class="metric">
+          <div class="m-label">Tiefschlaf</div>
+          <div class="m-val" style="{{ c_ds(G.deep_sleep_min if G else none) }}">{{ G.deep_sleep_min if G and G.deep_sleep_min else "–" }}</div>
+          <div class="m-small">min · Ziel &gt;60</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">REM</div>
+          <div class="m-val">{{ G.rem_sleep_min if G and G.rem_sleep_min else "–" }}</div>
+          <div class="m-small">min</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Leichtschlaf</div>
+          <div class="m-val">{{ G.light_sleep_min if G and G.light_sleep_min else "–" }}</div>
+          <div class="m-small">min</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Atemfreq.</div>
+          <div class="m-val" style="{{ c_af(G.breath_rate if G else none) }}">
+            {{ "%.1f"|format(G.breath_rate) if G and G.breath_rate else "–" }}
+          </div>
+          <div class="m-small">brpm · Ziel &lt;15</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Schritte</div>
+          <div class="m-val" style="font-size:18px">
+            {% if G and G.steps %}{{ "{:,.0f}".format(G.steps).replace(",", ".") }}{% else %}–{% endif %}
+          </div>
+          <div class="m-small">{% if A.steps %}Ø {{ "{:,.0f}".format(A.steps|int).replace(",", ".") }}{% endif %}</div>
+        </div>
+      </div>
+
+      <div class="mg mg-2" style="width:44%;border-radius:12px">
+        <div class="metric">
+          <div class="m-label">Stress</div>
+          <div class="m-val" style="{{ c_str(G.stress_avg if G else none) }}">{{ G.stress_avg if G and G.stress_avg else "–" }}</div>
+          <div class="m-small">/ 100</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Trainings-Bereitschaft</div>
+          <div class="m-val" style="{{ c_tr(G.training_readiness if G else none) }}">{{ G.training_readiness if G and G.training_readiness else "–" }}</div>
+          <div class="m-small">/ 100</div>
+        </div>
+      </div>
+
+      {% if G and G.training_status %}
+      <div class="mg mg-1" style="margin-top:2px;border-radius:12px">
+        <div class="metric">
+          <div class="m-label">Trainingsstatus</div>
+          <div class="m-val" style="font-size:18px">{{ G.training_status }}</div>
+          {% if G.vo2max %}<div class="m-small">VO₂max {{ G.vo2max }} ml/kg/min</div>{% endif %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+  </div><!-- /zwei-karten -->
+</div><!-- /haupt-card -->
+
+<!-- ══ SUBJEKTIV ════════════════════════════════════════════════ -->
+{% set has_subj = L and (L.energy_level or L.libido or L.mood or L.training_feel or L.water_retention or L.acne or L.night_sweat or L.notes) %}
+{% if has_subj %}
+<div class="card" style="margin-bottom:18px">
+  <div class="sh"><div class="sh-title">Subjektiv</div></div>
+  <div class="mg mg-4">
+    {% if L.energy_level %}
+    <div class="metric"><div class="m-label">Energie</div><div class="m-val" style="{% if L.energy_level >= 8 %}color:var(--teal){% elif L.energy_level >= 6 %}color:var(--gold){% else %}color:var(--red){% endif %}">{{ L.energy_level }}</div><div class="m-small">/ 10</div></div>
+    {% endif %}
+    {% if L.libido %}
+    <div class="metric"><div class="m-label">Libido</div><div class="m-val" style="{% if L.libido >= 8 %}color:var(--teal){% elif L.libido >= 6 %}color:var(--gold){% else %}color:var(--red){% endif %}">{{ L.libido }}</div><div class="m-small">/ 10</div></div>
+    {% endif %}
+    {% if L.mood %}
+    <div class="metric"><div class="m-label">Stimmung</div><div class="m-val" style="{% if L.mood >= 8 %}color:var(--teal){% elif L.mood >= 6 %}color:var(--gold){% else %}color:var(--red){% endif %}">{{ L.mood }}</div><div class="m-small">/ 10</div></div>
+    {% endif %}
+    {% if L.training_feel %}
+    <div class="metric"><div class="m-label">Training</div><div class="m-val" style="{% if L.training_feel >= 8 %}color:var(--teal){% elif L.training_feel >= 6 %}color:var(--gold){% endif %}">{{ L.training_feel }}</div><div class="m-small">/ 10</div></div>
+    {% endif %}
+    {% if L.water_retention %}
+    <div class="metric"><div class="m-label">Wasserret.</div><div class="m-val" style="{% if L.water_retention <= 2 %}color:var(--teal){% elif L.water_retention >= 4 %}color:var(--red){% else %}color:var(--gold){% endif %}">{{ L.water_retention }}</div><div class="m-small">/ 5</div></div>
+    {% endif %}
+    {% if L.acne %}
+    <div class="metric"><div class="m-label">Akne</div><div class="m-val" style="{% if L.acne <= 1 %}color:var(--teal){% elif L.acne >= 4 %}color:var(--red){% else %}color:var(--gold){% endif %}">{{ L.acne }}</div><div class="m-small">/ 5</div></div>
+    {% endif %}
+    {% if L.night_sweat %}
+    <div class="metric"><div class="m-label">Nachtschweiß</div><div class="m-val" style="font-size:16px;{% if L.night_sweat == 'nein' %}color:var(--teal){% elif L.night_sweat == 'ja' %}color:var(--red){% else %}color:var(--gold){% endif %}">{{ L.night_sweat | capitalize }}</div><div class="m-small">&nbsp;</div></div>
+    {% endif %}
+    {% if L.training_sessions %}
+    <div class="metric"><div class="m-label">Einheiten</div><div class="m-val">{{ L.training_sessions }}</div><div class="m-small">Training</div></div>
+    {% endif %}
+  </div>
+  {% if L.notes %}
+  <div style="margin-top:12px;padding:14px 16px;background:rgba(208,163,90,.06);border-radius:14px;border-left:3px solid var(--gold);font-size:13px;color:var(--muted);line-height:1.6">
+    {{ L.notes }}
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- ══ KEIN EINTRAG ══════════════════════════════════════════════ -->
+{% if not L and not W and not G %}
+<div class="card" style="text-align:center;padding:2.5rem;margin-bottom:18px">
+  <div style="font-family:'Cormorant Garamond',serif;font-size:2rem;color:var(--soft);margin-bottom:8px">Kein Eintrag</div>
+  <div style="font-size:13px;color:var(--soft);margin-bottom:16px">Für diesen Tag liegen noch keine Daten vor.</div>
+  {% if is_today %}<a href="/import/" class="btn btn-primary">Daten abrufen</a>{% endif %}
+</div>
+{% endif %}
+
+<!-- ══ MANUELLER EINTRAG (einklappbar) ══════════════════════════ -->
+<div class="card" style="cursor:pointer" id="manual-toggle" onclick="document.getElementById('manual-form').style.display=document.getElementById('manual-form').style.display==='none'?'block':'none';this.querySelector('.pill').textContent=document.getElementById('manual-form').style.display==='none'?'+':'−'">
+  <div style="display:flex;align-items:center;justify-content:space-between">
+    <div class="sh-title">Manuellen Eintrag {% if L %}bearbeiten{% else %}erstellen{% endif %}</div>
+    <span class="pill">+</span>
+  </div>
+</div>
+
+<div id="manual-form" style="display:none;margin-top:2px">
+  <div class="card" style="padding:22px">
     <form action="/tageslog/eintragen" method="post">
-      <div class="form-group">
-        <label>Datum</label>
-        <input type="date" name="log_date" value="{{ today.isoformat() }}">
+      <input type="hidden" name="log_date" value="{{ view_date.isoformat() }}">
+
+      <div class="sh-title" style="color:var(--gold);margin-bottom:12px">Garmin</div>
+      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:18px">
+        {% set gfields = [
+          ("hrv","HRV ms", L.hrv if L else ""),
+          ("heart_rate_night","HF Nacht bpm", L.heart_rate_night if L else ""),
+          ("sleep_score","Schlaf-Score", L.sleep_score if L else ""),
+          ("deep_sleep_min","Tiefschlaf min", L.deep_sleep_min if L else ""),
+          ("rem_sleep_min","REM min", L.rem_sleep_min if L else ""),
+          ("light_sleep_min","Leichtschlaf min", L.light_sleep_min if L else ""),
+          ("total_sleep_min","Gesamtschlaf min", L.total_sleep_min if L else ""),
+          ("body_battery","Body Battery", L.body_battery if L else ""),
+          ("breath_rate","Atemfreq brpm", L.breath_rate if L else ""),
+          ("steps","Schritte", L.steps if L else ""),
+          ("stress_avg","Stress 0-100", L.stress_avg if L else ""),
+          ("training_readiness","Training Readiness", L.training_readiness if L else ""),
+        ] %}
+        {% for name, label, val_default in gfields %}
+        <div class="form-group" style="margin:0">
+          <label>{{ label }}</label>
+          <input type="number" step="any" name="{{ name }}" {% if val_default %}value="{{ val_default }}"{% endif %}>
+        </div>
+        {% endfor %}
       </div>
 
-      <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;color:var(--green-700);margin:.75rem 0 .4rem">Garmin</div>
-      <div class="grid-2">
-        <div class="form-group">
-          <label>HRV (ms)</label>
-          <input type="number" name="hrv" step=".1" placeholder="z.B. 32" {% if today_log and today_log.hrv %}value="{{ today_log.hrv }}"{% endif %}>
+      <div class="sh-title" style="color:var(--gold);margin-bottom:12px">Withings / Körper</div>
+      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:18px">
+        {% set wfields = [
+          ("weight","Gewicht kg", L.weight if L else ""),
+          ("body_fat","KFA %", L.body_fat if L else ""),
+          ("bp_systolic","Blutdruck Sys", L.bp_systolic if L else ""),
+          ("bp_diastolic","Blutdruck Dia", L.bp_diastolic if L else ""),
+          ("resting_pulse","Ruhepuls bpm", L.resting_pulse if L else ""),
+        ] %}
+        {% for name, label, val_default in wfields %}
+        <div class="form-group" style="margin:0">
+          <label>{{ label }}</label>
+          <input type="number" step="any" name="{{ name }}" {% if val_default %}value="{{ val_default }}"{% endif %}>
         </div>
-        <div class="form-group">
-          <label>HF Nacht (bpm)</label>
-          <input type="number" name="heart_rate_night" step=".1" placeholder="z.B. 63" {% if today_log and today_log.heart_rate_night %}value="{{ today_log.heart_rate_night }}"{% endif %}>
-        </div>
-        <div class="form-group">
-          <label>Schlaf-Score</label>
-          <input type="number" name="sleep_score" placeholder="0-100" {% if today_log and today_log.sleep_score %}value="{{ today_log.sleep_score }}"{% endif %}>
-        </div>
-        <div class="form-group">
-          <label>Tiefschlaf (Min)</label>
-          <input type="number" name="deep_sleep_min" {% if today_log and today_log.deep_sleep_min %}value="{{ today_log.deep_sleep_min }}"{% endif %}>
-        </div>
-        <div class="form-group">
-          <label>REM (Min)</label>
-          <input type="number" name="rem_sleep_min" {% if today_log and today_log.rem_sleep_min %}value="{{ today_log.rem_sleep_min }}"{% endif %}>
-        </div>
-        <div class="form-group">
-          <label>Gesamtschlaf (Min)</label>
-          <input type="number" name="total_sleep_min" {% if today_log and today_log.total_sleep_min %}value="{{ today_log.total_sleep_min }}"{% endif %}>
-        </div>
-        <div class="form-group">
-          <label>Body Battery</label>
-          <input type="number" name="body_battery" {% if today_log and today_log.body_battery %}value="{{ today_log.body_battery }}"{% endif %}>
-        </div>
-        <div class="form-group">
-          <label>Atemfrequenz (brpm)</label>
-          <input type="number" name="breath_rate" step=".1" {% if today_log and today_log.breath_rate %}value="{{ today_log.breath_rate }}"{% endif %}>
-        </div>
+        {% endfor %}
       </div>
 
-      <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;color:var(--green-700);margin:.75rem 0 .4rem">Körper (Withings/manuell)</div>
-      <div class="grid-2">
-        <div class="form-group">
-          <label>Gewicht (kg)</label>
-          <input type="number" name="weight" step=".1" placeholder="nüchtern, nach Toilette" {% if today_log and today_log.weight %}value="{{ today_log.weight }}"{% endif %}>
+      <div class="sh-title" style="color:var(--gold);margin-bottom:12px">Subjektiv</div>
+      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:18px">
+        {% set sfields = [
+          ("energy_level","Energie 1-10", L.energy_level if L else ""),
+          ("libido","Libido 1-10", L.libido if L else ""),
+          ("mood","Stimmung 1-10", L.mood if L else ""),
+          ("training_feel","Training 1-10", L.training_feel if L else ""),
+          ("water_retention","Wasserret 1-5", L.water_retention if L else ""),
+          ("acne","Akne 1-5", L.acne if L else ""),
+          ("training_sessions","Einheiten", L.training_sessions if L else ""),
+        ] %}
+        {% for name, label, val_default in sfields %}
+        <div class="form-group" style="margin:0">
+          <label>{{ label }}</label>
+          <input type="number" step="any" name="{{ name }}" {% if val_default %}value="{{ val_default }}"{% endif %}>
         </div>
-        <div class="form-group">
-          <label>KFA % (Waage)</label>
-          <input type="number" name="body_fat" step=".1" {% if today_log and today_log.body_fat %}value="{{ today_log.body_fat }}"{% endif %}>
-        </div>
-      </div>
-
-      <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;color:var(--green-700);margin:.75rem 0 .4rem">Subjektiv (1-10)</div>
-      <div class="grid-3">
-        <div class="form-group">
-          <label>Energie</label>
-          <input type="number" name="energy_level" min="1" max="10" {% if today_log and today_log.energy_level %}value="{{ today_log.energy_level }}"{% endif %}>
-        </div>
-        <div class="form-group">
-          <label>Libido</label>
-          <input type="number" name="libido" min="1" max="10" {% if today_log and today_log.libido %}value="{{ today_log.libido }}"{% endif %}>
-        </div>
-        <div class="form-group">
-          <label>Stimmung</label>
-          <input type="number" name="mood" min="1" max="10" {% if today_log and today_log.mood %}value="{{ today_log.mood }}"{% endif %}>
-        </div>
-        <div class="form-group">
-          <label>Training-Gefühl</label>
-          <input type="number" name="training_feel" min="1" max="10" {% if today_log and today_log.training_feel %}value="{{ today_log.training_feel }}"{% endif %}>
-        </div>
-        <div class="form-group">
-          <label>Wasserretention (1-5)</label>
-          <input type="number" name="water_retention" min="1" max="5" {% if today_log and today_log.water_retention %}value="{{ today_log.water_retention }}"{% endif %}>
-        </div>
-        <div class="form-group">
-          <label>Akne (1-5)</label>
-          <input type="number" name="acne" min="1" max="5" {% if today_log and today_log.acne %}value="{{ today_log.acne }}"{% endif %}>
-        </div>
-      </div>
-
-      <div class="grid-2">
-        <div class="form-group">
+        {% endfor %}
+        <div class="form-group" style="margin:0">
           <label>Nachtschweiß</label>
           <select name="night_sweat">
             <option value="">–</option>
-            <option value="nein" {% if today_log and today_log.night_sweat == "nein" %}selected{% endif %}>Nein</option>
-            <option value="weniger" {% if today_log and today_log.night_sweat == "weniger" %}selected{% endif %}>Weniger</option>
-            <option value="ja" {% if today_log and today_log.night_sweat == "ja" %}selected{% endif %}>Ja</option>
+            <option value="nein" {% if L and L.night_sweat == "nein" %}selected{% endif %}>Nein</option>
+            <option value="weniger" {% if L and L.night_sweat == "weniger" %}selected{% endif %}>Weniger</option>
+            <option value="ja" {% if L and L.night_sweat == "ja" %}selected{% endif %}>Ja</option>
           </select>
         </div>
-        <div class="form-group">
-          <label>Trainings-Einheiten</label>
-          <input type="number" name="training_sessions" min="0" max="7" {% if today_log and today_log.training_sessions %}value="{{ today_log.training_sessions }}"{% endif %}>
-        </div>
       </div>
 
-      <div class="form-group">
-        <label>Notizen / Besonderheiten</label>
-        <textarea name="notes" rows="2">{% if today_log and today_log.notes %}{{ today_log.notes }}{% endif %}</textarea>
+      <div class="form-group" style="margin-bottom:14px">
+        <label>Notizen</label>
+        <textarea name="notes" rows="2">{% if L and L.notes %}{{ L.notes }}{% endif %}</textarea>
       </div>
 
-      <button class="btn btn-primary">Eintrag speichern</button>
+      <button class="btn btn-primary btn-sm">Speichern</button>
     </form>
   </div>
-
-  <!-- Chart: HRV letzte 30 Tage -->
-  <div>
-    <div class="card" style="margin-bottom:1rem">
-      <div class="section-title" style="margin-bottom:.5rem">HRV – letzte 30 Tage</div>
-      <div class="chart-container" style="height:160px"><canvas id="hrvChart"></canvas></div>
-    </div>
-    <div class="card" style="margin-bottom:1rem">
-      <div class="section-title" style="margin-bottom:.5rem">Gewicht</div>
-      <div class="chart-container" style="height:160px"><canvas id="weightChart"></canvas></div>
-    </div>
-    <div class="card">
-      <div class="section-title" style="margin-bottom:.5rem">Schlaf-Score</div>
-      <div class="chart-container" style="height:160px"><canvas id="sleepChart"></canvas></div>
-    </div>
-  </div>
 </div>
 
-<!-- Log-Tabelle -->
-<div class="card">
-  <div class="section-title" style="margin-bottom:.75rem">Verlauf (letzte 30 Einträge)</div>
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Datum</th>
-          <th>HRV</th>
-          <th>HF Nacht</th>
-          <th>Schlaf</th>
-          <th>Body B.</th>
-          <th>Gewicht</th>
-          <th>KFA%</th>
-          <th>Energie</th>
-          <th>Schweiß</th>
-          <th>Notizen</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for log in logs %}
-        <tr>
-          <td>{{ log.date.strftime("%d.%m.%Y") }}</td>
-          <td>{% if log.hrv %}<strong>{{ log.hrv }}</strong> ms{% else %}–{% endif %}</td>
-          <td>{{ log.heart_rate_night or "–" }}</td>
-          <td>{{ log.sleep_score or "–" }}</td>
-          <td>{{ log.body_battery or "–" }}</td>
-          <td>{{ log.weight or "–" }}</td>
-          <td>{{ log.body_fat or "–" }}</td>
-          <td>{{ log.energy_level or "–" }}</td>
-          <td>{{ log.night_sweat or "–" }}</td>
-          <td style="font-size:.75rem;color:var(--gray-500);max-width:180px">{{ log.notes or "" }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-fetch("/tageslog/api/chart?days=30").then(r => r.json()).then(data => {
-  const makeChart = (id, label, key, color) => {
-    const ctx = document.getElementById(id).getContext("2d");
-    new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: data.dates,
-        datasets: [{
-          label, data: data[key],
-          borderColor: color,
-          backgroundColor: color + "20",
-          tension: .3, pointRadius: 3, fill: true
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: false } }
-      }
-    });
-  };
-  makeChart("hrvChart",    "HRV (ms)",    "hrv",         "#22c55e");
-  makeChart("weightChart", "Gewicht (kg)","weight",      "#3b82f6");
-  makeChart("sleepChart",  "Schlaf-Score","sleep_score", "#a855f7");
-});
-</script>
 {% endblock %}

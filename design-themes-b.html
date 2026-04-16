@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Design B – Helligkeitsvarianten</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #2a2a2a; font-family: Inter, sans-serif; padding: 2rem; }
+h1 { color: #fff; font-size: 1rem; margin-bottom: 1.5rem; opacity: .5; letter-spacing: .08em; text-transform: uppercase; }
+
+.themes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+
+.theme { border-radius: 14px; overflow: hidden; border: 2px solid transparent; }
+.theme:hover { border-color: rgba(255,255,255,.25); }
+.theme-label { padding: .5rem .9rem; font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; background: rgba(0,0,0,.4); color: #bbb; }
+
+.preview { padding: 1rem; display: flex; flex-direction: column; gap: .6rem; }
+.p-nav { display: flex; align-items: center; justify-content: space-between; padding: .45rem .7rem; border-radius: 7px; font-size: .65rem; font-weight: 700; letter-spacing: .1em; }
+.p-brand { font-size: .7rem; font-weight: 900; letter-spacing: .12em; }
+.p-hero { border-radius: 10px; padding: 1rem; display: grid; grid-template-columns: 1fr 130px; gap: .75rem; }
+.p-hero-val { font-size: 2.2rem; font-weight: 900; line-height: 1; }
+.p-hero-val span { font-size: .42em; opacity: .5; }
+.p-hero-sub { font-size: .58rem; margin-top: .25rem; }
+.p-bar { height: 3px; border-radius: 2px; margin-top: .5rem; overflow: hidden; }
+.p-bar-track { background: rgba(255,255,255,.1); height: 100%; border-radius: 2px; }
+.p-bar-fill { height: 100%; border-radius: 2px; width: 48%; }
+.p-right { border-radius: 7px; padding: .6rem; display: flex; flex-direction: column; justify-content: space-between; }
+.p-chip { font-size: .58rem; font-weight: 700; padding: .18rem .4rem; border-radius: 4px; display: inline-block; margin-bottom: .2rem; }
+.p-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .4rem; }
+.p-card { border-radius: 8px; padding: .6rem .65rem; }
+.p-card-lbl { font-size: .55rem; opacity: .45; margin-bottom: .15rem; text-transform: uppercase; letter-spacing: .06em; }
+.p-card-val { font-size: 1rem; font-weight: 700; }
+.p-card-unit { font-size: .52rem; opacity: .4; }
+
+/* ── B1: Kaum heller ── */
+.b1 .preview { background: #0f1220; }
+.b1 .p-nav { background: #161929; color: #dde4f5; }
+.b1 .p-brand span { color: #fbbf24; }
+.b1 .p-hero { background: #161929; color: #dde4f5; }
+.b1 .p-bar-track { background: rgba(255,255,255,.08); }
+.b1 .p-bar-fill { background: linear-gradient(90deg,#f59e0b,#fb923c); }
+.b1 .p-right { background: rgba(251,191,36,.07); }
+.b1 .p-chip { background: rgba(251,191,36,.14); color: #fcd34d; }
+.b1 .p-card { background: #161929; color: #dde4f5; }
+.b1 .p-accent { color: #fbbf24; }
+.b1 .p-hero-sub { color: #f59e0b; }
+
+/* ── B2: Etwas heller ── */
+.b2 .preview { background: #111526; }
+.b2 .p-nav { background: #191e34; color: #e2e8f8; }
+.b2 .p-brand span { color: #fbbf24; }
+.b2 .p-hero { background: #191e34; color: #e2e8f8; }
+.b2 .p-bar-track { background: rgba(255,255,255,.1); }
+.b2 .p-bar-fill { background: linear-gradient(90deg,#f59e0b,#fb923c); }
+.b2 .p-right { background: rgba(251,191,36,.08); }
+.b2 .p-chip { background: rgba(251,191,36,.15); color: #fcd34d; }
+.b2 .p-card { background: #191e34; color: #e2e8f8; }
+.b2 .p-accent { color: #fbbf24; }
+.b2 .p-hero-sub { color: #f59e0b; }
+
+/* ── B3: Merklich heller ── */
+.b3 .preview { background: #141830; }
+.b3 .p-nav { background: #1d2240; color: #e8edfb; }
+.b3 .p-brand span { color: #fbbf24; }
+.b3 .p-hero { background: #1d2240; color: #e8edfb; }
+.b3 .p-bar-track { background: rgba(255,255,255,.1); }
+.b3 .p-bar-fill { background: linear-gradient(90deg,#f59e0b,#fb923c); }
+.b3 .p-right { background: rgba(251,191,36,.09); }
+.b3 .p-chip { background: rgba(251,191,36,.16); color: #fcd34d; }
+.b3 .p-card { background: #1d2240; color: #e8edfb; }
+.b3 .p-accent { color: #fbbf24; }
+.b3 .p-hero-sub { color: #fbbf24; }
+
+/* ── B4: Deutlich heller ── */
+.b4 .preview { background: #181d38; }
+.b4 .p-nav { background: #222848; color: #ecf0fb; }
+.b4 .p-brand span { color: #fbbf24; }
+.b4 .p-hero { background: #222848; color: #ecf0fb; }
+.b4 .p-bar-track { background: rgba(255,255,255,.1); }
+.b4 .p-bar-fill { background: linear-gradient(90deg,#f59e0b,#fb923c); }
+.b4 .p-right { background: rgba(251,191,36,.1); }
+.b4 .p-chip { background: rgba(251,191,36,.18); color: #fde68a; }
+.b4 .p-card { background: #222848; color: #ecf0fb; }
+.b4 .p-accent { color: #fbbf24; }
+.b4 .p-hero-sub { color: #fbbf24; }
+
+/* ── B5: Hell, fast Navy ── */
+.b5 .preview { background: #1c2240; }
+.b5 .p-nav { background: #252d55; color: #f0f2fc; }
+.b5 .p-brand span { color: #fbbf24; }
+.b5 .p-hero { background: #252d55; color: #f0f2fc; }
+.b5 .p-bar-track { background: rgba(255,255,255,.12); }
+.b5 .p-bar-fill { background: linear-gradient(90deg,#f59e0b,#fb923c); }
+.b5 .p-right { background: rgba(251,191,36,.1); }
+.b5 .p-chip { background: rgba(251,191,36,.18); color: #fde68a; }
+.b5 .p-card { background: #252d55; color: #f0f2fc; }
+.b5 .p-accent { color: #fbbf24; }
+.b5 .p-hero-sub { color: #fbbf24; }
+
+/* ── B6: Warm-Navy, leicht bläulich-grau ── */
+.b6 .preview { background: #13172a; }
+.b6 .p-nav { background: #1b2038; color: #e4e8f6; }
+.b6 .p-brand span { color: #fb923c; }
+.b6 .p-hero { background: #1b2038; color: #e4e8f6; }
+.b6 .p-bar-track { background: rgba(255,255,255,.09); }
+.b6 .p-bar-fill { background: linear-gradient(90deg,#fb923c,#f97316); }
+.b6 .p-right { background: rgba(251,146,60,.08); }
+.b6 .p-chip { background: rgba(251,146,60,.15); color: #fdba74; }
+.b6 .p-card { background: #1b2038; color: #e4e8f6; }
+.b6 .p-accent { color: #fb923c; }
+.b6 .p-hero-sub { color: #fb923c; }
+</style>
+</head>
+<body>
+<h1>Variante B — 6 Helligkeitsstufen (Dunkelblau + Amber)</h1>
+<div class="themes">
+
+<!-- B1 -->
+<div class="theme b1">
+  <div class="theme-label">B1 · Minimal heller</div>
+  <div class="preview">
+    <div class="p-nav"><span class="p-brand">IRON <span>FORGE</span> LAB</span><span style="opacity:.4;font-size:.6rem;font-family:'JetBrains Mono'">10. Apr 2026</span></div>
+    <div class="p-hero">
+      <div>
+        <div style="font-size:.54rem;opacity:.4;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.25rem">Blast · Tag 47</div>
+        <div class="p-hero-val">71.6<span>KG</span></div>
+        <div class="p-hero-sub">Woche 7 · −0.3 kg</div>
+        <div class="p-bar"><div class="p-bar-track"><div class="p-bar-fill"></div></div></div>
+      </div>
+      <div class="p-right">
+        <div class="p-chip">HRV 38 ms</div><br>
+        <div class="p-chip">Schlaf 82</div><br>
+        <div class="p-chip">BB 71</div>
+      </div>
+    </div>
+    <div class="p-grid">
+      <div class="p-card"><div class="p-card-lbl">HRV</div><div class="p-card-val p-accent">38</div><div class="p-card-unit">ms</div></div>
+      <div class="p-card"><div class="p-card-lbl">Schlaf</div><div class="p-card-val">7h 20m</div><div class="p-card-unit">Score 82</div></div>
+      <div class="p-card"><div class="p-card-lbl">KFA</div><div class="p-card-val">13.6</div><div class="p-card-unit">%</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- B2 -->
+<div class="theme b2">
+  <div class="theme-label">B2 · Etwas heller</div>
+  <div class="preview">
+    <div class="p-nav"><span class="p-brand">IRON <span>FORGE</span> LAB</span><span style="opacity:.4;font-size:.6rem;font-family:'JetBrains Mono'">10. Apr 2026</span></div>
+    <div class="p-hero">
+      <div>
+        <div style="font-size:.54rem;opacity:.4;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.25rem">Blast · Tag 47</div>
+        <div class="p-hero-val">71.6<span>KG</span></div>
+        <div class="p-hero-sub">Woche 7 · −0.3 kg</div>
+        <div class="p-bar"><div class="p-bar-track"><div class="p-bar-fill"></div></div></div>
+      </div>
+      <div class="p-right">
+        <div class="p-chip">HRV 38 ms</div><br>
+        <div class="p-chip">Schlaf 82</div><br>
+        <div class="p-chip">BB 71</div>
+      </div>
+    </div>
+    <div class="p-grid">
+      <div class="p-card"><div class="p-card-lbl">HRV</div><div class="p-card-val p-accent">38</div><div class="p-card-unit">ms</div></div>
+      <div class="p-card"><div class="p-card-lbl">Schlaf</div><div class="p-card-val">7h 20m</div><div class="p-card-unit">Score 82</div></div>
+      <div class="p-card"><div class="p-card-lbl">KFA</div><div class="p-card-val">13.6</div><div class="p-card-unit">%</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- B3 -->
+<div class="theme b3">
+  <div class="theme-label">B3 · Merklich heller ✦</div>
+  <div class="preview">
+    <div class="p-nav"><span class="p-brand">IRON <span>FORGE</span> LAB</span><span style="opacity:.4;font-size:.6rem;font-family:'JetBrains Mono'">10. Apr 2026</span></div>
+    <div class="p-hero">
+      <div>
+        <div style="font-size:.54rem;opacity:.4;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.25rem">Blast · Tag 47</div>
+        <div class="p-hero-val">71.6<span>KG</span></div>
+        <div class="p-hero-sub">Woche 7 · −0.3 kg</div>
+        <div class="p-bar"><div class="p-bar-track"><div class="p-bar-fill"></div></div></div>
+      </div>
+      <div class="p-right">
+        <div class="p-chip">HRV 38 ms</div><br>
+        <div class="p-chip">Schlaf 82</div><br>
+        <div class="p-chip">BB 71</div>
+      </div>
+    </div>
+    <div class="p-grid">
+      <div class="p-card"><div class="p-card-lbl">HRV</div><div class="p-card-val p-accent">38</div><div class="p-card-unit">ms</div></div>
+      <div class="p-card"><div class="p-card-lbl">Schlaf</div><div class="p-card-val">7h 20m</div><div class="p-card-unit">Score 82</div></div>
+      <div class="p-card"><div class="p-card-lbl">KFA</div><div class="p-card-val">13.6</div><div class="p-card-unit">%</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- B4 -->
+<div class="theme b4">
+  <div class="theme-label">B4 · Deutlich heller</div>
+  <div class="preview">
+    <div class="p-nav"><span class="p-brand">IRON <span>FORGE</span> LAB</span><span style="opacity:.4;font-size:.6rem;font-family:'JetBrains Mono'">10. Apr 2026</span></div>
+    <div class="p-hero">
+      <div>
+        <div style="font-size:.54rem;opacity:.4;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.25rem">Blast · Tag 47</div>
+        <div class="p-hero-val">71.6<span>KG</span></div>
+        <div class="p-hero-sub">Woche 7 · −0.3 kg</div>
+        <div class="p-bar"><div class="p-bar-track"><div class="p-bar-fill"></div></div></div>
+      </div>
+      <div class="p-right">
+        <div class="p-chip">HRV 38 ms</div><br>
+        <div class="p-chip">Schlaf 82</div><br>
+        <div class="p-chip">BB 71</div>
+      </div>
+    </div>
+    <div class="p-grid">
+      <div class="p-card"><div class="p-card-lbl">HRV</div><div class="p-card-val p-accent">38</div><div class="p-card-unit">ms</div></div>
+      <div class="p-card"><div class="p-card-lbl">Schlaf</div><div class="p-card-val">7h 20m</div><div class="p-card-unit">Score 82</div></div>
+      <div class="p-card"><div class="p-card-lbl">KFA</div><div class="p-card-val">13.6</div><div class="p-card-unit">%</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- B5 -->
+<div class="theme b5">
+  <div class="theme-label">B5 · Hell-Navy</div>
+  <div class="preview">
+    <div class="p-nav"><span class="p-brand">IRON <span>FORGE</span> LAB</span><span style="opacity:.4;font-size:.6rem;font-family:'JetBrains Mono'">10. Apr 2026</span></div>
+    <div class="p-hero">
+      <div>
+        <div style="font-size:.54rem;opacity:.4;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.25rem">Blast · Tag 47</div>
+        <div class="p-hero-val">71.6<span>KG</span></div>
+        <div class="p-hero-sub">Woche 7 · −0.3 kg</div>
+        <div class="p-bar"><div class="p-bar-track"><div class="p-bar-fill"></div></div></div>
+      </div>
+      <div class="p-right">
+        <div class="p-chip">HRV 38 ms</div><br>
+        <div class="p-chip">Schlaf 82</div><br>
+        <div class="p-chip">BB 71</div>
+      </div>
+    </div>
+    <div class="p-grid">
+      <div class="p-card"><div class="p-card-lbl">HRV</div><div class="p-card-val p-accent">38</div><div class="p-card-unit">ms</div></div>
+      <div class="p-card"><div class="p-card-lbl">Schlaf</div><div class="p-card-val">7h 20m</div><div class="p-card-unit">Score 82</div></div>
+      <div class="p-card"><div class="p-card-lbl">KFA</div><div class="p-card-val">13.6</div><div class="p-card-unit">%</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- B6 -->
+<div class="theme b6">
+  <div class="theme-label">B6 · Warm-Navy + Orange</div>
+  <div class="preview">
+    <div class="p-nav"><span class="p-brand">IRON <span>FORGE</span> LAB</span><span style="opacity:.4;font-size:.6rem;font-family:'JetBrains Mono'">10. Apr 2026</span></div>
+    <div class="p-hero">
+      <div>
+        <div style="font-size:.54rem;opacity:.4;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.25rem">Blast · Tag 47</div>
+        <div class="p-hero-val">71.6<span>KG</span></div>
+        <div class="p-hero-sub">Woche 7 · −0.3 kg</div>
+        <div class="p-bar"><div class="p-bar-track"><div class="p-bar-fill"></div></div></div>
+      </div>
+      <div class="p-right">
+        <div class="p-chip">HRV 38 ms</div><br>
+        <div class="p-chip">Schlaf 82</div><br>
+        <div class="p-chip">BB 71</div>
+      </div>
+    </div>
+    <div class="p-grid">
+      <div class="p-card"><div class="p-card-lbl">HRV</div><div class="p-card-val p-accent">38</div><div class="p-card-unit">ms</div></div>
+      <div class="p-card"><div class="p-card-lbl">Schlaf</div><div class="p-card-val">7h 20m</div><div class="p-card-unit">Score 82</div></div>
+      <div class="p-card"><div class="p-card-lbl">KFA</div><div class="p-card-val">13.6</div><div class="p-card-unit">%</div></div>
+    </div>
+  </div>
+</div>
+
+</div>
+<div style="margin-top:1.5rem;padding:.9rem 1rem;background:#1e1e1e;border-radius:8px;color:#777;font-size:.78rem;line-height:1.7">
+  B1 → B5: gleicher Amber-Ton, Blau-Hintergrund wird heller<br>
+  B6: etwas wärmer (blaugrau + Orange statt Amber)<br>
+  Einfach ein Kürzel nennen, ich übertrage es direkt auf alle Seiten.
+</div>
+</body>
+</html>

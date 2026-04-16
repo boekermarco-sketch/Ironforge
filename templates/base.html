@@ -1,38 +1,98 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="de" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}Fitness Dashboard{% endblock %} – Marco Böker</title>
-  <link rel="stylesheet" href="/static/css/style.css">
+  <title>{% block title %}Dashboard{% endblock %} – Iron Forge Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css?v=12">
+  <script>(function(){var t=localStorage.getItem('ifl-theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();</script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const cs  = getComputedStyle(document.documentElement);
+      const v   = k => cs.getPropertyValue(k).trim();
+      Chart.defaults.color                             = v('--chart-tick');
+      Chart.defaults.borderColor                       = v('--chart-grid');
+      Chart.defaults.font.family                       = "'Manrope', sans-serif";
+      Chart.defaults.font.size                         = 10;
+      Chart.defaults.plugins.legend.labels.color       = v('--chart-tick');
+      Chart.defaults.plugins.tooltip.backgroundColor   = v('--chart-tip-bg');
+      Chart.defaults.plugins.tooltip.borderColor       = v('--chart-tip-bdr');
+      Chart.defaults.plugins.tooltip.borderWidth       = 1;
+      Chart.defaults.plugins.tooltip.titleColor        = v('--chart-tip-ttl');
+      Chart.defaults.plugins.tooltip.bodyColor         = v('--chart-tip-bdy');
+      Chart.defaults.plugins.tooltip.padding           = 10;
+      Chart.defaults.plugins.tooltip.titleFont         = { family: 'Manrope', weight: '700', size: 11 };
+      Chart.defaults.plugins.tooltip.bodyFont          = { family: 'JetBrains Mono', size: 11 };
+    });
+  </script>
 </head>
 <body>
 
-<nav class="navbar">
-  <div class="nav-brand">
-    <span class="nav-icon">💪</span>
-    <span>Marco's Dashboard</span>
-  </div>
-  <ul class="nav-links">
-    <li><a href="/" {% if request.url.path == "/" %}class="active"{% endif %}>Dashboard</a></li>
-    <li><a href="/stack/" {% if "/stack" in request.url.path %}class="active"{% endif %}>Stack</a></li>
-    <li><a href="/blutbilder/" {% if "/blutbilder" in request.url.path %}class="active"{% endif %}>Blutbilder</a></li>
-    <li><a href="/tageslog/" {% if "/tageslog" in request.url.path %}class="active"{% endif %}>Tageslog</a></li>
-    <li><a href="/journal/" {% if "/journal" in request.url.path %}class="active"{% endif %}>Journal</a></li>
-    <li><a href="/ereignisse/" {% if "/ereignisse" in request.url.path %}class="active"{% endif %}>Ereignisse</a></li>
-    <li><a href="/import/" {% if "/import" in request.url.path %}class="active"{% endif %}>Import</a></li>
-  </ul>
-</nav>
+<div class="shell">
 
-<main class="main-content">
-  {% block content %}{% endblock %}
-</main>
+  <!-- ══ SIDEBAR ══════════════════════════════════════ -->
+  <aside class="side">
+    <div>
+      <div class="brand">IRON<br><span>FORGE</span></div>
+      <div class="brand-sub">Lab · Recomp-Blast 2026</div>
+    </div>
 
-<footer class="footer">
-  <span>Fitness Dashboard v1.0 · Marco Böker · Stand: 2026</span>
-</footer>
+    <nav class="side-nav">
+      <a href="/"            class="nav-btn {% if request.url.path == '/' %}active{% endif %}">Dashboard</a>
+      <a href="/tageslog/"   class="nav-btn {% if '/tageslog'   in request.url.path %}active{% endif %}">Tageslog</a>
+      <a href="/stack/"      class="nav-btn {% if '/stack'      in request.url.path %}active{% endif %}">Stack</a>
+      <a href="/blutbilder/" class="nav-btn {% if '/blutbilder' in request.url.path %}active{% endif %}">Blutbild</a>
+      <a href="/checkin/"    class="nav-btn {% if '/checkin'    in request.url.path %}active{% endif %}">Check-in</a>
+      <a href="/journal/"    class="nav-btn {% if '/journal'    in request.url.path %}active{% endif %}">Journal</a>
+      <a href="/ereignisse/" class="nav-btn {% if '/ereignisse' in request.url.path %}active{% endif %}">Ereignisse</a>
+      <a href="/import/"     class="nav-btn {% if '/import'     in request.url.path %}active{% endif %}">Import</a>
+    </nav>
+
+    <button id="theme-btn" class="nav-btn" onclick="iflToggleTheme()"
+      style="font-size:10px;letter-spacing:.14em;text-align:left;cursor:pointer;background:none;border:1px solid var(--line);color:var(--soft)">
+    </button>
+
+    {% if today is defined %}
+    {% set blast_start_d = today.__class__(2026, 2, 23) %}
+    {% set b_day  = (today - blast_start_d).days + 1 %}
+    {% set b_week = ((today - blast_start_d).days // 7) + 1 %}
+    {% set b_pct  = ((b_day / 112) * 100) | round | int %}
+    <div class="blast-widget">
+      <div class="blast-label">Aktuelle Phase</div>
+      <div class="blast-num">W{{ b_week }}<span> / 16</span></div>
+      <div class="blast-days">Tag {{ b_day }} · 23.02 – 15.06.2026</div>
+      <div class="blast-bar"><div class="blast-fill" style="width:{{ b_pct }}%"></div></div>
+    </div>
+    {% endif %}
+  </aside>
+
+  <!-- ══ MAIN ════════════════════════════════════════ -->
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+</div>
 
 {% block scripts %}{% endblock %}
+<script>
+function iflToggleTheme() {
+  const html = document.documentElement;
+  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('ifl-theme', next);
+  _iflSyncBtn();
+}
+function _iflSyncBtn() {
+  const btn = document.getElementById('theme-btn');
+  if (!btn) return;
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  btn.textContent = isDark ? '☀ Light Mode' : '🌙 Dark Mode';
+}
+document.addEventListener('DOMContentLoaded', _iflSyncBtn);
+</script>
 </body>
 </html>

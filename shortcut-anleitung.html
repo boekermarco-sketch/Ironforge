@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iOS Shortcut Anleitung – Ironforge Health Sync</title>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --panel: #141414;
+    --panel2: #1c1c1c;
+    --line: #2a2a2a;
+    --text: #f0f0f0;
+    --muted: #888;
+    --orange: #f97316;
+    --blue: #3b82f6;
+    --green: #22c55e;
+    --yellow: #eab308;
+    --red: #ef4444;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    padding: 24px 16px 80px;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-size: 1.8rem;
+    color: var(--orange);
+    margin-bottom: 6px;
+    font-weight: 800;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-bottom: 40px;
+  }
+
+  /* ---- SECTION HEADER ---- */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 40px 0 20px;
+  }
+
+  .section-num {
+    background: var(--orange);
+    color: #000;
+    font-weight: 900;
+    font-size: 1.1rem;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .section-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+
+  /* ---- STEP CARD ---- */
+  .step {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+
+  .step-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--panel2);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .step-num {
+    background: var(--blue);
+    color: #fff;
+    font-weight: 800;
+    font-size: 0.85rem;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .step-title {
+    font-weight: 700;
+    font-size: 1rem;
+  }
+
+  .step-body {
+    padding: 16px;
+  }
+
+  .step-body p { margin-bottom: 10px; }
+  .step-body p:last-child { margin-bottom: 0; }
+
+  /* ---- IPHONE MOCKUP ---- */
+  .iphone {
+    background: #1a1a1a;
+    border: 2px solid #333;
+    border-radius: 40px;
+    width: 260px;
+    margin: 16px auto;
+    padding: 20px 10px;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  }
+
+  .iphone::before {
+    content: '';
+    position: absolute;
+    top: 10px; left: 50%;
+    transform: translateX(-50%);
+    width: 80px; height: 6px;
+    background: #333;
+    border-radius: 4px;
+  }
+
+  .iphone-screen {
+    background: #000;
+    border-radius: 28px;
+    padding: 12px 8px;
+    min-height: 120px;
+  }
+
+  /* ---- iOS UI ELEMENTS ---- */
+  .ios-nav-bar {
+    background: #1c1c1e;
+    padding: 10px 14px;
+    border-radius: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.75rem;
+  }
+
+  .ios-nav-back {
+    color: var(--blue);
+    font-size: 0.8rem;
+  }
+
+  .ios-nav-title {
+    font-weight: 700;
+    font-size: 0.85rem;
+  }
+
+  .ios-nav-action {
+    color: var(--blue);
+    font-size: 0.8rem;
+  }
+
+  .ios-large-title {
+    padding: 8px 14px 4px;
+    font-size: 1.4rem;
+    font-weight: 800;
+    background: #000;
+  }
+
+  .ios-row {
+    background: #1c1c1e;
+    border-radius: 12px;
+    margin: 4px 6px;
+    padding: 10px 12px;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .ios-row-label { color: #fff; }
+  .ios-row-value { color: var(--muted); font-size: 0.7rem; }
+
+  .ios-button {
+    display: block;
+    background: var(--blue);
+    color: #fff;
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin: 6px;
+  }
+
+  .ios-button.orange { background: var(--orange); color: #000; }
+  .ios-button.green { background: var(--green); }
+
+  .ios-search {
+    background: #2c2c2e;
+    border-radius: 10px;
+    padding: 8px 12px;
+    margin: 4px 6px;
+    font-size: 0.75rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .ios-action-block {
+    background: #2c2c2e;
+    border-radius: 12px;
+    margin: 4px 6px;
+    padding: 10px 12px;
+    font-size: 0.72rem;
+  }
+
+  .ios-action-title {
+    color: var(--blue);
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .ios-action-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+    color: #ccc;
+    border-bottom: 1px solid #3c3c3e;
+  }
+
+  .ios-action-row:last-child { border-bottom: none; }
+  .ios-action-row span:last-child { color: var(--orange); }
+
+  .ios-tab-bar {
+    background: rgba(28,28,30,0.95);
+    display: flex;
+    padding: 8px 0 4px;
+    border-top: 1px solid #333;
+    margin-top: 6px;
+    border-radius: 0 0 26px 26px;
+  }
+
+  .ios-tab {
+    flex: 1;
+    text-align: center;
+    font-size: 0.55rem;
+    color: var(--muted);
+  }
+
+  .ios-tab.active { color: var(--orange); }
+
+  .ios-tab-icon {
+    font-size: 1rem;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  /* ---- TAP INDICATOR ---- */
+  .tap {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--orange);
+    color: #000;
+    font-weight: 700;
+    font-size: 0.75rem;
+    padding: 3px 8px;
+    border-radius: 20px;
+  }
+
+  .tap::before { content: "👆"; font-size: 0.9rem; }
+
+  /* ---- HINWEIS ---- */
+  .hint {
+    background: #1a2e1a;
+    border: 1px solid #2d5a2d;
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-size: 0.88rem;
+  }
+
+  .hint strong { color: var(--green); }
+
+  .warn {
+    background: #2a1e0a;
+    border: 1px solid #6b4c1a;
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-size: 0.88rem;
+  }
+
+  .warn strong { color: var(--yellow); }
+
+  /* ---- CODE ---- */
+  code {
+    background: #2a2a2a;
+    color: var(--orange);
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+  }
+
+  pre {
+    background: #111;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px;
+    overflow-x: auto;
+    font-size: 0.82rem;
+    line-height: 1.7;
+    color: #ccc;
+  }
+
+  pre .key { color: #7dd3fc; }
+  pre .val { color: #86efac; }
+  pre .str { color: #fde68a; }
+
+  /* ---- ARROW ---- */
+  .arrow {
+    text-align: center;
+    font-size: 1.4rem;
+    margin: 4px 0;
+    color: var(--orange);
+  }
+
+  /* ---- OVERVIEW BOX ---- */
+  .overview {
+    background: var(--panel);
+    border: 1px solid var(--orange);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 32px;
+  }
+
+  .overview h3 { color: var(--orange); margin-bottom: 12px; }
+
+  .overview ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .overview li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+  }
+
+  .overview li .badge {
+    background: var(--panel2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 2px 8px;
+    font-size: 0.75rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  /* ---- ALTERNATIVE BOX ---- */
+  .alt-prompt {
+    background: #0f1729;
+    border: 1px solid #1e3a8a;
+    border-radius: 16px;
+    padding: 20px;
+    margin: 32px 0;
+  }
+
+  .alt-prompt h3 { color: var(--blue); margin-bottom: 10px; }
+  .alt-prompt p { margin-bottom: 10px; font-size: 0.9rem; }
+
+  .prompt-box {
+    background: #0a0f1f;
+    border: 1px solid #2a3a5e;
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 0.85rem;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    color: #cbd5e1;
+    font-family: Georgia, serif;
+  }
+
+  /* ---- SUPABASE TABLE SQL ---- */
+  .sql-box {
+    background: #0d1117;
+    border: 1px solid #21262d;
+    border-radius: 12px;
+    padding: 16px;
+    margin: 12px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    line-height: 1.8;
+    color: #e6edf3;
+    overflow-x: auto;
+  }
+
+  .sql-kw { color: #ff7b72; }
+  .sql-type { color: #79c0ff; }
+  .sql-str { color: #a5d6ff; }
+  .sql-comment { color: #8b949e; }
+</style>
+</head>
+<body>
+
+<h1>Ironforge Health Sync</h1>
+<p class="subtitle">iOS Shortcut Anleitung – Apple Health → Supabase (täglich automatisch)</p>
+
+<!-- ÜBERSICHT -->
+<div class="overview">
+  <h3>Was dieser Shortcut macht</h3>
+  <ul>
+    <li><span class="badge">MFP</span> Kalorien, Protein, Kohlenhydrate, Fett aus Apple Health lesen</li>
+    <li><span class="badge">Withings</span> Körpergewicht, Körperfett lesen</li>
+    <li><span class="badge">Garmin</span> Ruhepuls, Schritte lesen</li>
+    <li><span class="badge">Supabase</span> Alle Werte direkt in die Cloud speichern</li>
+    <li><span class="badge">Automation</span> Läuft täglich um 23:30 Uhr automatisch</li>
+  </ul>
+</div>
+
+<div class="warn">
+  <strong>Voraussetzung:</strong> In MyFitnessPal muss die Apple Health Verbindung aktiv sein.<br>
+  <strong>Wo:</strong> MFP App → unten rechts Profil → Einstellungen (Zahnrad) → Apps &amp; Geräte → Apple Health → alles EIN
+</div>
+
+<!-- ==================== TEIL 1 ==================== -->
+<div class="section-header">
+  <div class="section-num">1</div>
+  <div class="section-title">Supabase Tabelle anlegen (einmalig, am PC)</div>
+</div>
+
+<div class="step">
+  <div class="step-header">
+    <div class="step-num">1</div>
+    <div class="step-title">Supabase öffnen und SQL ausführen</div>
+  </div>
+  <div class="step-body">
+    <p>Gehe auf <strong>supabase.com → dein Projekt → SQL Editor</strong> (links in der Navigation).</p>
+    <p>Kopiere diesen Code, füge ihn ein, klicke <strong>Run</strong>:</p>
+    <div class="sql-box">
+<span class="sql-kw">CREATE TABLE IF NOT EXISTS</span> apple_health_daily (<br>
+&nbsp;&nbsp;date&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sql-type">DATE</span> <span class="sql-kw">PRIMARY KEY</span>,<br>
+&nbsp;&nbsp;calories&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sql-type">FLOAT</span>,<br>
+&nbsp;&nbsp;protein_g&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sql-type">FLOAT</span>,<br>
+&nbsp;&nbsp;carbs_g&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sql-type">FLOAT</span>,<br>
+&nbsp;&nbsp;fat_g&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sql-type">FLOAT</span>,<br>
+&nbsp;&nbsp;body_mass_kg&nbsp;&nbsp;<span class="sql-type">FLOAT</span>,<br>
+&nbsp;&nbsp;body_fat_pct&nbsp;&nbsp;<span class="sql-type">FLOAT</span>,<br>
+&nbsp;&nbsp;steps&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sql-type">INTEGER</span>,<br>
+&nbsp;&nbsp;resting_hr&nbsp;&nbsp;&nbsp;&nbsp;<span class="sql-type">INTEGER</span>,<br>
+&nbsp;&nbsp;sleep_min&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sql-type">INTEGER</span>,<br>
+&nbsp;&nbsp;synced_at&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sql-type">TIMESTAMP</span> <span class="sql-kw">DEFAULT</span> now()<br>
+);<br><br>
+<span class="sql-comment">-- RLS: Anon darf einfügen und überschreiben</span><br>
+<span class="sql-kw">ALTER TABLE</span> apple_health_daily <span class="sql-kw">ENABLE ROW LEVEL SECURITY</span>;<br><br>
+<span class="sql-kw">CREATE POLICY</span> <span class="sql-str">"anon insert"</span> <span class="sql-kw">ON</span> apple_health_daily<br>
+&nbsp;&nbsp;<span class="sql-kw">FOR INSERT TO</span> anon <span class="sql-kw">WITH CHECK</span> (true);<br><br>
+<span class="sql-kw">CREATE POLICY</span> <span class="sql-str">"anon update"</span> <span class="sql-kw">ON</span> apple_health_daily<br>
+&nbsp;&nbsp;<span class="sql-kw">FOR UPDATE TO</span> anon <span class="sql-kw">USING</span> (true);
+    </div>
+    <div class="hint"><strong>Fertig wenn:</strong> Du siehst "Success. No rows returned" — das ist korrekt, die Tabelle wurde angelegt.</div>
+  </div>
+</div>
+
+<!-- ==================== TEIL 2 ==================== -->
+<div class="section-header">
+  <div class="section-num">2</div>
+  <div class="section-title">Shortcuts App öffnen und Shortcut anlegen</div>
+</div>
+
+<div class="step">
+  <div class="step-header">
+    <div class="step-num">1</div>
+    <div class="step-title">Shortcuts App öffnen</div>
+  </div>
+  <div class="step-body">
+    <p>Suche auf dem iPhone nach <strong>"Kurzbefehle"</strong> (die App mit dem orangen Icon und zwei weißen Pfeilen). Falls sie nicht auf dem Homescreen ist: Wisch nach unten für die Suche → tippe "Kurzbefehle".</p>
+
+    <div class="iphone">
+      <div class="iphone-screen">
+        <div class="ios-nav-bar">
+          <span></span>
+          <span class="ios-nav-title">Kurzbefehle</span>
+          <span class="ios-nav-action" style="font-size:1.2rem; font-weight:900">+</span>
+        </div>
+        <div class="ios-large-title">Meine Kurzbefehle</div>
+        <div style="padding: 8px 6px;">
+          <div class="ios-row">
+            <span class="ios-row-label">🔆 Helligkeit</span>
+            <span>›</span>
+          </div>
+          <div class="ios-row">
+            <span class="ios-row-label">📷 Kamera</span>
+            <span>›</span>
+          </div>
+        </div>
+        <div class="ios-tab-bar">
+          <div class="ios-tab active">
+            <span class="ios-tab-icon">⚡</span>
+            Kurzbefehle
+          </div>
+          <div class="ios-tab">
+            <span class="ios-tab-icon">🤖</span>
+            Automationen
+          </div>
+          <div class="ios-tab">
+            <span class="ios-tab-icon">🔍</span>
+            Galerie
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p><span class="tap">Tippe</span> oben rechts auf das <strong>+</strong> Symbol</p>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-header">
+    <div class="step-num">2</div>
+    <div class="step-title">Shortcut benennen</div>
+  </div>
+  <div class="step-body">
+    <p>Du siehst jetzt einen leeren Shortcut-Editor. Oben steht <strong>"Neuer Kurzbefehl"</strong>.</p>
+
+    <div class="iphone">
+      <div class="iphone-screen">
+        <div class="ios-nav-bar">
+          <span class="ios-nav-back">✕</span>
+          <span class="ios-nav-title">Neuer Kurzbefehl</span>
+          <span class="ios-nav-action">Fertig</span>
+        </div>
+        <div style="background:#1c1c1e; padding:8px; margin:6px; border-radius:12px; text-align:center; font-size:0.8rem; color:#888;">
+          Aktion hinzufügen<br>
+          <span style="font-size:2rem;">+</span>
+        </div>
+        <div class="ios-tab-bar">
+          <div class="ios-tab active">
+            <span class="ios-tab-icon">⚡</span>
+            Kurzbefehl
+          </div>
+          <div class="ios-tab">
+            <span class="ios-tab-icon">⚙️</span>
+            Einstellungen
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p><span class="tap">Tippe</span> oben auf <strong>"Neuer Kurzbefehl"</strong> → dann auf <strong>"Umbenennen"</strong> → tippe ein:</p>
+    <p><code>Ironforge Health Sync</code></p>
+    <p>Dann <strong>Fertig</strong> auf der Tastatur.</p>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-header">
+    <div class="step-num">3</div>
+    <div class="step-title">Das Prinzip: Wie füge ich eine Action hinzu?</div>
+  </div>
+  <div class="step-body">
+    <p>Das ist die wichtigste Sache zu verstehen. Tippe auf den großen <strong>blauen "+" Button</strong> in der Mitte der leeren Fläche.</p>
+    <p>Es öffnet sich ein Suchfenster von unten. <strong>Hier</strong> kannst du jede Action eintippen und finden.</p>
+
+    <div class="iphone">
+      <div class="iphone-screen">
+        <div style="background:#000; padding:12px 8px 4px; text-align:center; font-size:0.7rem; color:#888;">
+          (Shortcut-Editor)
+        </div>
+        <div style="background:#1c1c1e; padding:8px; margin:4px 6px; border-radius:12px; text-align:center; font-size:0.8rem; color:#888;">
+          Aktion hinzufügen<br>
+          <span style="font-size:1.5rem; color:#3b82f6;">+</span>
+        </div>
+        <div style="background:#1c1c1e; padding:8px 6px; margin-top:6px; border-radius:12px 12px 0 0;">
+          <div class="ios-search">🔍 Suchen...</div>
+          <div style="font-size:0.65rem; color:#888; padding:6px 8px;">Beliebt</div>
+          <div class="ios-row" style="margin:2px 0; background:#2c2c2e;">
+            <span class="ios-row-label">🔢 Variable festlegen</span>
+          </div>
+          <div class="ios-row" style="margin:2px 0; background:#2c2c2e;">
+            <span class="ios-row-label">🌐 Inhalt von URL abrufen</span>
+          </div>
+          <div class="ios-row" style="margin:2px 0; background:#2c2c2e;">
+            <span class="ios-row-label">📱 Nachricht anzeigen</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hint">
+      <strong>Merke:</strong> In der Suchleiste einfach den deutschen oder englischen Begriff eintippen. Ich schreibe immer genau was du eintippen musst.
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TEIL 3: ACTIONS ==================== -->
+<div class="section-header">
+  <div class="section-num">3</div>
+  <div class="section-title">Die 9 Actions einrichten (nacheinander)</div>
+</div>
+
+<!-- ACTION 1 -->
+<div class="step">
+  <div class="step-header">
+    <div class="step-num">A1</div>
+    <div class="step-title">Datum holen</div>
+  </div>
+  <div class="step-body">
+    <p><span class="tap">Tippe</span> auf <strong>+</strong> → Suche nach: <code>Aktuelles Datum</code></p>
+    <p>Tippe auf <strong>"Aktuelles Datum"</strong> → wird hinzugefügt.</p>
+    <p>In der Action auf <strong>"Datum und Uhrzeit"</strong> tippen → <strong>"Datum"</strong> wählen</p>
+
+    <div class="iphone">
+      <div class="iphone-screen">
+        <div class="ios-action-block">
+          <div class="ios-action-title">📅 Aktuelles Datum</div>
+          <div class="ios-action-row">
+            <span>Format</span>
+            <span>Datum ◂</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ACTION 2: Kalorien -->
+<div class="step">
+  <div class="step-header">
+    <div class="step-num">A2</div>
+    <div class="step-title">Kalorien lesen (von MFP)</div>
+  </div>
+  <div class="step-body">
+    <p><span class="tap">Tippe</span> auf <strong>+</strong> → Suche: <code>Gesundheitsdaten suchen</code></p>
+    <p>Tippe auf <strong>"Gesundheitsdaten suchen"</strong>. Jetzt siehst du diese Action:</p>
+
+    <div class="iphone">
+      <div class="iphone-screen">
+        <div class="ios-action-block">
+          <div class="ios-action-title">❤️ Gesundheitsdaten suchen</div>
+          <div class="ios-action-row">
+            <span>Typ</span>
+            <span>Nahrungsenergie ◂</span>
+          </div>
+          <div class="ios-action-row">
+            <span>Zeitraum</span>
+            <span>Letzte 3 Tage ◂</span>
+          </div>
+          <div class="ios-action-row">
+            <span>Sortieren</span>
+            <span>Neueste zuerst ◂</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p>So einrichten:</p>
+    <ul style="padding-left:20px; margin:8px 0;">
+      <li><strong>Typ:</strong> tippen → suche <code>Nahrungsenergie</code> → wählen</li>
+      <li><strong>Zeitraum:</strong> tippen → <strong>"Letzte"</strong> → <code>3</code> → <strong>"Tage"</strong></li>
+      <li><strong>Sortieren:</strong> Neueste zuerst (so kommt heutiger Wert zuerst)</li>
+      <li><strong>Limit:</strong> auf <code>1</code> setzen (nur letzten Eintrag)</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ACTION 3: Wert extrahieren -->
+<div class="step">
+  <div class="step-header">
+    <div class="step-num">A3</div>
+    <div class="step-title">Kaloriewert aus dem Ergebnis extrahieren</div>
+  </div>
+  <div class="step-body">
+    <p><span class="tap">Tippe</span> auf <strong>+</strong> → Suche: <code>Details der Gesundheitsdaten</code></p>
+    <p>Tippe auf <strong>"Details der Gesundheitsdaten abrufen"</strong>.</p>
+
+    <div class="iphone">
+      <div class="iphone-screen">
+        <div class="ios-action-block">
+          <div class="ios-action-title">🔍 Details der Gesundheitsdaten</div>
+          <div class="ios-action-row">
+            <span>Eigenschaft</span>
+            <span>Wert ◂</span>
+          </div>
+          <div class="ios-action-row">
+            <span>Von</span>
+            <span>Gesundheitsproben ◂</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p><strong>Eigenschaft:</strong> <code>Wert</code> &nbsp;|&nbsp; <strong>Von:</strong> <code>Gesundheitsproben</code> (die Variable aus A2)</p>
+
+    <div class="hint">
+      <strong>Tipp:</strong> "Gesundheitsproben" ist die violette/blaue Variable die automatisch aus der vorherigen Action erscheint. Tippe auf das Feld und wähle sie aus.
+    </div>
+  </div>
+</div>
+
+<!-- WIEDERHOLUNG FÜR ANDERE METRIKEN -->
+<div class="step">
+  <div class="step-header">
+    <div class="step-num">A4–A8</div>
+    <div class="step-title">Protein, Kohlenhydrate, Fett, Gewicht, Ruhepuls (gleich wie A2+A3)</div>
+  </div>
+  <div class="step-body">
+    <p>Wiederhole <strong>jeweils</strong> die beiden Actions (Suchen + Details) mit diesen Typen:</p>
+
+    <table style="width:100%; border-collapse:collapse; font-size:0.85rem; margin:10px 0;">
+      <thead>
+        <tr style="background:#2a2a2a;">
+          <th style="padding:8px 10px; text-align:left; border-radius:8px 0 0 0;">Action</th>
+          <th style="padding:8px 10px; text-align:left;">Typ suchen nach</th>
+          <th style="padding:8px 10px; text-align:left; border-radius:0 8px 0 0;">Limit</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #2a2a2a;">
+          <td style="padding:8px 10px;">A4 – Protein</td>
+          <td style="padding:8px 10px;"><code>Protein</code></td>
+          <td style="padding:8px 10px;">1</td>
+        </tr>
+        <tr style="border-bottom:1px solid #2a2a2a;">
+          <td style="padding:8px 10px;">A5 – Kohlenhydrate</td>
+          <td style="padding:8px 10px;"><code>Kohlenhydrate</code></td>
+          <td style="padding:8px 10px;">1</td>
+        </tr>
+        <tr style="border-bottom:1px solid #2a2a2a;">
+          <td style="padding:8px 10px;">A6 – Fett</td>
+          <td style="padding:8px 10px;"><code>Fett (Gesamt)</code></td>
+          <td style="padding:8px 10px;">1</td>
+        </tr>
+        <tr style="border-bottom:1px solid #2a2a2a;">
+          <td style="padding:8px 10px;">A7 – Körpergewicht</td>
+          <td style="padding:8px 10px;"><code>Körpermasse</code></td>
+          <td style="padding:8px 10px;">1</td>
+        </tr>
+        <tr style="border-bottom:1px solid #2a2a2a;">
+          <td style="padding:8px 10px;">A8 – Ruhepuls</td>
+          <td style="padding:8px 10px;"><code>Ruhepuls</code></td>
+          <td style="padding:8px 10px;">1</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 10px;">A9 – Schritte</td>
+          <td style="padding:8px 10px;"><code>Schrittanzahl</code></td>
+          <td style="padding:8px 10px;">1</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <strong>Wichtig bei Schritte:</strong> Limit auf <code>1</code> setzen, Zeitraum "Heute". Schritte kommen manchmal als viele kleine Einträge — wir holen nur den letzten Tageswert.
+    </div>
+  </div>
+</div>
+
+<!-- ACTION: WÖRTERBUCH -->
+<div class="step">
+  <div class="step-header">
+    <div class="step-num">A10</div>
+    <div class="step-title">Wörterbuch (JSON-Paket) zusammenbauen</div>
+  </div>
+  <div class="step-body">
+    <p><span class="tap">Tippe</span> auf <strong>+</strong> → Suche: <code>Wörterbuch</code></p>
+    <p>Tippe auf <strong>"Wörterbuch"</strong>. Du siehst eine leere Action mit <strong>"Element hinzufügen"</strong>.</p>
+
+    <div class="iphone">
+      <div class="iphone-screen">
+        <div class="ios-action-block">
+          <div class="ios-action-title">📚 Wörterbuch</div>
+          <div class="ios-action-row">
+            <span style="color:#3b82f6;">date</span>
+            <span style="color:#22c55e;">Datum ▸</span>
+          </div>
+          <div class="ios-action-row">
+            <span style="color:#3b82f6;">calories</span>
+            <span style="color:#22c55e;">Wert ▸</span>
+          </div>
+          <div class="ios-action-row">
+            <span style="color:#3b82f6;">protein_g</span>
+            <span style="color:#22c55e;">Wert ▸</span>
+          </div>
+          <div style="color:#3b82f6; font-size:0.7rem; padding:4px 0; text-align:center;">+ Element hinzufügen</div>
+        </div>
+      </div>
+    </div>
+
+    <p>Füge folgende Einträge hinzu — tippe jeweils <strong>"Element hinzufügen"</strong>:</p>
+
+    <table style="width:100%; border-collapse:collapse; font-size:0.85rem; margin:10px 0;">
+      <thead>
+        <tr style="background:#2a2a2a;">
+          <th style="padding:8px 10px; text-align:left;">Key (links eintippen)</th>
+          <th style="padding:8px 10px; text-align:left;">Wert (rechts — Variable wählen)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #2a2a2a;"><td style="padding:7px 10px;"><code>date</code></td><td style="padding:7px 10px;">Variable: <em>Aktuelles Datum</em> (aus A1)</td></tr>
+        <tr style="border-bottom:1px solid #2a2a2a;"><td style="padding:7px 10px;"><code>calories</code></td><td style="padding:7px 10px;">Variable: <em>Wert</em> (Kalorien, aus A2+A3)</td></tr>
+        <tr style="border-bottom:1px solid #2a2a2a;"><td style="padding:7px 10px;"><code>protein_g</code></td><td style="padding:7px 10px;">Variable: <em>Wert</em> (Protein)</td></tr>
+        <tr style="border-bottom:1px solid #2a2a2a;"><td style="padding:7px 10px;"><code>carbs_g</code></td><td style="padding:7px 10px;">Variable: <em>Wert</em> (Kohlenhydrate)</td></tr>
+        <tr style="border-bottom:1px solid #2a2a2a;"><td style="padding:7px 10px;"><code>fat_g</code></td><td style="padding:7px 10px;">Variable: <em>Wert</em> (Fett)</td></tr>
+        <tr style="border-bottom:1px solid #2a2a2a;"><td style="padding:7px 10px;"><code>body_mass_kg</code></td><td style="padding:7px 10px;">Variable: <em>Wert</em> (Körpermasse)</td></tr>
+        <tr style="border-bottom:1px solid #2a2a2a;"><td style="padding:7px 10px;"><code>resting_hr</code></td><td style="padding:7px 10px;">Variable: <em>Wert</em> (Ruhepuls)</td></tr>
+        <tr><td style="padding:7px 10px;"><code>steps</code></td><td style="padding:7px 10px;">Variable: <em>Wert</em> (Schritte)</td></tr>
+      </tbody>
+    </table>
+
+    <div class="hint">
+      <strong>Wie wähle ich eine Variable?</strong> Tippe auf das Wertfeld (rechts) → es erscheinen unten die zuletzt verwendeten Variablen. Tippe auf die passende. Wenn du mehrere "Wert"-Variablen siehst: halte sie gedrückt um zu sehen welche Action sie kommt.
+    </div>
+  </div>
+</div>
+
+<!-- ACTION: HTTP POST -->
+<div class="step">
+  <div class="step-header">
+    <div class="step-num">A11</div>
+    <div class="step-title">Daten an Supabase senden (HTTP POST)</div>
+  </div>
+  <div class="step-body">
+    <p><span class="tap">Tippe</span> auf <strong>+</strong> → Suche: <code>Inhalt von URL abrufen</code></p>
+    <p>Tippe auf <strong>"Inhalt von URL abrufen"</strong>. So einrichten:</p>
+
+    <div class="iphone">
+      <div class="iphone-screen">
+        <div class="ios-action-block">
+          <div class="ios-action-title">🌐 Inhalt von URL abrufen</div>
+          <div class="ios-action-row">
+            <span>URL</span>
+            <span style="font-size:0.6rem; color:#f97316;">supabase.co/...</span>
+          </div>
+          <div class="ios-action-row">
+            <span>Methode</span>
+            <span>POST ◂</span>
+          </div>
+          <div class="ios-action-row">
+            <span>Header</span>
+            <span>2 Header ◂</span>
+          </div>
+          <div class="ios-action-row">
+            <span>Text</span>
+            <span>Wörterbuch ◂</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p><strong>URL</strong> — exakt so einfügen (alles in einer Zeile):</p>
+    <pre>https://dbamakgjtrgqplufwlca.supabase.co/rest/v1/apple_health_daily</pre>
+
+    <p><strong>Methode:</strong> tippen → <code>POST</code> wählen</p>
+
+    <p><strong>Header</strong> — tippe auf <em>"Header hinzufügen"</em>, füge drei Header ein:</p>
+    <table style="width:100%; border-collapse:collapse; font-size:0.82rem; margin:10px 0;">
+      <thead>
+        <tr style="background:#2a2a2a;">
+          <th style="padding:7px 10px; text-align:left;">Header-Name</th>
+          <th style="padding:7px 10px; text-align:left;">Wert</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #2a2a2a;">
+          <td style="padding:7px 10px;"><code>apikey</code></td>
+          <td style="padding:7px 10px; font-size:0.7rem; word-break:break-all;">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRiYW1ha2dqdHJncXBsdWZ3bGNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwODY0MzMsImV4cCI6MjA5MTY2MjQzM30.nXRtfxvgqg0Ccgo2FRtFYGrBjx-voNfQOpDCAzK_EME</td>
+        </tr>
+        <tr style="border-bottom:1px solid #2a2a2a;">
+          <td style="padding:7px 10px;"><code>Authorization</code></td>
+          <td style="padding:7px 10px; font-size:0.7rem; word-break:break-all;">Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRiYW1ha2dqdHJncXBsdWZ3bGNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwODY0MzMsImV4cCI6MjA5MTY2MjQzM30.nXRtfxvgqg0Ccgo2FRtFYGrBjx-voNfQOpDCAzK_EME</td>
+        </tr>
+        <tr>
+          <td style="padding:7px 10px;"><code>Prefer</code></td>
+          <td style="padding:7px 10px;"><code>resolution=merge-duplicates</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p><strong>Anforderungstext:</strong> auf <code>JSON</code> stellen → <em>Wörterbuch</em> aus A10 wählen</p>
+
+    <div class="hint">
+      <strong>Der "Prefer" Header</strong> sorgt dafür dass, wenn du den Shortcut zweimal für denselben Tag ausführst, der Eintrag überschrieben statt doppelt gespeichert wird.
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TEIL 4: AUTOMATION ==================== -->
+<div class="section-header">
+  <div class="section-num">4</div>
+  <div class="section-title">Tägliche Automation einrichten</div>
+</div>
+
+<div class="step">
+  <div class="step-header">
+    <div class="step-num">1</div>
+    <div class="step-title">Automation Tab öffnen</div>
+  </div>
+  <div class="step-body">
+    <p>In der Shortcuts App unten in der Tab-Bar auf <strong>"Automationen"</strong> tippen.</p>
+
+    <div class="iphone">
+      <div class="iphone-screen">
+        <div class="ios-nav-bar">
+          <span></span>
+          <span class="ios-nav-title">Automationen</span>
+          <span class="ios-nav-action" style="font-size:1.2rem; font-weight:900">+</span>
+        </div>
+        <div style="padding:20px 10px; text-align:center; color:#888; font-size:0.75rem;">
+          Keine Automationen<br>
+          <span style="font-size:0.65rem; margin-top:4px; display:block;">Tippe auf + um eine zu erstellen</span>
+        </div>
+        <div class="ios-tab-bar">
+          <div class="ios-tab">
+            <span class="ios-tab-icon">⚡</span>
+            Kurzbefehle
+          </div>
+          <div class="ios-tab active">
+            <span class="ios-tab-icon">🤖</span>
+            Automationen
+          </div>
+          <div class="ios-tab">
+            <span class="ios-tab-icon">🔍</span>
+            Galerie
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p><span class="tap">Tippe</span> oben rechts auf <strong>+</strong></p>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-header">
+    <div class="step-num">2</div>
+    <div class="step-title">Auslöser: Täglich 23:30 Uhr</div>
+  </div>
+  <div class="step-body">
+
+    <div class="iphone">
+      <div class="iphone-screen">
+        <div class="ios-nav-bar">
+          <span class="ios-nav-back">✕</span>
+          <span class="ios-nav-title">Neue Automation</span>
+          <span></span>
+        </div>
+        <div style="font-size:0.65rem; color:#888; padding:6px 10px;">PERSÖNLICH</div>
+        <div class="ios-row" style="background:#2c2c2e;">
+          <span class="ios-row-label">⏰ Tageszeit</span>
+          <span>›</span>
+        </div>
+        <div class="ios-row" style="background:#2c2c2e;">
+          <span class="ios-row-label">🌅 Sonnenaufgang</span>
+          <span>›</span>
+        </div>
+        <div class="ios-row" style="background:#2c2c2e;">
+          <span class="ios-row-label">📍 Ankunft</span>
+          <span>›</span>
+        </div>
+      </div>
+    </div>
+
+    <p><span class="tap">Tippe</span> auf <strong>"Tageszeit"</strong></p>
+    <p>Dann:</p>
+    <ul style="padding-left:20px; margin:8px 0;">
+      <li><strong>Uhrzeit:</strong> auf <code>23:30</code> stellen (Uhr nach links/rechts drehen)</li>
+      <li><strong>Täglich</strong> wählen (nicht Wochentage)</li>
+      <li>Auf <strong>"Weiter"</strong> tippen</li>
+    </ul>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-header">
+    <div class="step-num">3</div>
+    <div class="step-title">Shortcut zuweisen + automatisch ausführen</div>
+  </div>
+  <div class="step-body">
+    <p><span class="tap">Tippe</span> auf <strong>"Kurzbefehl ausführen"</strong> → wähle <strong>"Ironforge Health Sync"</strong></p>
+    <p>Dann auf <strong>"Weiter"</strong> tippen.</p>
+
+    <div class="iphone">
+      <div class="iphone-screen">
+        <div class="ios-nav-bar">
+          <span class="ios-nav-back">Zurück</span>
+          <span class="ios-nav-title">Details</span>
+          <span class="ios-nav-action">Fertig</span>
+        </div>
+        <div style="padding:8px 6px;">
+          <div class="ios-row" style="background:#2c2c2e;">
+            <span class="ios-row-label">Täglich um 23:30</span>
+          </div>
+          <div style="height:1px; background:#2a2a2a; margin:8px 0;"></div>
+          <div class="ios-action-block" style="background:#1e3a1e;">
+            <div class="ios-action-title" style="color:#22c55e;">⚡ Kurzbefehl ausführen</div>
+            <div class="ios-action-row">
+              <span>Ironforge Health Sync</span>
+            </div>
+          </div>
+          <div style="height:1px; background:#2a2a2a; margin:8px 0;"></div>
+          <div class="ios-row" style="background:#2c2c2e; justify-content:space-between;">
+            <span class="ios-row-label">Vor Ausführung fragen</span>
+            <span style="color:#ef4444; font-size:0.7rem;">AUS ●</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p><strong>WICHTIG:</strong> Den Schalter <strong>"Vor Ausführung fragen"</strong> auf <strong>AUS</strong> stellen — sonst erscheint jede Nacht eine Benachrichtigung.</p>
+    <p>Dann <strong>"Fertig"</strong> tippen.</p>
+
+    <div class="hint">
+      <strong>Fertig!</strong> Ab jetzt läuft der Sync täglich still um 23:30 Uhr. Du kannst den Shortcut auch manuell starten: einfach in der Shortcuts App auf <strong>"Ironforge Health Sync"</strong> tippen.
+    </div>
+  </div>
+</div>
+
+<!-- ==================== ALTERNATIVE: KI-PROMPT ==================== -->
+<div class="alt-prompt">
+  <h3>Alternative: Prompt für ChatGPT / Gemini (mit echten Screenshots)</h3>
+  <p>Falls du lieber eine Anleitung mit echten iPhone-Screenshots haben möchtest, kopiere diesen Prompt in ChatGPT oder Gemini:</p>
+
+  <div class="prompt-box">Erstelle eine detaillierte Schritt-für-Schritt-Anleitung mit echten iOS Screenshots für folgende Aufgabe:
+
+Ich möchte in der iOS "Kurzbefehle" App (Shortcuts) einen neuen Kurzbefehl erstellen, der:
+1. Gesundheitsdaten aus Apple Health liest (Kalorien, Protein, Kohlenhydrate, Fett, Körpermasse, Ruhepuls, Schritte) - jeweils mit der Action "Gesundheitsdaten suchen", Zeitraum letzte 3 Tage, Limit 1
+2. Die Werte per "Details der Gesundheitsdaten" extrahiert
+3. Ein JSON-Wörterbuch mit den Feldern date, calories, protein_g, carbs_g, fat_g, body_mass_kg, resting_hr, steps baut
+4. Per "Inhalt von URL abrufen" (POST-Methode, JSON-Body) an eine REST API sendet
+
+Außerdem: wie richte ich eine persönliche Automation ein, die diesen Shortcut täglich um 23:30 Uhr ohne Nachfragen automatisch ausführt?
+
+Ich habe noch nie einen Shortcut erstellt. Bitte zeige jeden Schritt mit einem Screenshot was genau ich sehe und wo ich tippen muss. iOS 17, iPhone 13 Pro.</div>
+</div>
+
+<!-- ==================== TEST ==================== -->
+<div class="section-header">
+  <div class="section-num">5</div>
+  <div class="section-title">Shortcut testen</div>
+</div>
+
+<div class="step">
+  <div class="step-header">
+    <div class="step-num">✓</div>
+    <div class="step-title">Ersten Testlauf machen</div>
+  </div>
+  <div class="step-body">
+    <p>Gehe in der Shortcuts App auf <strong>"Ironforge Health Sync"</strong> → tippe auf das <strong>▶ Play-Symbol</strong>.</p>
+    <p>Der Shortcut läuft ca. 3–5 Sekunden. Wenn kein Fehler-Popup erscheint: Erfolg.</p>
+    <p>Prüfen ob Daten angekommen sind:</p>
+    <ul style="padding-left:20px; margin:8px 0;">
+      <li>Supabase → Table Editor → <code>apple_health_daily</code></li>
+      <li>Dort sollte ein Eintrag mit dem heutigen Datum stehen</li>
+    </ul>
+
+    <div class="warn">
+      <strong>Fehler "No permission":</strong> Die RLS-Policies aus Schritt 1 nochmal ausführen.<br>
+      <strong>Fehler "404 Not Found":</strong> Die URL prüfen — kein Leerzeichen am Ende.<br>
+      <strong>Leere Werte:</strong> MFP hat heute noch keine Daten geschrieben — morgen nach dem ersten MFP-Eintrag nochmal versuchen.
+    </div>
+  </div>
+</div>
+
+<p style="text-align:center; color:var(--muted); font-size:0.8rem; margin-top:40px;">
+  Ironforge Fitness System · Shortcut-Anleitung · Stand 15.04.2026
+</p>
+
+</body>
+</html>

@@ -1,0 +1,3235 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Training – Iron Forge Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#050608; --panel:#101317; --panel2:#13171c; --line:rgba(214,198,169,.08);
+  --text:#fbf7ef; --muted:#b9b1a2; --soft:#898174;
+  --gold:#d0a35a; --goldSoft:rgba(208,163,90,.08);
+  --teal:#58b9b0; --red:#de7171; --warn:#e8a64a;
+  --shadow:0 30px 90px rgba(0,0,0,.38);
+  --shine:linear-gradient(90deg,transparent,var(--gold),transparent);
+}
+[data-theme="light"] {
+  --bg:#f0ede8; --panel:#f8f6f2; --panel2:#ede9e3; --line:rgba(60,45,25,.1);
+  --text:#1c1814; --muted:#5c5448; --soft:#8a8070; --gold:#b07d20;
+  --goldSoft:rgba(176,125,32,.10); --teal:#2a9090; --red:#c44040; --warn:#c87020;
+  --shadow:0 4px 30px rgba(30,20,10,.12);
+  --shine:linear-gradient(90deg,transparent,rgba(176,125,32,.35),transparent);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:15px;scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;font-size:.875rem;line-height:1.6;overflow-x:hidden}
+
+/* SHELL */
+.shell{display:grid;grid-template-columns:260px minmax(0,1fr);min-height:100vh}
+.side{padding:24px 20px;background:linear-gradient(160deg,var(--panel),var(--panel2));border-right:1px solid var(--line);display:flex;flex-direction:column;gap:14px;position:sticky;top:0;height:100vh;overflow:auto}
+.brand{font-family:'Cormorant Garamond',serif;font-size:38px;line-height:.88;letter-spacing:-.04em}
+.brand span{color:var(--gold)}
+.brand-sub{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--soft);font-weight:700;margin-top:5px}
+.side-nav{display:grid;gap:5px}
+.nav-btn{display:block;padding:11px 14px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid var(--line);color:var(--muted);font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;transition:.2s;cursor:pointer;text-align:left}
+.nav-btn:hover,.nav-btn.active{background:var(--goldSoft);color:var(--gold);border-color:rgba(208,163,90,.2);transform:translateX(3px)}
+[data-theme="light"] .nav-btn{background:rgba(0,0,0,.03)}
+[data-theme="light"] .nav-btn:hover,[data-theme="light"] .nav-btn.active{background:var(--goldSoft)}
+[data-theme="light"] .side{background:linear-gradient(160deg,var(--panel),var(--panel2))}
+.blast-widget{margin-top:auto;padding:14px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.02)}
+.blast-label{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--soft);font-weight:800;margin-bottom:5px}
+.blast-num{font-family:'Cormorant Garamond',serif;font-size:34px;line-height:.9}
+.blast-num span{font-size:.45em;color:var(--soft);font-family:Manrope}
+.blast-days{font-size:11px;color:var(--soft);margin:3px 0 7px}
+.blast-bar{height:4px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden}
+.blast-fill{height:100%;background:linear-gradient(90deg,var(--gold),rgba(208,163,90,.4));border-radius:4px}
+[data-theme="light"] .blast-widget{background:rgba(0,0,0,.03)}
+[data-theme="light"] .blast-bar{background:rgba(0,0,0,.1)}
+
+/* MAIN */
+.main-content{padding:22px;min-width:0}
+
+/* CARDS */
+.card{background:linear-gradient(145deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:18px;overflow:visible;position:relative}
+.card::after{content:"";position:absolute;inset:0;border-radius:22px;pointer-events:none}
+.card::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:var(--shine);opacity:.5}
+[data-theme="light"] .card{background:linear-gradient(145deg,var(--panel),var(--panel2))}
+.sh{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.sh-title{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);font-weight:800}
+
+/* PILLS */
+.pill{display:inline-flex;align-items:center;padding:4px 11px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;cursor:pointer;transition:.15s}
+.pill:hover{background:var(--goldSoft);color:var(--gold)}
+.pill.active,.pill-gold{background:var(--goldSoft);color:var(--gold);border-color:rgba(208,163,90,.3)}
+.pill-teal{background:rgba(88,185,176,.08);color:var(--teal);border-color:rgba(88,185,176,.2)}
+.pill-red{background:rgba(222,113,113,.08);color:var(--red);border-color:rgba(222,113,113,.2)}
+[data-theme="light"] .pill{background:rgba(0,0,0,.04)}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 16px;border-radius:11px;border:none;cursor:pointer;font-family:'Manrope',sans-serif;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;transition:.2s}
+.btn-primary{background:var(--gold);color:#0a0a0a}
+.btn-primary:hover{background:#e0b46a}
+.btn-secondary{background:rgba(255,255,255,.06);color:var(--muted);border:1px solid var(--line)}
+.btn-secondary:hover{background:rgba(255,255,255,.1);color:var(--text)}
+.btn-teal{background:rgba(88,185,176,.1);color:var(--teal);border:1px solid rgba(88,185,176,.25)}
+.btn-sm{padding:5px 11px;font-size:10px;border-radius:8px}
+.btn-full{width:100%}
+[data-theme="light"] .btn-secondary{background:rgba(0,0,0,.04)}
+
+/* SESSION TABS */
+.session-tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.session-tab{flex:1;min-width:80px;padding:11px 6px;border-radius:13px;background:rgba(255,255,255,.03);border:1px solid var(--line);color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;text-align:center;transition:.2s}
+.session-tab:hover{background:var(--goldSoft);color:var(--gold)}
+.session-tab.active{background:var(--goldSoft);color:var(--gold);border-color:rgba(208,163,90,.3)}
+.session-tab.analyse-tab.active{background:rgba(88,185,176,.08);color:var(--teal);border-color:rgba(88,185,176,.3)}
+.session-tab.kalender-tab.active{background:rgba(162,101,200,.08);color:#c084fc;border-color:rgba(162,101,200,.3)}
+.session-tab.uebungen-tab.active{background:rgba(232,166,74,.08);color:var(--warn);border-color:rgba(232,166,74,.3)}
+[data-theme="light"] .session-tab{background:rgba(0,0,0,.03)}
+
+/* REST TIMER */
+.rest-timer-wrap{background:var(--goldSoft);border:1px solid rgba(208,163,90,.2);border-radius:16px;padding:12px 16px;margin-bottom:14px;display:none;position:sticky;top:8px;z-index:40;backdrop-filter:blur(4px)}
+.rest-timer-label{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);font-weight:800;margin-bottom:2px}
+.rest-timer-val{font-family:'Cormorant Garamond',serif;font-size:44px;line-height:1;color:var(--gold);letter-spacing:-.03em}
+.rest-timer-val.over{color:var(--red)}
+
+/* STUDIO */
+.studio-select{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:11px;color:var(--text);padding:9px 13px;font-family:'Manrope',sans-serif;font-size:12px;font-weight:700;outline:none;cursor:pointer;width:100%}
+.studio-select option{background:var(--panel)}
+[data-theme="light"] .studio-select{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.12)}
+
+/* CAT FILTERS */
+.cat-filters{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px}
+.pool-mode{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.tab-state{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.03)}
+.tab-state-title{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--soft);font-weight:800}
+[data-theme="light"] .tab-state{background:rgba(0,0,0,.03)}
+.edit-mode-banner{display:none;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;padding:10px 12px;border-radius:12px;border:1px solid rgba(222,113,113,.3);background:rgba(222,113,113,.08)}
+.edit-mode-banner.show{display:flex}
+.edit-done-fab{display:none;position:fixed;right:14px;bottom:92px;z-index:95;background:rgba(222,113,113,.95);color:#fff;border:none;border-radius:999px;padding:11px 14px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;box-shadow:var(--shadow);cursor:pointer}
+.edit-done-fab.show{display:inline-flex}
+
+/* EXERCISE TILES */
+.ex-tile{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:13px;padding:11px 13px;margin-bottom:6px;cursor:pointer;transition:border-color .15s,background .15s,transform .1s;position:relative;user-select:none}
+.ex-tile:hover{background:rgba(208,163,90,.05);border-color:rgba(208,163,90,.18);transform:translateX(2px)}
+.ex-tile.drag-over-top{border-top:2px solid var(--gold) !important}
+.ex-tile.drag-over-bottom{border-bottom:2px solid var(--gold) !important}
+.ex-tile.dragging{opacity:.35;transform:scale(.98)}
+.mobile-edit-mode #active-zone .ex-tile{animation:wiggle .22s ease-in-out infinite alternate}
+.mobile-edit-mode #active-zone .ex-tile::after{content:'↕';position:absolute;right:8px;top:8px;font-size:11px;color:var(--warn);background:rgba(232,166,74,.15);border:1px solid rgba(232,166,74,.3);border-radius:6px;padding:1px 5px}
+@keyframes wiggle{
+  from{transform:rotate(-0.6deg)}
+  to{transform:rotate(0.6deg)}
+}
+.ex-tile-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:4px}
+.ex-tile-img{width:48px;height:48px;border-radius:9px;object-fit:cover;flex-shrink:0;border:1px solid var(--line);background:rgba(255,255,255,.03)}
+.ex-tile-name{font-size:13px;font-weight:700;color:var(--text)}
+.ex-tile-badges{display:flex;gap:4px;align-items:center;flex-shrink:0}
+.ex-tile-cat{font-size:9px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:5px;background:rgba(255,255,255,.05)}
+.ex-tile-group{font-size:9px;color:var(--teal);background:rgba(88,185,176,.08);border:1px solid rgba(88,185,176,.15);padding:2px 7px;border-radius:5px;letter-spacing:.06em;cursor:pointer;transition:.15s}
+.ex-tile-group:hover{background:rgba(88,185,176,.15)}
+.ex-tile-history{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--soft);display:flex;flex-wrap:wrap;gap:5px;line-height:1.6}
+.ex-set{display:inline-flex;align-items:center;gap:2px}
+.ex-set.up{color:var(--teal)}
+.ex-set.down{color:var(--red)}
+.ex-set.pr{color:var(--gold)}
+.ex-tile-footer{display:flex;justify-content:space-between;align-items:center;margin-top:5px;padding-top:5px;border-top:1px solid rgba(255,255,255,.04)}
+.ex-1rm{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--gold)}
+.ex-pr-badge{font-size:9px;font-weight:800;letter-spacing:.08em;color:var(--gold);background:rgba(208,163,90,.1);border:1px solid rgba(208,163,90,.25);padding:2px 7px;border-radius:5px}
+.ex-quick-add{margin-left:auto;background:rgba(88,185,176,.09);color:var(--teal);border:1px solid rgba(88,185,176,.3);border-radius:7px;padding:2px 8px;font-size:10px;font-weight:800;letter-spacing:.08em;cursor:pointer}
+.ex-quick-add:hover{background:rgba(88,185,176,.16)}
+.ex-move-controls{display:none;gap:4px;margin-left:auto}
+.mobile-edit-mode .ex-move-controls{display:flex}
+.ex-move-btn{background:rgba(232,166,74,.1);color:var(--warn);border:1px solid rgba(232,166,74,.35);border-radius:7px;padding:1px 7px;font-size:11px;font-weight:800;cursor:pointer}
+#active-zone .ex-tile{cursor:grab}
+#active-zone .ex-tile:active{cursor:grabbing}
+[data-theme="light"] .ex-tile{background:rgba(0,0,0,.025);border-color:rgba(0,0,0,.06)}
+[data-theme="light"] .ex-tile:hover{background:rgba(176,125,32,.05)}
+[data-theme="light"] .ex-tile-footer{border-top-color:rgba(0,0,0,.07)}
+[data-theme="light"] .ex-tile-cat{background:rgba(0,0,0,.06)}
+
+/* DROP ZONES */
+.drop-zone{min-height:260px;border-radius:14px;transition:background .15s,border .15s;padding:2px}
+.drop-zone.drag-over{background:rgba(208,163,90,.03);border:1px dashed rgba(208,163,90,.3)}
+.drop-empty{display:flex;align-items:center;justify-content:center;height:160px;color:var(--soft);font-size:11px;letter-spacing:.1em;text-transform:uppercase;border:1px dashed rgba(255,255,255,.06);border-radius:13px}
+[data-theme="light"] .drop-empty{border-color:rgba(0,0,0,.08)}
+
+/* TRAINING GRID */
+.training-grid{display:grid;grid-template-columns:320px 1fr;gap:16px}
+.phase-switch{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.mobile-session-focus #pool-card{display:none}
+.mobile-session-focus #active-card{grid-column:1/-1}
+
+/* ANALYSE GRID */
+.analyse-grid{display:grid;gap:16px}
+
+/* BTABLE */
+.btable{width:100%;border-collapse:collapse;font-size:13px}
+.btable th{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--soft);font-weight:800;text-align:left;padding:9px 12px 7px;border-bottom:1px solid var(--line)}
+.btable td{padding:9px 12px;border-bottom:1px solid rgba(255,255,255,.04)}
+.btable tr:last-child td{border-bottom:none}
+.btable tr:hover td{background:rgba(255,255,255,.02)}
+[data-theme="light"] .btable td{border-bottom-color:rgba(0,0,0,.04)}
+[data-theme="light"] .btable tr:hover td{background:rgba(0,0,0,.025)}
+
+/* FORM */
+.form-group{display:flex;flex-direction:column;gap:5px;margin-bottom:.9rem}
+.form-group label{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--soft);font-weight:800}
+.form-group input,.form-group select,.form-group textarea{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:9px;color:var(--text);padding:9px 13px;font-family:'Manrope',sans-serif;font-size:13px;outline:none;transition:.2s;width:100%}
+.form-group input:focus,.form-group select:focus{border-color:rgba(208,163,90,.4);background:rgba(208,163,90,.04)}
+.form-group select option{background:var(--panel)}
+[data-theme="light"] .form-group input,[data-theme="light"] .form-group select,[data-theme="light"] .form-group textarea{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.12)}
+
+/* STAT ROW */
+.stat-row{display:flex;gap:20px;flex-wrap:wrap}
+.stat-item{display:flex;flex-direction:column;gap:1px}
+.stat-val{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:var(--gold)}
+.stat-lbl{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--soft);font-weight:800}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:1000;display:none;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.open{display:flex}
+.modal-box{background:linear-gradient(145deg,var(--panel),var(--panel2));border:1px solid rgba(208,163,90,.2);border-radius:22px;padding:22px;width:100%;max-width:400px;position:relative;max-height:92vh;overflow-y:auto}
+.modal-box::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:var(--shine);opacity:.6;border-radius:22px 22px 0 0}
+.modal-ex-img{width:100%;height:160px;object-fit:cover;border-radius:14px;margin-bottom:14px;border:1px solid var(--line);display:none}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:1.7rem;letter-spacing:-.03em;margin-bottom:3px}
+.modal-sub{font-size:10px;color:var(--soft);letter-spacing:.12em;text-transform:uppercase;margin-bottom:16px}
+[data-theme="light"] .modal-box{background:linear-gradient(145deg,var(--panel),var(--panel2))}
+
+.set-rows{max-height:300px;overflow-y:auto;margin-bottom:10px}
+.set-row{display:grid;grid-template-columns:26px 1fr 1fr 26px;gap:7px;margin-bottom:8px;align-items:center}
+.set-num{font-size:10px;font-weight:800;color:var(--soft);text-align:center}
+.set-input{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:9px;color:var(--text);padding:10px 6px;font-family:'JetBrains Mono',monospace;font-size:16px;text-align:center;outline:none;transition:.2s;width:100%}
+.set-input:focus{border-color:rgba(208,163,90,.4);background:rgba(208,163,90,.04)}
+.set-del{background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;opacity:.5;transition:.15s;text-align:center;line-height:1}
+.set-del:hover{opacity:1}
+.set-hdr{display:grid;grid-template-columns:26px 1fr 1fr 26px;gap:7px;margin-bottom:6px}
+.set-hdr span{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--soft);text-align:center;font-weight:800}
+[data-theme="light"] .set-input{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.12)}
+
+.prev-wrap{background:rgba(255,255,255,.02);border-radius:9px;padding:9px 11px;margin-bottom:12px}
+.prev-label{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--soft);font-weight:800;margin-bottom:5px}
+.prev-sets-row{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);display:flex;flex-wrap:wrap;gap:7px}
+[data-theme="light"] .prev-wrap{background:rgba(0,0,0,.03)}
+
+/* EXPORT BTN */
+.export-btn{background:rgba(37,211,102,.08);color:#25D366;border:1px solid rgba(37,211,102,.25);border-radius:11px;padding:9px;font-family:'Manrope',sans-serif;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;width:100%;transition:.2s;margin-top:10px}
+.export-btn:hover{background:rgba(37,211,102,.15)}
+
+/* CALCULATOR RESULT */
+.calc-result{background:rgba(208,163,90,.06);border:1px solid rgba(208,163,90,.2);border-radius:14px;padding:16px;text-align:center;margin-top:14px;display:none}
+.calc-result-val{font-family:'Cormorant Garamond',serif;font-size:3rem;color:var(--gold);line-height:1}
+.calc-result-sub{font-size:11px;color:var(--muted);margin-top:4px}
+
+/* GROUP ASSIGN LIST */
+.group-assign-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.group-assign-row:last-child{border-bottom:none}
+.group-assign-name{font-size:12px;font-weight:600}
+[data-theme="light"] .group-assign-row{border-bottom-color:rgba(0,0,0,.06)}
+.catalog-list{display:grid;gap:8px}
+.catalog-row{display:grid;grid-template-columns:52px 1fr auto;gap:10px;align-items:center;padding:8px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.02)}
+.catalog-img{width:52px;height:52px;border-radius:8px;object-fit:cover;border:1px solid var(--line);background:rgba(255,255,255,.03)}
+.catalog-meta{font-size:10px;color:var(--soft);font-family:'JetBrains Mono',monospace}
+[data-theme="light"] .catalog-row{background:rgba(0,0,0,.02)}
+.sync-status{font-size:10px;color:var(--soft);margin-top:6px}
+.setup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.84);z-index:1200;display:none;align-items:center;justify-content:center;padding:14px}
+.setup-overlay.open{display:flex}
+.setup-box{width:100%;max-width:560px;background:linear-gradient(145deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:18px;padding:16px}
+
+/* CALENDAR */
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.cal-month-label{font-family:'Cormorant Garamond',serif;font-size:1.6rem;letter-spacing:-.03em}
+.cal-nav-btn{background:rgba(255,255,255,.04);border:1px solid var(--line);color:var(--muted);border-radius:9px;padding:7px 14px;cursor:pointer;font-family:'Manrope',sans-serif;font-size:12px;font-weight:800;transition:.15s}
+.cal-nav-btn:hover{background:var(--goldSoft);color:var(--gold)}
+[data-theme="light"] .cal-nav-btn{background:rgba(0,0,0,.04)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:18px}
+.cal-day-hdr{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--soft);font-weight:800;text-align:center;padding:5px 0}
+.cal-day{min-height:44px;border-radius:10px;border:1px solid transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:12px;font-weight:600;color:var(--muted);cursor:default;transition:.15s;position:relative}
+.cal-day.other-month{opacity:.25}
+.cal-day.today{border-color:rgba(208,163,90,.3);color:var(--gold)}
+.cal-day.has-session{background:rgba(255,255,255,.04);border-color:var(--line);cursor:pointer}
+.cal-day.has-session:hover{background:var(--goldSoft);border-color:rgba(208,163,90,.3);color:var(--gold)}
+.cal-day.selected{background:var(--goldSoft);border-color:rgba(208,163,90,.4);color:var(--gold)}
+[data-theme="light"] .cal-day.has-session{background:rgba(0,0,0,.04)}
+.cal-dots{display:flex;gap:2px;flex-wrap:wrap;justify-content:center}
+.cal-dot{width:5px;height:5px;border-radius:50%}
+.cal-session-detail{background:rgba(255,255,255,.02);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px}
+[data-theme="light"] .cal-session-detail{background:rgba(0,0,0,.02)}
+.cal-session-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px}
+.cal-session-title{font-family:'Cormorant Garamond',serif;font-size:1.2rem;letter-spacing:-.02em}
+.cal-ex-row{padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.cal-ex-row:last-child{border-bottom:none}
+.cal-ex-name{font-size:13px;font-weight:700;min-width:160px}
+.cal-ex-sets{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);flex:1}
+.cal-ex-rm{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold)}
+[data-theme="light"] .cal-ex-row{border-bottom-color:rgba(0,0,0,.06)}
+
+/* RESPONSIVE */
+@media(max-width:1000px){
+  .shell{grid-template-columns:1fr}
+  .side{position:relative;height:auto;border-right:none;border-bottom:1px solid var(--line)}
+  .side-nav{grid-template-columns:repeat(4,1fr)}
+  .blast-widget{display:none}
+  .training-grid{grid-template-columns:1fr}
+  .main-content{padding:14px}
+}
+@media(max-width:640px){
+  .side-nav{grid-template-columns:repeat(3,1fr)}
+  .session-tab{font-size:9px;padding:9px 4px;letter-spacing:.08em}
+  .card{padding:13px;border-radius:17px}
+  .training-grid{grid-template-columns:1fr}
+  .session-tabs{display:none}
+  .main-content{padding-bottom:130px}
+  /* Rest-Timer: floating fest über Bottom-Nav */
+  .rest-timer-wrap{position:fixed !important;bottom:112px;left:12px;right:12px;margin:0;z-index:85;box-shadow:0 6px 28px rgba(0,0,0,.55);animation:timer-pop .18s cubic-bezier(.4,0,.2,1) both}
+  /* Logger-Modal fullscreen auf Mobile */
+  #logger-modal.open{align-items:flex-end;padding:0}
+  #logger-modal .modal-box{border-radius:22px 22px 0 0;max-height:92dvh;max-width:100%;width:100%;overflow-y:auto;padding:20px 16px 28px}
+  /* Views mit iOS-Transition */
+  #view-training,#view-analyse,#view-kalender,#view-uebungen{transition:opacity .22s cubic-bezier(.4,0,.2,1),transform .22s cubic-bezier(.4,0,.2,1)}
+  .view-entering{opacity:0;transform:translateY(8px)}
+}
+@keyframes timer-pop{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+/* Session Focus Bar (nur auf Mobile) */
+.session-focus-bar{display:none;background:var(--goldSoft);border:1px solid rgba(208,163,90,.25);border-radius:14px;padding:12px 14px;margin-bottom:12px}
+.focus-bar-label{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:800;margin-bottom:4px}
+.focus-bar-name{font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px}
+.focus-bar-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.focus-bar-stat{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--soft)}
+/* Bottom Nav redesign */
+.mobile-bottom-nav{display:none;position:fixed;left:8px;right:8px;bottom:8px;z-index:80;background:linear-gradient(145deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:18px;padding:8px 8px 10px;box-shadow:var(--shadow)}
+.mobile-main-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:5px}
+.mobile-main-tab{display:flex;flex-direction:column;align-items:center;gap:1px;padding:9px 4px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--muted);font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:.18s cubic-bezier(.4,0,.2,1)}
+.mobile-main-tab .m-icon{font-size:15px;line-height:1}
+.mobile-main-tab.active{background:var(--goldSoft);color:var(--gold);border-color:rgba(208,163,90,.35)}
+.mobile-train-tabs{display:none;grid-template-columns:repeat(6,1fr);gap:4px}
+.mobile-train-tabs.show{display:grid}
+.mobile-train-tab{padding:6px 2px;border-radius:9px;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--soft);font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;transition:.15s}
+.mobile-train-tab.active{background:var(--goldSoft);color:var(--gold);border-color:rgba(208,163,90,.3)}
+[data-theme="light"] .mobile-main-tab{background:rgba(0,0,0,.04)}
+[data-theme="light"] .mobile-train-tab{background:rgba(0,0,0,.03)}
+@media(max-width:640px){
+  .mobile-bottom-nav{display:block}
+  /* Alte bottom-tabs ausblenden falls vorhanden */
+  .mobile-bottom-tabs{display:none}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- SIDEBAR -->
+<aside class="side">
+  <div>
+    <div class="brand">IRON<br><span>FORGE</span></div>
+    <div class="brand-sub">Lab · Recomp-Blast 2026</div>
+  </div>
+  <nav class="side-nav">
+    <a href="#" class="nav-btn">Dashboard</a>
+    <a href="#" class="nav-btn">Tageslog</a>
+    <a href="#" class="nav-btn">Stack</a>
+    <a href="#" class="nav-btn">Blutbild</a>
+    <a href="#" class="nav-btn">Check-in</a>
+    <a href="#" class="nav-btn">Journal</a>
+    <a href="#" class="nav-btn">Ereignisse</a>
+    <a href="#" class="nav-btn active">Training</a>
+    <a href="#" class="nav-btn">Import</a>
+  </nav>
+  <button id="theme-btn" class="nav-btn" onclick="toggleTheme()" style="color:var(--soft);border-color:var(--line)"></button>
+  <div class="blast-widget">
+    <div class="blast-label">Aktuelle Phase</div>
+    <div class="blast-num">W7<span> / 16</span></div>
+    <div class="blast-days">Tag 49 · 23.02 – 15.06.2026</div>
+    <div class="blast-bar"><div class="blast-fill" style="width:44%"></div></div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main-content">
+
+  <!-- PAGE TOP -->
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap">
+    <div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:clamp(28px,4vw,42px);line-height:1;font-weight:600">Training</div>
+      <div style="font-size:11px;color:var(--soft);letter-spacing:.14em;text-transform:uppercase;margin-top:2px">Tagebuch · Übungen · Analyse</div>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+      <span class="pill" id="build-pill" style="cursor:default"></span>
+      <span class="pill" id="date-pill" style="cursor:default"></span>
+    </div>
+  </div>
+
+  <!-- STUDIO + STATS -->
+  <div class="card" style="margin-bottom:14px">
+    <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end;margin-bottom:14px">
+      <div>
+        <div style="font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:800;margin-bottom:5px">Aktuelles Studio</div>
+        <select id="studio-select" class="studio-select" onchange="switchStudio()"></select>
+      </div>
+      <button onclick="addStudio()" class="btn btn-secondary btn-sm">+ Studio</button>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <button onclick="exportBackup()" class="btn btn-secondary btn-sm">Backup Export</button>
+      <button onclick="importBackup()" class="btn btn-secondary btn-sm">Backup Import</button>
+      <button onclick="openSetupWizard(true)" class="btn btn-secondary btn-sm">Sync Setup</button>
+      <button onclick="syncToCloud()" class="btn btn-secondary btn-sm">Cloud Hochladen</button>
+      <button onclick="syncFromCloud()" class="btn btn-secondary btn-sm">Cloud Laden</button>
+      <input type="file" id="backup-file-input" accept=".json,application/json" style="display:none" onchange="handleBackupFile(event)">
+    </div>
+    <div id="sync-status" class="sync-status">Sync: noch nicht eingerichtet</div>
+    <div style="height:1px;background:var(--line);margin-bottom:12px"></div>
+    <div class="stat-row">
+      <div class="stat-item"><div class="stat-val" id="stat-sessions">0</div><div class="stat-lbl">Sessions</div></div>
+      <div class="stat-item"><div class="stat-val" id="stat-active">0</div><div class="stat-lbl">Übungen aktiv</div></div>
+      <div class="stat-item"><div class="stat-val" id="stat-sets">0</div><div class="stat-lbl">Sätze heute</div></div>
+      <div class="stat-item"><div class="stat-val" id="stat-prs" style="color:var(--teal)">0</div><div class="stat-lbl">PRs gesetzt</div></div>
+    </div>
+  </div>
+
+  <!-- SESSION TABS -->
+  <div class="session-tabs">
+    <button class="session-tab active" id="tab-push"   onclick="changeTab('push')">Push</button>
+    <button class="session-tab"        id="tab-pull_a" onclick="changeTab('pull_a')">Pull A</button>
+    <button class="session-tab"        id="tab-pull_b" onclick="changeTab('pull_b')">Pull B</button>
+    <button class="session-tab"        id="tab-legs"   onclick="changeTab('legs')">Beine</button>
+    <button class="session-tab"        id="tab-free"   onclick="changeTab('free')">Frei</button>
+    <button class="session-tab"        id="tab-cardio" onclick="changeTab('cardio')">Cardio</button>
+    <button class="session-tab analyse-tab"  id="tab-analyse"  onclick="changeTab('analyse')">Analyse</button>
+    <button class="session-tab kalender-tab" id="tab-kalender" onclick="changeTab('kalender')">Kalender</button>
+    <button class="session-tab uebungen-tab" id="tab-uebungen" onclick="changeTab('uebungen')">Übungen</button>
+  </div>
+  <div id="tab-state" class="tab-state"></div>
+
+  <!-- ═══ TRAINING VIEW ═══════════════════════════════════════ -->
+  <div id="view-training">
+    <div class="phase-switch">
+      <button class="pill" id="phase-plan-btn" onclick="setMobilePhase('plan')">Planung</button>
+      <button class="pill" id="phase-session-btn" onclick="setMobilePhase('session')">Session Fokus</button>
+      <button class="pill" id="phase-check-btn" onclick="setMobilePhase('checkin')">Check-In</button>
+    </div>
+    <div id="phase-note" style="font-size:11px;color:var(--soft);margin-bottom:8px"></div>
+    <div id="edit-mode-banner" class="edit-mode-banner">
+      <div style="font-size:11px;color:var(--muted);font-weight:700">Sortiermodus aktiv (Long-Press)</div>
+      <button onclick="exitEditMode()" class="btn btn-secondary btn-sm">Fertig</button>
+    </div>
+
+    <div id="active-rest-timer" class="rest-timer-wrap">
+      <div class="rest-timer-label">Pause läuft</div>
+      <div id="rest-val" class="rest-timer-val">0:00</div>
+    </div>
+
+    <div class="training-grid">
+
+      <!-- POOL -->
+      <div class="card" style="align-self:start" id="pool-card">
+        <div class="sh">
+          <div class="sh-title">Übungs-Pool</div>
+          <span class="pill" id="pool-pill">0</span>
+        </div>
+        <div id="pool-mode" class="pool-mode"></div>
+        <div class="cat-filters" id="cat-filters"></div>
+        <div class="drop-zone" id="pool-zone"></div>
+      </div>
+
+      <!-- AKTIVE SESSION -->
+      <div class="card" id="active-card">
+        <div class="sh">
+          <div class="sh-title" id="active-title">Push Session</div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap">
+            <button onclick="setMobilePhase('plan')" class="btn btn-secondary btn-sm" id="btn-back-pool" style="display:none">Pool</button>
+            <button onclick="toggleEditMode()" class="btn btn-secondary btn-sm" id="btn-sort-mode">Sortieren</button>
+            <button onclick="loadTemplate()" class="btn btn-secondary btn-sm" id="btn-load-tpl" style="display:none">↺ Standard</button>
+            <button onclick="clearSession()" class="btn btn-secondary btn-sm">Leeren</button>
+            <button onclick="finishSession()" class="btn btn-primary btn-sm">Beenden ✓</button>
+          </div>
+        </div>
+        <!-- Session-Fokus-Bar (nur Mobile, nur bei Phase 'session') -->
+        <div class="session-focus-bar" id="session-focus-bar" style="display:none">
+          <div class="focus-bar-label">Session Fokus · Nächste Übung</div>
+          <div class="focus-bar-name" id="focus-bar-name">–</div>
+          <div class="focus-bar-row">
+            <span class="focus-bar-stat" id="focus-bar-prev">Letztes Mal: –</span>
+            <button onclick="focusBarOpen()" class="btn btn-primary btn-sm" style="margin-left:auto">Loggen ➜</button>
+          </div>
+          <div style="margin-top:8px;font-size:10px;color:var(--soft)" id="focus-bar-progress"></div>
+        </div>
+        <div class="drop-zone" id="active-zone"></div>
+        <button onclick="exportSession()" class="export-btn">📋 Session in Zwischenablage kopieren</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ANALYSE VIEW ════════════════════════════════════════ -->
+  <div id="view-analyse" style="display:none">
+    <div class="analyse-grid">
+
+      <!-- 1RM VERGLEICH -->
+      <div class="card">
+        <div class="sh">
+          <div class="sh-title">1RM-Vergleich nach Bewegungsgruppe</div>
+          <span class="pill pill-teal">Studio-übergreifend</span>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="btable" id="compare-table">
+            <thead id="compare-head"></thead>
+            <tbody id="compare-body"></tbody>
+          </table>
+        </div>
+        <div style="font-size:11px;color:var(--soft);margin-top:10px">★ = Gruppenrekord über alle Studios und Übungen</div>
+      </div>
+
+      <!-- ZIELGEWICHT RECHNER -->
+      <div class="card">
+        <div class="sh"><div class="sh-title">Zielgewicht-Rechner</div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+          <div class="form-group" style="margin:0">
+            <label>Bewegungsgruppe</label>
+            <select id="calc-group" onchange="calcLoadFactor();calcUpdate()"></select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>Basis-Studio</label>
+            <select id="calc-base-studio" onchange="calcLoadFactor();calcUpdate()"></select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>Ziel-Studio</label>
+            <select id="calc-studio" onchange="calcLoadFactor();calcUpdate()"></select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>Faktor k</label>
+            <input type="number" id="calc-factor" value="1.00" min="0.1" max="3" step="0.01" oninput="calcUpdate()">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>Geplante Wiederholungen</label>
+            <input type="number" id="calc-reps" value="8" min="1" max="30" oninput="calcUpdate()">
+          </div>
+          <div class="form-group" style="margin:0;display:flex;align-items:flex-end">
+            <button onclick="saveCalcFactor()" class="btn btn-secondary btn-sm" style="width:100%">Faktor speichern</button>
+          </div>
+        </div>
+        <div id="calc-result" class="calc-result">
+          <div class="calc-result-val" id="calc-val">–</div>
+          <div class="calc-result-sub" id="calc-sub">kg auflegen</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="sh">
+          <div class="sh-title">Progress pro Übung</div>
+          <span class="pill pill-teal">Session-Log basiert</span>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="btable">
+            <thead>
+              <tr>
+                <th>Übung</th>
+                <th>Letzter 1RM</th>
+                <th>Bester 1RM</th>
+                <th>Trend</th>
+              </tr>
+            </thead>
+            <tbody id="progress-ex-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="sh">
+          <div class="sh-title">Progress pro Bewegungsgruppe</div>
+          <span class="pill">Studio-übergreifend</span>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="btable">
+            <thead>
+              <tr>
+                <th>Gruppe</th>
+                <th>Letzter 1RM</th>
+                <th>Bester 1RM</th>
+                <th>Trend</th>
+              </tr>
+            </thead>
+            <tbody id="progress-group-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      
+
+    </div>
+  </div>
+
+  <!-- ═══ KALENDER VIEW ═══════════════════════════════════════ -->
+  <div id="view-kalender" style="display:none">
+    <div class="card">
+      <div class="cal-nav">
+        <button class="cal-nav-btn" onclick="calPrev()">← Zurück</button>
+        <div class="cal-month-label" id="cal-month-label"></div>
+        <button class="cal-nav-btn" onclick="calNext()">Weiter →</button>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+      <div id="cal-sessions-wrap"></div>
+      <div id="recent-sessions-wrap" style="margin-top:12px"></div>
+    </div>
+  </div>
+
+  <!-- ═══ ÜBUNGEN VIEW ════════════════════════════════════════ -->
+  <div id="view-uebungen" style="display:none">
+    <div class="analyse-grid">
+
+      <!-- NEUE ÜBUNG -->
+      <div class="card" style="border-color:rgba(222,113,113,.15)">
+        <div class="sh">
+          <div class="sh-title">Datenbank</div>
+          <span class="pill" id="db-count-pill">0 Übungen</span>
+        </div>
+        <button onclick="resetDB()" class="btn btn-secondary btn-sm" style="color:var(--red);border-color:rgba(222,113,113,.3)">
+          ↺ Auf gym80-Standard zurücksetzen
+        </button>
+      </div>
+
+      <div class="card">
+        <div class="sh"><div class="sh-title">Neue Übung hinzufügen</div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="form-group" style="margin:0;grid-column:span 2">
+            <label>Name</label>
+            <input type="text" id="new-ex-name" placeholder="z.B. Schrägbank Multipresse">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>Kategorie</label>
+            <select id="new-ex-cat">
+              <option>Brust</option><option>Rücken</option><option>Beine</option>
+              <option>Schulter</option><option>Arme</option><option>Core</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>Session-Typ</label>
+            <select id="new-ex-type">
+              <option value="push">Push</option><option value="pull">Pull</option>
+              <option value="legs">Beine</option><option value="free">Frei</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0;grid-column:span 2">
+            <label>Pool-Zuordnung</label>
+            <select id="new-ex-scope">
+              <option value="global">Standard-Pool (alle Studios)</option>
+              <option value="studio">Studio-Pool (nur aktuelles Studio)</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0;grid-column:span 2">
+            <label>Bewegungsgruppe (für Studio-Vergleich)</label>
+            <input type="text" id="new-ex-group" placeholder="z.B. Brustpresse schräg" list="groups-list">
+            <datalist id="groups-list"></datalist>
+          </div>
+        </div>
+        <button onclick="addExercise()" class="btn btn-primary" style="margin-top:12px;width:100%">Übung hinzufügen</button>
+      </div>
+
+      <div class="card">
+        <div class="sh">
+          <div class="sh-title">Gerätekatalog (stückweise)</div>
+          <span class="pill" id="catalog-pill">0 Treffer</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-bottom:10px">
+          <div class="form-group" style="margin:0">
+            <label>Hersteller</label>
+            <select id="catalog-brand">
+              <option value="">Alle</option>
+              <option value="gym80">gym80</option>
+              <option value="Matrix">Matrix</option>
+              <option value="eGym">eGym</option>
+              <option value="Freihantel">Freihantel</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>Zielmuskel</label>
+            <select id="catalog-target">
+              <option value="">Alle</option>
+              <option>Brust</option><option>Rücken</option><option>Beine</option>
+              <option>Schulter</option><option>Arme</option><option>Core</option><option>Glutes</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>Suche</label>
+            <input id="catalog-search" type="text" placeholder="z.B. Schrägbank, 4329n">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>Session-Typ</label>
+            <select id="catalog-stype">
+              <option value="">Alle</option>
+              <option value="push">Push</option>
+              <option value="pull">Pull</option>
+              <option value="legs">Beine</option>
+              <option value="cardio">Cardio</option>
+              <option value="free">Frei</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0;display:flex;align-items:flex-end">
+            <button onclick="catalogSearch(true)" class="btn btn-secondary btn-sm" style="width:100%">Offline suchen</button>
+          </div>
+          <div class="form-group" style="margin:0;display:flex;align-items:flex-end">
+            <button onclick="catalogSearchDb(true)" class="btn btn-teal btn-sm" style="width:100%">DB suchen</button>
+          </div>
+        </div>
+        <div id="catalog-status" class="sync-status" style="margin-bottom:8px"></div>
+        <div id="catalog-list" class="catalog-list"></div>
+        <button id="catalog-more-btn" onclick="catalogLoadMore()" class="btn btn-secondary btn-sm" style="width:100%;margin-top:10px;display:none">Mehr laden</button>
+      </div>
+
+      <!-- GRUPPE ZUWEISEN -->
+      <div class="card">
+        <div class="sh">
+          <div class="sh-title">Bewegungsgruppen zuweisen</div>
+          <span class="pill" id="group-count-pill">0 Gruppen</span>
+        </div>
+        <div id="group-assign-list"></div>
+      </div>
+
+    </div>
+  </div>
+
+</main>
+</div>
+<div class="mobile-bottom-nav" id="mobile-bottom-nav">
+  <!-- 3 Haupt-Views -->
+  <div class="mobile-main-tabs">
+    <button class="mobile-main-tab" id="m-main-stats" onclick="switchMobileMainView('stats')">
+      <span class="m-icon">📊</span>Stats
+    </button>
+    <button class="mobile-main-tab active" id="m-main-training" onclick="switchMobileMainView('training')">
+      <span class="m-icon">🏋️</span>Training
+    </button>
+    <button class="mobile-main-tab" id="m-main-history" onclick="switchMobileMainView('history')">
+      <span class="m-icon">📅</span>History
+    </button>
+  </div>
+  <!-- Training-Subtabs (nur wenn Training aktiv) -->
+  <div class="mobile-train-tabs show" id="mobile-train-tabs">
+    <button class="mobile-train-tab active" id="m-tab-push" onclick="changeTab('push')">Push</button>
+    <button class="mobile-train-tab" id="m-tab-pull_a" onclick="changeTab('pull_a')">Pull A</button>
+    <button class="mobile-train-tab" id="m-tab-pull_b" onclick="changeTab('pull_b')">Pull B</button>
+    <button class="mobile-train-tab" id="m-tab-legs" onclick="changeTab('legs')">Beine</button>
+    <button class="mobile-train-tab" id="m-tab-free" onclick="changeTab('free')">Frei</button>
+    <button class="mobile-train-tab" id="m-tab-cardio" onclick="changeTab('cardio')">Cardio</button>
+  </div>
+</div>
+<button id="edit-done-fab" class="edit-done-fab" onclick="exitEditMode()">Fertig</button>
+<div id="setup-overlay" class="setup-overlay">
+  <div class="setup-box">
+    <div class="sh">
+      <div class="sh-title">Erststart · Sync Setup</div>
+      <span class="pill pill-gold">Pflicht einmalig</span>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px">
+      Trage hier GitHub/Supabase ein. Danach kannst du mit einem Klick in die Cloud hochladen oder laden.
+    </div>
+    <div class="form-group" style="margin:0 0 10px 0">
+      <label>Profilname</label>
+      <input id="setup-profile" type="text" placeholder="z.B. Marco">
+    </div>
+    <div class="form-group" style="margin:0 0 10px 0">
+      <label>GitHub Pages URL</label>
+      <input id="setup-pages-url" type="text" placeholder="https://deinname.github.io/ironforge/">
+    </div>
+    <div class="form-group" style="margin:0 0 10px 0">
+      <label>Supabase URL</label>
+      <input id="setup-supabase-url" type="text" placeholder="https://xxxxx.supabase.co">
+    </div>
+    <div class="form-group" style="margin:0 0 10px 0">
+      <label>Supabase anon key</label>
+      <textarea id="setup-supabase-key" rows="3" placeholder="eyJ..."></textarea>
+    </div>
+    <div class="form-group" style="margin:0 0 12px 0">
+      <label>Vault-Passwort (lokal gespeichert)</label>
+      <input id="setup-vault-pass" type="password" placeholder="für spätere Verschlüsselung">
+    </div>
+    <div class="form-group" style="margin:0 0 12px 0">
+      <label>Sync-Modus</label>
+      <select id="setup-sync-mode">
+        <option value="state_v1">Einfach (eine Tabelle)</option>
+        <option value="structured_v1">Strukturiert (mehrere Tabellen)</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-secondary btn-sm" onclick="testSyncConfig()">Verbindung testen</button>
+      <button class="btn btn-primary btn-sm" onclick="saveSetupWizard()">Setup speichern</button>
+      <button class="btn btn-secondary btn-sm" onclick="closeSetupWizard()">Später</button>
+    </div>
+    <div id="setup-help" style="font-size:11px;color:var(--soft);margin-top:10px"></div>
+  </div>
+</div>
+
+<!-- SESSION EDIT MODAL -->
+<div id="ses-edit-modal" class="modal-overlay" onclick="if(event.target.id==='ses-edit-modal')closeSesMdl()">
+  <div class="modal-box" style="max-width:520px">
+    <div class="modal-title" id="ses-edit-title">Session bearbeiten</div>
+    <div class="modal-sub" id="ses-edit-sub">–</div>
+    <div id="ses-edit-body" style="margin-bottom:14px;max-height:55vh;overflow-y:auto"></div>
+    <button onclick="saveSessionEdit()" class="btn btn-primary btn-full" style="margin-bottom:7px">Speichern</button>
+    <button onclick="closeSesMdl()" class="btn btn-secondary btn-full">Abbrechen</button>
+  </div>
+</div>
+
+<!-- LOGGER MODAL -->
+<div id="logger-modal" class="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal-box">
+    <img id="modal-ex-img" class="modal-ex-img" src="" alt="">
+    <div class="modal-title" id="modal-name">Übung</div>
+    <div class="modal-sub" id="modal-info">–</div>
+    <div id="prev-wrap" class="prev-wrap" style="display:none">
+      <div class="prev-label">Letztes Mal in diesem Studio</div>
+      <div class="prev-sets-row" id="prev-row"></div>
+    </div>
+    <div class="prev-wrap" style="margin-bottom:10px">
+      <div class="prev-label">Timer</div>
+      <div id="modal-timer-val" class="prev-sets-row">Pause: aus</div>
+      <button onclick="stopTimer()" class="btn btn-secondary btn-sm" style="margin-top:8px;width:100%">Timer stoppen</button>
+    </div>
+    <div class="set-hdr">
+      <span></span><span>kg</span><span>Wdh</span><span></span>
+    </div>
+    <div class="set-rows" id="set-rows"></div>
+    <button onclick="addSetRow()" class="btn btn-secondary btn-full btn-sm" style="margin-bottom:12px">+ Satz</button>
+    <details style="margin-bottom:10px">
+      <summary style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--soft);cursor:pointer">Kommentar (optional)</summary>
+      <textarea id="ex-notes" rows="3" placeholder="Optionaler Kommentar zur Übung..." style="margin-top:8px"></textarea>
+    </details>
+    <button onclick="finalizeLog(false)" class="btn btn-primary btn-full" style="margin-bottom:7px">Speichern &amp; Timer starten</button>
+    <button onclick="finalizeLog(true)" class="btn btn-teal btn-full" style="margin-bottom:7px">Speichern &amp; nächste Übung</button>
+    <button onclick="closeModal()" class="btn btn-secondary btn-full">Abbrechen</button>
+  </div>
+</div>
+
+<script>
+// ═══ THEME ═══════════════════════════════════════════════════
+(function(){ var t=localStorage.getItem('ifl-theme')||'dark'; document.documentElement.setAttribute('data-theme',t); })();
+function toggleTheme(){
+  const h=document.documentElement, n=h.getAttribute('data-theme')==='dark'?'light':'dark';
+  h.setAttribute('data-theme',n); localStorage.setItem('ifl-theme',n); syncThemeBtn();
+}
+function syncThemeBtn(){
+  const b=document.getElementById('theme-btn');
+  if(b) b.textContent = document.documentElement.getAttribute('data-theme')==='dark' ? '☀ Light Mode' : '🌙 Dark Mode';
+}
+
+// ═══ DATA ════════════════════════════════════════════════════
+const DEFAULT_STUDIOS = ['Contact Habenhausen','FitnessPark Aumund','FitnessPark Burg','FitnessPark Delmenhorst'];
+let studios  = JSON.parse(localStorage.getItem('ifl_studios') || JSON.stringify(DEFAULT_STUDIOS));
+let currentStudio = localStorage.getItem('ifl_studio') || studios[0];
+let currentTab = 'push';
+let activePoolCat = 'Brust';
+let poolMode = localStorage.getItem('ifl_pool_mode') || 'global';
+let draggedId = null;
+let dropTargetId = null;
+let timerInterval = null;
+let timerSec = 0;
+let activeEx = null;
+let timerRunning = false;
+let longPressTimer = null;
+let suppressNextClick = false;
+let editMode = false;
+let reorderSourceId = null;
+let catalogOffset = 0;
+let catalogMatches = [];
+const CATALOG_PAGE_SIZE = 8;
+let mobilePhase = localStorage.getItem('ifl_mobile_phase') || 'plan';
+let iftttEvents = JSON.parse(localStorage.getItem('ifl_ifttt_events') || '[]');
+let catalogSource = 'local';
+let autoSyncTimer = null;
+let catalogStatusText = '';
+let gym80CategoryMap = null;
+const BUILD_STAMP = '2026-04-16 10:00';
+
+const CATS = ['Brust','Rücken','Beine','Schulter','Arme','Core'];
+const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
+const SESSION_LABELS = {push:'Push Session',pull_a:'Pull A Session',pull_b:'Pull B Session',legs:'Beine Session',free:'Freie Session',cardio:'Cardio Session'};
+const TRAIN_TABS = ['push','pull_a','pull_b','legs','free','cardio'];
+
+// Standard-Sessions (IDs aus DB) — individuell anpassbar
+const SESSION_TEMPLATES = {
+  push:   [3, 2, 4, 5, 12, 11],           // Schrägbank, Butterfly, Seitheben, Trizeps, Beinstrecker, Beinpresse
+  pull_a: [6, 7, 8, 10, 13, 14, 15],      // Butterfly Rev., High Row, Low Row, Bizeps, Beinbeuger, Abdukt., Klappsitz
+  pull_b: [6, 16, 9, 10, 13, 14, 15],     // Butterfly Rev., Latziehen, T-Bar, Bizeps, Beinbeuger, Abdukt., Klappsitz
+  legs:   [11, 12, 13, 14, 26, 15],
+  free:   [24, 25, 15]
+};
+
+const SB_IMG = 'https://dbamakgjtrgqplufwlca.supabase.co/storage/v1/object/public/fitness-assets/gym80/';
+const DEVICE_CATALOG = [
+  {brand:'gym80', name:'Brustpresse 3022', type:'Block', target:'Brust', cat:'Brust', sType:'push', group:'Brustpresse flach', art:'3022', img:SB_IMG+'3022.webp'},
+  {brand:'gym80', name:'Schrägbank 4329n', type:'Plate', target:'Brust', cat:'Brust', sType:'push', group:'Brustpresse schräg', art:'4329n', img:SB_IMG+'4329n.webp'},
+  {brand:'gym80', name:'Butterfly Reverse 3025', type:'Block', target:'Rücken/Schulter', cat:'Rücken', sType:'pull', group:'Rücken Isolation', art:'3025', img:SB_IMG+'3025.webp'},
+  {brand:'gym80', name:'High Row 4340', type:'Block', target:'Rücken', cat:'Rücken', sType:'pull', group:'Latpresse', art:'4340', img:SB_IMG+'4340.webp'},
+  {brand:'gym80', name:'Low Row Dual 4319', type:'Block', target:'Rücken', cat:'Rücken', sType:'pull', group:'Rudern', art:'4319', img:SB_IMG+'4319.webp'},
+  {brand:'gym80', name:'T-Bar 4018', type:'Plate', target:'Rücken', cat:'Rücken', sType:'pull', group:'Rudern', art:'4018', img:SB_IMG+'4018.webp'},
+  {brand:'gym80', name:'Beinpresse 5001', type:'Plate', target:'Beine', cat:'Beine', sType:'legs', group:'Kniebeuge', art:'5001', img:SB_IMG+'5001.webp'},
+  {brand:'gym80', name:'Beinstrecker 3001', type:'Block', target:'Beine', cat:'Beine', sType:'legs', group:'Quad Isolation', art:'3001', img:SB_IMG+'3001.webp'},
+  {brand:'gym80', name:'Beinbeuger liegend 3002', type:'Block', target:'Beine', cat:'Beine', sType:'legs', group:'Hamstring', art:'3002', img:SB_IMG+'3002.webp'},
+  {brand:'Matrix', name:'Chest Press Matrix', type:'Block', target:'Brust', cat:'Brust', sType:'push', group:'Brustpresse flach', art:null, img:null},
+  {brand:'Matrix', name:'Incline Chest Press Matrix', type:'Block', target:'Brust', cat:'Brust', sType:'push', group:'Brustpresse schräg', art:null, img:null},
+  {brand:'Matrix', name:'Lat Pulldown Matrix', type:'Block', target:'Rücken', cat:'Rücken', sType:'pull', group:'Latpresse', art:null, img:null},
+  {brand:'Matrix', name:'Seated Row Matrix', type:'Block', target:'Rücken', cat:'Rücken', sType:'pull', group:'Rudern', art:null, img:null},
+  {brand:'eGym', name:'Hip Thrust Smart', type:'Digital', target:'Glutes', cat:'Beine', sType:'legs', group:'Hüfte', art:null, img:null},
+  {brand:'eGym', name:'Shoulder Press Smart', type:'Digital', target:'Schulter', cat:'Schulter', sType:'push', group:'Schulterdrücken', art:null, img:null},
+  {brand:'Freihantel', name:'Seitheben Kurzhantel', type:'Hantel', target:'Schulter', cat:'Schulter', sType:'push', group:'Schulter Isolation', art:null, img:null},
+  {brand:'Freihantel', name:'Schrägbank Kurzhantel', type:'Hantel', target:'Brust', cat:'Brust', sType:'push', group:'Brustpresse schräg', art:null, img:null}
+];
+const DB_VERSION = '6';
+// Automatischer Reset wenn alte Demo-Daten im localStorage sind
+(function(){
+  const stored = localStorage.getItem('ifl_training_db');
+  if(stored && (stored.includes('Bankdrücken') || stored.includes('Klimmz') || localStorage.getItem('ifl_db_version') !== DB_VERSION)){
+    localStorage.removeItem('ifl_training_db');
+    localStorage.setItem('ifl_db_version', DB_VERSION);
+  }
+})();
+
+function loadDB(){
+  const s = localStorage.getItem('ifl_training_db');
+  if(s) return JSON.parse(s);
+  return [
+    // ── PUSH · Brust  [Contact Habenhausen] ─────────────────────────
+    {id:1,  name:'Brustpresse',            art:'3016', brand:'gym80 Sygnum',     cat:'Brust',    sType:'push', group:'Brustpresse flach',  gym:'Contact Habenhausen', status:'pool', order:1,  img:SB_IMG+'3016.webp', history:{}, prev:{}},
+    {id:2,  name:'Butterfly',              art:'3022', brand:'gym80 Sygnum',     cat:'Brust',    sType:'push', group:'Brust Isolation',    gym:'Contact Habenhausen', status:'pool', order:2,  img:SB_IMG+'3022.webp', history:{}, prev:{}},
+    {id:3,  name:'Schrägbank Dual',        art:'4329n',brand:'gym80 Pure Kraft', cat:'Brust',    sType:'push', group:'Brustpresse schräg', gym:'Contact Habenhausen', status:'pool', order:3,  img:SB_IMG+'4329n.webp', history:{}, prev:{}},
+    // ── PUSH · Schulter  [#4 noch nachzulegen] ──────────────────────
+    {id:4,  name:'Seithebemaschine Dual',  art:'4325', brand:'gym80 Pure Kraft', cat:'Schulter', sType:'push', group:'Schulter Isolation', gym:'Contact Habenhausen', status:'pool', order:4,  img:SB_IMG+'4325.webp', history:{}, prev:{}},
+    // ── PUSH · Arme ──────────────────────────────────────────────────
+    {id:5,  name:'Trizeps Überkopf',       art:'3095', brand:'gym80 Sygnum',     cat:'Arme',     sType:'push', group:'Trizeps',           gym:'Contact Habenhausen', status:'pool', order:5,  img:SB_IMG+'3095.webp', history:{}, prev:{}},
+    // ── PULL · Rücken ────────────────────────────────────────────────
+    {id:6,  name:'Butterfly Reverse',      art:'3025', brand:'gym80 Sygnum',     cat:'Rücken',   sType:'pull', group:'Rücken Isolation',  gym:'Contact Habenhausen', status:'pool', order:6,  img:SB_IMG+'3025.webp', history:{}, prev:{}},
+    {id:7,  name:'High Row Dual',          art:'4340', brand:'gym80 Pure Kraft', cat:'Rücken',   sType:'pull', group:'Latpresse',         gym:'Contact Habenhausen', status:'pool', order:7,  img:SB_IMG+'4340.webp', history:{}, prev:{}},
+    {id:8,  name:'Low Row Dual',           art:'4319', brand:'gym80 Pure Kraft', cat:'Rücken',   sType:'pull', group:'Rudern',            gym:'Contact Habenhausen', status:'pool', order:8,  img:SB_IMG+'4319.webp', history:{}, prev:{}},
+    {id:9,  name:'T-Bar Rudermaschine',    art:'4018', brand:'gym80 Pure Kraft', cat:'Rücken',   sType:'pull', group:'Rudern',            gym:'Contact Habenhausen', status:'pool', order:9,  img:SB_IMG+'4018.webp', history:{}, prev:{}},
+    // ── PULL · Arme ──────────────────────────────────────────────────
+    {id:10, name:'Bizeps Horizontal',      art:'3098', brand:'gym80 Sygnum',     cat:'Arme',     sType:'pull', group:'Bizeps',            gym:'Contact Habenhausen', status:'pool', order:10, img:SB_IMG+'3098.webp', history:{}, prev:{}},
+    // ── BEINE ────────────────────────────────────────────────────────
+    {id:11, name:'Beinpresse',             art:'5001', brand:'gym80 Innovation', cat:'Beine',    sType:'legs', group:'Kniebeuge',         gym:'Contact Habenhausen', status:'pool', order:11, img:SB_IMG+'5001.webp', history:{}, prev:{}},
+    {id:12, name:'Beinstrecker',           art:'3001', brand:'gym80 Sygnum',     cat:'Beine',    sType:'legs', group:'Quad Isolation',    gym:'Contact Habenhausen', status:'pool', order:12, img:SB_IMG+'3001.webp', history:{}, prev:{}},
+    {id:13, name:'Beinbeuger liegend',     art:'3002', brand:'gym80 Sygnum',     cat:'Beine',    sType:'legs', group:'Hamstring',         gym:'Contact Habenhausen', status:'pool', order:13, img:SB_IMG+'3002.webp', history:{}, prev:{}},
+    {id:14, name:'Abduktionen',            art:'3028', brand:'gym80 Sygnum',     cat:'Beine',    sType:'legs', group:'Abduktoren',        gym:'Contact Habenhausen', status:'pool', order:14, img:SB_IMG+'3028.webp', history:{}, prev:{}},
+    // ── PULL · Rücken (Kabel) ────────────────────────────────────────
+    {id:16, name:'Latziehen Kabel',             art:'3020', brand:'gym80 Sygnum',  cat:'Rücken',   sType:'pull', group:'Latpresse',          gym:'Contact Habenhausen', status:'pool', order:16, img:SB_IMG+'3020.webp', history:{}, prev:{}},
+    {id:27, name:'Klimmzüge',                   art:null,   brand:null,            cat:'Rücken',   sType:'pull', group:'Latpresse',          gym:'Contact Habenhausen', status:'pool', order:27, img:null,               history:{}, prev:{}},
+    // ── BEINE (Freigewicht / Egym) ───────────────────────────────────
+    {id:17, name:'Beinbeuger sitzend',          art:null,   brand:null,            cat:'Beine',    sType:'legs', group:'Hamstring',          gym:'Contact Habenhausen', status:'pool', order:17, img:null,               history:{}, prev:{}},
+    {id:26, name:'Hip Thrust',                  art:null,   brand:null,            cat:'Beine',    sType:'legs', group:'Hüfte',              gym:'Contact Habenhausen', status:'pool', order:26, img:null,               history:{}, prev:{}},
+    // ── PUSH · Brust (Freigewicht / Multipresse) ─────────────────────
+    {id:18, name:'Schrägbankdrücken Multipresse', art:null, brand:null,            cat:'Brust',    sType:'push', group:'Brustpresse schräg', gym:'Contact Habenhausen', status:'pool', order:18, img:null,               history:{}, prev:{}},
+    // ── PUSH · Schulter ──────────────────────────────────────────────
+    {id:19, name:'Schulterdrücken Multipresse', art:null,   brand:null,            cat:'Schulter', sType:'push', group:'Schulterdrücken',    gym:'Contact Habenhausen', status:'pool', order:19, img:null,               history:{}, prev:{}},
+    {id:28, name:'Egym Schulterdrücken',        art:null,   brand:'Egym',          cat:'Schulter', sType:'push', group:'Schulterdrücken',    gym:'Contact Habenhausen', status:'pool', order:28, img:null,               history:{}, prev:{}},
+    {id:20, name:'Seitheben Kabelzug',          art:null,   brand:null,            cat:'Schulter', sType:'push', group:'Schulter Isolation', gym:'Contact Habenhausen', status:'pool', order:20, img:null,               history:{}, prev:{}},
+    {id:21, name:'Seitheben Kurzhantel',        art:null,   brand:null,            cat:'Schulter', sType:'push', group:'Schulter Isolation', gym:'Contact Habenhausen', status:'pool', order:21, img:null,               history:{}, prev:{}},
+    // ── PUSH · Arme ──────────────────────────────────────────────────
+    {id:22, name:'Trizeps Kabelzug Einarmig',   art:null,   brand:null,            cat:'Arme',     sType:'push', group:'Trizeps',            gym:'Contact Habenhausen', status:'pool', order:22, img:null,               history:{}, prev:{}},
+    {id:23, name:'Dips',                        art:null,   brand:null,            cat:'Arme',     sType:'push', group:'Trizeps',            gym:'Contact Habenhausen', status:'pool', order:23, img:null,               history:{}, prev:{}},
+    // ── FREI · Core ──────────────────────────────────────────────────
+    {id:15, name:'Klappsitz (Bauch)',           art:'3008', brand:'gym80 Sygnum',  cat:'Core',     sType:'free', group:'Core',               gym:'Contact Habenhausen', status:'pool', order:15, img:SB_IMG+'3008.webp', history:{}, prev:{}},
+    {id:24, name:'Crunches',                    art:null,   brand:null,            cat:'Core',     sType:'free', group:'Core',               gym:'Contact Habenhausen', status:'pool', order:24, img:null,               history:{}, prev:{}},
+    {id:25, name:'Beinheben',                   art:null,   brand:null,            cat:'Core',     sType:'free', group:'Core',               gym:'Contact Habenhausen', status:'pool', order:25, img:null,               history:{}, prev:{}},
+  ];
+}
+let db = loadDB();
+
+// Einmalige Migration: alte gym80.de-URLs in gespeicherten Einträgen
+// auf Supabase Storage URLs aktualisieren (anhand art-Nummer)
+(function migrateImages(){
+  const GYM80_OLD = 'gym80.de/wp-content';
+  let changed = false;
+  db.forEach(ex => {
+    if(ex.art && ex.img && ex.img.includes(GYM80_OLD)){
+      ex.img = SB_IMG + ex.art + '.webp';
+      changed = true;
+    } else if(!ex.img && ex.art){
+      // art vorhanden aber noch kein Bild gesetzt → Supabase-URL ergänzen
+      ex.img = SB_IMG + ex.art + '.webp';
+      changed = true;
+    }
+  });
+  if(changed) localStorage.setItem('ifl_training_db', JSON.stringify(db));
+})();
+
+let nextId = Math.max(...db.map(x=>x.id)) + 1;
+function saveDB(){
+  localStorage.setItem('ifl_training_db', JSON.stringify(db));
+  scheduleAutoSync();
+}
+
+// Session-Log (datiertes Archiv abgeschlossener Sessions)
+function loadSessionLog(){ return JSON.parse(localStorage.getItem('ifl_session_log')||'[]'); }
+function saveSessionLog(){
+  localStorage.setItem('ifl_session_log', JSON.stringify(sessionLog));
+  scheduleAutoSync();
+}
+let sessionLog = loadSessionLog();
+let factorMap = JSON.parse(localStorage.getItem('ifl_factor_map') || '{}');
+
+// Kalender-State
+let calYear  = new Date().getFullYear();
+let calMonth = new Date().getMonth(); // 0-based
+let calSelectedDate = null;
+let editingSession  = null; // für Session-Edit-Modal
+
+// ═══ 1RM ═════════════════════════════════════════════════════
+function calc1RM(w, r){ return (w>0 && r>0) ? +(w*(1+r/30)).toFixed(1) : 0; }
+function maxRM(sets){ return sets.length ? Math.max(...sets.map(s=>calc1RM(s.w,s.r))) : 0; }
+
+// Best 1RM for a group in a studio (across all exercises in group)
+function groupBestRM(group, studio){
+  return Math.max(...db.filter(x=>x.group===group).map(x=>maxRM(x.history[studio]||[])), 0) || null;
+}
+
+// Best 1RM for an exercise across ALL studios
+function exBestRMAllStudios(ex){
+  return Math.max(...studios.map(s=>maxRM(ex.history[s]||[])), 0);
+}
+
+// Is current studio 1RM a group record? (beats all other exercises in same group, any studio)
+function isGroupRecord(ex){
+  if(!ex.group) return false;
+  const cur = maxRM(ex.history[currentStudio]||[]);
+  if(!cur) return false;
+  const others = db.filter(x=>x.group===ex.group && x.id!==ex.id);
+  const allOther = Math.max(
+    ...others.flatMap(o=>studios.map(s=>maxRM(o.history[s]||[]))),
+    ...studios.filter(s=>s!==currentStudio).map(s=>maxRM(ex.history[s]||[])),
+    0
+  );
+  return cur > allOther;
+}
+
+// ═══ RENDER ══════════════════════════════════════════════════
+function render(){
+  renderStudios();
+  renderCatFilters();
+  renderPool();
+  renderActive();
+  renderStats();
+  renderAnalyse();
+  renderUebungen();
+  renderKalender();
+  renderTabState();
+  renderMobileTabs();
+  _setMobileMainActive(TRAIN_TABS.includes(currentTab) ? 'training' : (currentTab==='kalender'?'history':'training'));
+  _showMobileTrainTabs(TRAIN_TABS.includes(currentTab));
+  renderMobilePhase();
+  syncSortModeButton();
+  document.getElementById('active-title').textContent = SESSION_LABELS[currentTab] || 'Session';
+  document.getElementById('date-pill').textContent = new Date().toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const buildPill = document.getElementById('build-pill');
+  if(buildPill) buildPill.textContent = `Build ${BUILD_STAMP}`;
+  const tplBtn = document.getElementById('btn-load-tpl');
+  if(tplBtn) tplBtn.style.display = SESSION_TEMPLATES[currentTab] ? '' : 'none';
+  syncThemeBtn();
+}
+
+function setMobilePhase(phase){
+  mobilePhase = phase;
+  localStorage.setItem('ifl_mobile_phase', phase);
+  renderMobilePhase();
+}
+
+function renderMobilePhase(){
+  const isSmall = window.matchMedia('(max-width: 640px)').matches;
+  const body = document.body;
+  const note = document.getElementById('phase-note');
+  const btnPool = document.getElementById('btn-back-pool');
+  ['plan','session','checkin'].forEach(p=>{
+    document.getElementById(`phase-${p==='checkin'?'check':p}-btn`)?.classList.toggle('active', mobilePhase===p);
+  });
+  body.classList.toggle('mobile-session-focus', isSmall && mobilePhase==='session');
+  if(btnPool) btnPool.style.display = (isSmall && mobilePhase==='session') ? '' : 'none';
+  if(note){
+    if(mobilePhase==='session') note.textContent = 'Session Fokus: aktive Übungen · Timer läuft weiter';
+    else if(mobilePhase==='checkin') note.textContent = 'Check-In: Studio wählen, dann in Planung wechseln.';
+    else note.textContent = 'Planung: Pool und Session gleichzeitig sichtbar.';
+  }
+  // Focus-Bar nur auf Mobile in Session-Phase
+  renderFocusBar(isSmall && mobilePhase==='session');
+}
+
+function renderFocusBar(show){
+  const bar = document.getElementById('session-focus-bar');
+  if(!bar) return;
+  if(!show){ bar.style.display='none'; return; }
+
+  const items = db.filter(x=>x.status==='active'&&x.sType===currentTab)
+                  .sort((a,b)=>a.order-b.order);
+  if(!items.length){ bar.style.display='none'; return; }
+
+  // Erste Übung die noch keine Einträge heute hat, sonst erste
+  const today = new Date().toISOString().slice(0,10);
+  const unlogged = items.filter(ex=>{
+    const h = ex.history[currentStudio]||[];
+    const logged = (ex.loggedDate||{});
+    return logged[currentStudio] !== today;
+  });
+  const focus = unlogged.length ? unlogged[0] : items[0];
+
+  const hist = focus.history[currentStudio]||[];
+  const prevText = hist.length
+    ? hist.map(s=>`${s.w}×${s.r}`).join(' · ')
+    : 'Kein Eintrag';
+  const doneCount = items.length - unlogged.length;
+
+  document.getElementById('focus-bar-name').textContent = focus.name;
+  document.getElementById('focus-bar-prev').textContent = `Letztes Mal: ${prevText}`;
+  document.getElementById('focus-bar-progress').textContent =
+    `${doneCount}/${items.length} Übungen geloggt`;
+  bar.dataset.focusId = focus.id;
+  bar.style.display = 'block';
+}
+
+function focusBarOpen(){
+  const bar = document.getElementById('session-focus-bar');
+  if(!bar) return;
+  const id = parseInt(bar.dataset.focusId);
+  const ex = db.find(x=>x.id===id);
+  if(ex) openLogger(ex);
+}
+
+function renderTabState(){
+  const box = document.getElementById('tab-state');
+  if(!box) return;
+  const isTrain = TRAIN_TABS.includes(currentTab);
+  if(!isTrain){
+    box.style.display = 'none';
+    return;
+  }
+  box.style.display = 'flex';
+  const activeCount = db.filter(x=>x.status==='active'&&x.sType===currentTab).length;
+  const hasTpl = !!SESSION_TEMPLATES[currentTab];
+  box.innerHTML = `
+    <div>
+      <div class="tab-state-title">${SESSION_LABELS[currentTab] || 'Session aktiv'}</div>
+      <div style="font-size:12px;color:var(--muted)">${activeCount} aktive Übungen · Studio: ${currentStudio}</div>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+      ${hasTpl?'<span class="pill pill-gold" style="cursor:default">Standard verfügbar</span>':''}
+      <span class="pill" style="cursor:default">Tab aktiv: ${currentTab.toUpperCase()}</span>
+    </div>
+  `;
+}
+
+function renderStudios(){
+  const sel = document.getElementById('studio-select');
+  sel.innerHTML = studios.map(s=>`<option value="${s}"${s===currentStudio?' selected':''}>${s}</option>`).join('');
+  const baseSel = document.getElementById('calc-base-studio');
+  if(baseSel){
+    baseSel.innerHTML = studios.map(s=>`<option value="${s}"${s===currentStudio?' selected':''}>${s}</option>`).join('');
+  }
+  const cg = document.getElementById('calc-studio');
+  if(cg) cg.innerHTML = studios.map(s=>`<option value="${s}"${s===currentStudio?' selected':''}>${s}</option>`).join('');
+}
+
+function renderCatFilters(){
+  document.getElementById('cat-filters').innerHTML = CATS.map(c=>
+    `<button class="pill${c===activePoolCat?' active':''}" onclick="filterCat('${c}')">${c}</button>`
+  ).join('');
+}
+
+function renderPool(){
+  const zone = document.getElementById('pool-zone');
+  renderPoolMode();
+  const items = db
+    .filter(x=>x.status==='pool'&&x.cat===activePoolCat)
+    .filter(x=>poolMode==='global' ? (x.poolScope||'global')==='global' : (x.poolScope||'global')==='studio' && x.gym===currentStudio)
+    .sort((a,b)=>a.order-b.order);
+  document.getElementById('pool-pill').textContent = items.length;
+  zone.innerHTML = items.length
+    ? items.map(ex=>tileHTML(ex,false)).join('')
+    : '<div class="drop-empty">Alle aktiv</div>';
+  attachTileEvents(zone,'pool');
+}
+
+function renderPoolMode(){
+  const wrap = document.getElementById('pool-mode');
+  if(!wrap) return;
+  wrap.innerHTML = `
+    <button class="pill${poolMode==='global'?' active':''}" onclick="setPoolMode('global')">Standard-Pool</button>
+    <button class="pill${poolMode==='studio'?' active':''}" onclick="setPoolMode('studio')">Studio-Pool</button>
+  `;
+}
+
+function setPoolMode(mode){
+  poolMode = mode;
+  localStorage.setItem('ifl_pool_mode', mode);
+  renderPool();
+}
+
+function renderActive(){
+  const zone = document.getElementById('active-zone');
+  const items = db.filter(x=>x.status==='active'&&x.sType===currentTab).sort((a,b)=>a.order-b.order);
+  zone.innerHTML = items.length
+    ? items.map(ex=>tileHTML(ex,true)).join('')
+    : '<div class="drop-empty">Übung aus Pool hierher ziehen</div>';
+  attachTileEvents(zone,'active');
+}
+
+function tileHTML(ex, inActive){
+  const hist = ex.history[currentStudio]||[];
+  const prev = ex.prev[currentStudio]||[];
+  const setsHTML = hist.map((s,i)=>{
+    const up = prev[i] && (s.w>prev[i].w || (s.w===prev[i].w && s.r>prev[i].r));
+    const dn = prev[i] && (s.w<prev[i].w || (s.w===prev[i].w && s.r<prev[i].r));
+    const cls = up?' up':dn?' down':'';
+    return `<span class="ex-set${cls}">${up?'↑ ':dn?'↓ ':''}${s.w}×${s.r}</span>`;
+  }).join('');
+  const rm = maxRM(hist);
+  const pr = isGroupRecord(ex);
+  const grpLabel = ex.group
+    ? `<span class="ex-tile-group" onclick="event.stopPropagation();promptGroup(${ex.id})">${ex.group}</span>`
+    : `<span class="ex-tile-group" style="opacity:.5" onclick="event.stopPropagation();promptGroup(${ex.id})">+ Gruppe</span>`;
+  const catColor = CAT_COLOR[ex.cat]||'var(--soft)';
+  const imgHTML = ex.img ? `<img src="${ex.img}" class="ex-tile-img" loading="lazy" draggable="false">` : '';
+  const optBadge = ex.optional ? `<span style="font-size:8px;color:var(--warn);background:rgba(232,166,74,.1);border:1px solid rgba(232,166,74,.25);border-radius:4px;padding:1px 5px;margin-left:5px">noch nachzulegen</span>` : '';
+  const artLabel = ex.art ? `${ex.brand||'gym80'} · ${ex.art}` : (ex.brand ? ex.brand : null);
+  const artHTML = artLabel ? `<div style="font-size:9px;color:var(--soft);font-family:'JetBrains Mono',monospace;margin-top:2px">${artLabel}${optBadge}</div>` : '';
+  const scopeBadge = (ex.poolScope||'global')==='studio'
+    ? `<span class="pill pill-teal" style="font-size:8px;padding:2px 7px;cursor:default">${ex.gym||'Studio'}</span>`
+    : `<span class="pill" style="font-size:8px;padding:2px 7px;cursor:default">Standard</span>`;
+  const quickAddBtn = !inActive
+    ? `<button class="ex-quick-add" onclick="event.stopPropagation();addToCurrentSession(${ex.id})">+ Session</button>`
+    : '';
+  const moveControls = inActive
+    ? `<div class="ex-move-controls">
+        <button class="ex-move-btn" onclick="event.stopPropagation();moveExercise(${ex.id}, -1)">↑</button>
+        <button class="ex-move-btn" onclick="event.stopPropagation();moveExercise(${ex.id}, 1)">↓</button>
+      </div>`
+    : '';
+  return `<div class="ex-tile" draggable="true" data-id="${ex.id}">
+    <div class="ex-tile-top">
+      ${imgHTML}
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px">
+          <div class="ex-tile-name">${ex.name}</div>
+          <span class="ex-tile-cat" style="color:${catColor};flex-shrink:0">${ex.cat}</span>
+        </div>
+        ${artHTML}
+      </div>
+    </div>
+    ${grpLabel}
+    <div style="display:flex;align-items:center;gap:6px;margin-top:5px">${scopeBadge}${quickAddBtn}${moveControls}</div>
+    <div class="ex-tile-history" style="margin-top:5px">${setsHTML||'<span style="color:var(--soft)">Noch keine Einträge</span>'}</div>
+    ${rm>0?`<div class="ex-tile-footer">
+      <span class="ex-1rm">1RM ~${rm} kg</span>
+      ${pr?'<span class="ex-pr-badge">★ Gruppenrekord</span>':''}
+    </div>`:''}
+  </div>`;
+}
+
+function addToCurrentSession(id){
+  const ex = db.find(x=>x.id===id);
+  if(!ex) return;
+  ex.status = 'active';
+  ex.sType = currentTab;
+  const maxOrder = Math.max(
+    ...db.filter(x=>x.status==='active' && x.sType===currentTab).map(x=>x.order||0),
+    0
+  );
+  ex.order = maxOrder + 1;
+  saveDB();
+  render();
+}
+
+function moveExercise(id, step){
+  const items = db
+    .filter(x=>x.status==='active' && x.sType===currentTab)
+    .sort((a,b)=>a.order-b.order);
+  const idx = items.findIndex(x=>x.id===id);
+  if(idx < 0) return;
+  const targetIdx = idx + step;
+  if(targetIdx < 0 || targetIdx >= items.length) return;
+  const a = items[idx];
+  const b = items[targetIdx];
+  [a.order, b.order] = [b.order, a.order];
+  saveDB();
+  renderActive();
+}
+
+function enterEditMode(){
+  editMode = true;
+  document.body.classList.add('mobile-edit-mode');
+  document.getElementById('edit-mode-banner')?.classList.add('show');
+  document.getElementById('edit-done-fab')?.classList.add('show');
+  syncSortModeButton();
+}
+
+function exitEditMode(){
+  editMode = false;
+  reorderSourceId = null;
+  document.body.classList.remove('mobile-edit-mode');
+  document.getElementById('edit-mode-banner')?.classList.remove('show');
+  document.getElementById('edit-done-fab')?.classList.remove('show');
+  syncSortModeButton();
+}
+
+function toggleEditMode(){
+  if(editMode) exitEditMode();
+  else enterEditMode();
+}
+
+function syncSortModeButton(){
+  const btn = document.getElementById('btn-sort-mode');
+  if(!btn) return;
+  btn.textContent = editMode ? 'Sortieren AUS' : 'Sortieren';
+  btn.classList.toggle('btn-teal', editMode);
+}
+
+function renderMobileTabs(){
+  TRAIN_TABS.forEach(tab=>{
+    const btn = document.getElementById('m-tab-' + tab);
+    if(btn){
+      btn.classList.toggle('active', tab === currentTab);
+    }
+  });
+}
+
+function attachTileEvents(zone, zoneType){
+  zone.querySelectorAll('.ex-tile').forEach(el=>{
+    const id = +el.dataset.id;
+    el.addEventListener('dragstart', e=>{
+      draggedId=id; el.classList.add('dragging');
+      e.dataTransfer.effectAllowed='move';
+    });
+    el.addEventListener('dragend', ()=>{
+      el.classList.remove('dragging');
+      zone.querySelectorAll('.ex-tile').forEach(t=>{ t.classList.remove('drag-over-top','drag-over-bottom'); });
+    });
+    // Pool-Tile: aktive Übung zurück in Pool droppen
+    if(zoneType==='pool'){
+      el.addEventListener('dragenter', e=>{ if(draggedId && draggedId!==id) e.preventDefault(); });
+      el.addEventListener('dragover', e=>{ if(draggedId && draggedId!==id) e.preventDefault(); });
+      el.addEventListener('drop', e=>{
+        e.preventDefault(); e.stopPropagation();
+        if(draggedId && draggedId!==id){
+          const a=db.find(x=>x.id===draggedId);
+          if(a && a.status==='active'){ a.status='pool'; saveDB(); render(); }
+        }
+        draggedId=null; dropTargetId=null;
+      });
+    }
+    // Reorder: only within active zone
+    if(zoneType==='active'){
+      el.addEventListener('touchstart', ()=>{
+        clearTimeout(longPressTimer);
+        longPressTimer = setTimeout(()=>{
+          enterEditMode();
+          suppressNextClick = true;
+        }, 420);
+      }, {passive:true});
+      el.addEventListener('touchend', ()=>clearTimeout(longPressTimer), {passive:true});
+      el.addEventListener('touchmove', ()=>clearTimeout(longPressTimer), {passive:true});
+      el.addEventListener('dragenter', e=>{
+        if(draggedId && draggedId!==id){
+          e.preventDefault();
+          dropTargetId = id;
+          zone.querySelectorAll('.ex-tile').forEach(t=>t.classList.remove('drag-over-top','drag-over-bottom'));
+          el.classList.add('drag-over-top');
+        }
+      });
+      el.addEventListener('dragover', e=>{
+        if(draggedId && draggedId!==id) e.preventDefault();
+      });
+      el.addEventListener('drop', e=>{
+        e.preventDefault(); e.stopPropagation();
+        if(draggedId && draggedId!==id){
+          const a=db.find(x=>x.id===draggedId), b=db.find(x=>x.id===id);
+          if(a && b){
+            if(a.status==='active' && b.status==='active'){
+              // Reorder innerhalb aktiver Session
+              [a.order, b.order]=[b.order, a.order];
+            } else if(a.status==='pool'){
+              // Pool-Übung auf aktives Tile gedroppt → in Session aufnehmen
+              a.status='active'; a.sType=currentTab;
+            }
+            saveDB(); render();
+          }
+        }
+        draggedId=null; dropTargetId=null;
+      });
+    }
+    el.addEventListener('click', ()=>{
+      if(suppressNextClick){
+        suppressNextClick = false;
+        return;
+      }
+      if(editMode && zoneType==='active'){
+        if(reorderSourceId===null){
+          reorderSourceId = id;
+          zone.querySelectorAll('.ex-tile').forEach(t=>t.style.outline='');
+          el.style.outline = '2px solid var(--gold)';
+          return;
+        }
+        if(reorderSourceId===id){
+          reorderSourceId = null;
+          el.style.outline = '';
+          return;
+        }
+        const a=db.find(x=>x.id===reorderSourceId), b=db.find(x=>x.id===id);
+        if(a && b && a.status==='active' && b.status==='active' && a.sType===currentTab && b.sType===currentTab){
+          [a.order, b.order]=[b.order, a.order];
+          saveDB();
+          reorderSourceId = null;
+          renderActive();
+        }
+        return;
+      }
+      const ex=db.find(x=>x.id===id); if(ex) openLogger(ex);
+    });
+  });
+  // Zone drop (move between pool/active)
+  zone.addEventListener('dragover', e=>{ e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', ()=>zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e=>{
+    e.preventDefault(); zone.classList.remove('drag-over');
+    if(dropTargetId){ dropTargetId=null; draggedId=null; return; } // handled by tile
+    if(!draggedId) return;
+    const ex=db.find(x=>x.id===draggedId);
+    if(ex){ ex.status=zoneType==='active'?'active':'pool'; if(ex.status==='active') ex.sType=currentTab; saveDB(); render(); }
+    draggedId=null;
+  });
+}
+
+function renderStats(){
+  const actives = db.filter(x=>x.status==='active'&&x.sType===currentTab);
+  const sets = actives.reduce((n,x)=>n+(x.history[currentStudio]||[]).length,0);
+  let prs=0;
+  db.forEach(ex=>{ if(isGroupRecord(ex)) prs++; });
+  document.getElementById('stat-sessions').textContent = sessionLog.length || localStorage.getItem('ifl_session_count')||'0';
+  document.getElementById('stat-active').textContent = actives.length;
+  document.getElementById('stat-sets').textContent = sets;
+  document.getElementById('stat-prs').textContent = prs;
+}
+
+// ═══ ANALYSE ═════════════════════════════════════════════════
+function getGroups(){ return [...new Set(db.map(x=>x.group).filter(Boolean))].sort(); }
+
+function renderAnalyse(){
+  const groups = getGroups();
+  // Table header
+  const thead = document.getElementById('compare-head');
+  const tbody = document.getElementById('compare-body');
+  if(!thead||!tbody) return;
+  thead.innerHTML = `<tr><th>Bewegungsgruppe</th>${studios.map(s=>`<th style="color:var(--gold)">${s}</th>`).join('')}<th>Δ Bestes</th></tr>`;
+  tbody.innerHTML = groups.length ? groups.map(g=>{
+    const rms = studios.map(s=>groupBestRM(g,s));
+    const validRMs = rms.filter(r=>r!==null);
+    const best = validRMs.length ? Math.max(...validRMs) : null;
+    const worst = validRMs.length > 1 ? Math.min(...validRMs) : null;
+    const delta = best && worst ? `+${(best-worst).toFixed(1)} kg` : '–';
+    const bestStudio = best ? studios[rms.indexOf(best)] : null;
+    const cells = studios.map((s,i)=>{
+      const rm = rms[i];
+      const isBest = rm===best && validRMs.length>1;
+      return `<td style="font-family:'JetBrains Mono',monospace;${isBest?'color:var(--teal);font-weight:700':''}">${rm ? rm+' kg' : '–'}</td>`;
+    }).join('');
+    return `<tr><td style="font-weight:600">${g}</td>${cells}<td style="font-family:'JetBrains Mono',monospace;color:var(--gold);font-size:12px">${delta}</td></tr>`;
+  }).join('') : `<tr><td colspan="${studios.length+2}" style="color:var(--soft);text-align:center;padding:20px">Noch keine Gruppen definiert</td></tr>`;
+
+  // Calc group dropdown
+  const cg = document.getElementById('calc-group');
+  if(cg){ cg.innerHTML = groups.map(g=>`<option value="${g}">${g}</option>`).join(''); }
+
+  // Datalist for new exercise group
+  const dl = document.getElementById('groups-list');
+  if(dl){ dl.innerHTML = groups.map(g=>`<option value="${g}">`).join(''); }
+
+  // Group count
+  const gp = document.getElementById('group-count-pill');
+  if(gp) gp.textContent = groups.length + ' Gruppen';
+
+  calcLoadFactor();
+  renderProgressTables();
+  renderIftttEvents();
+  calcUpdate();
+}
+
+function trendLabel(last, best){
+  if(!last || !best) return '–';
+  const delta = +(last - best).toFixed(1);
+  if(delta === 0) return 'auf Bestwert';
+  if(delta > 0) return `+${delta} kg`;
+  return `${delta} kg`;
+}
+
+function renderProgressTables(){
+  const exBody = document.getElementById('progress-ex-body');
+  const groupBody = document.getElementById('progress-group-body');
+  if(!exBody || !groupBody) return;
+
+  const logs = [...sessionLog].sort((a,b)=>{
+    const d = a.date.localeCompare(b.date);
+    return d !== 0 ? d : a.id - b.id;
+  });
+
+  const exMap = {};
+  const groupMap = {};
+
+  logs.forEach(s=>{
+    (s.exercises || []).forEach(ex=>{
+      const sets = ex.sets || [];
+      const rm = ex.rm || maxRM(sets);
+      if(!rm) return;
+      const exKey = String(ex.id || ex.name);
+      if(!exMap[exKey]) exMap[exKey] = { name: ex.name, last: null, best: 0 };
+      exMap[exKey].last = rm;
+      exMap[exKey].best = Math.max(exMap[exKey].best, rm);
+
+      if(ex.group){
+        if(!groupMap[ex.group]) groupMap[ex.group] = { name: ex.group, last: null, best: 0 };
+        groupMap[ex.group].last = Math.max(groupMap[ex.group].last || 0, rm);
+        groupMap[ex.group].best = Math.max(groupMap[ex.group].best, rm);
+      }
+    });
+  });
+
+  const exRows = Object.values(exMap).sort((a,b)=>b.best-a.best);
+  exBody.innerHTML = exRows.length
+    ? exRows.map(r=>`<tr>
+        <td style="font-weight:600">${r.name}</td>
+        <td style="font-family:'JetBrains Mono',monospace">${r.last.toFixed(1)} kg</td>
+        <td style="font-family:'JetBrains Mono',monospace;color:var(--gold)">${r.best.toFixed(1)} kg</td>
+        <td style="font-family:'JetBrains Mono',monospace;color:${r.last===r.best?'var(--teal)':'var(--muted)'}">${trendLabel(r.last, r.best)}</td>
+      </tr>`).join('')
+    : `<tr><td colspan="4" style="text-align:center;color:var(--soft)">Noch keine abgeschlossenen Sessions</td></tr>`;
+
+  const groupRows = Object.values(groupMap).sort((a,b)=>b.best-a.best);
+  groupBody.innerHTML = groupRows.length
+    ? groupRows.map(r=>`<tr>
+        <td style="font-weight:600">${r.name}</td>
+        <td style="font-family:'JetBrains Mono',monospace">${r.last.toFixed(1)} kg</td>
+        <td style="font-family:'JetBrains Mono',monospace;color:var(--gold)">${r.best.toFixed(1)} kg</td>
+        <td style="font-family:'JetBrains Mono',monospace;color:${r.last===r.best?'var(--teal)':'var(--muted)'}">${trendLabel(r.last, r.best)}</td>
+      </tr>`).join('')
+    : `<tr><td colspan="4" style="text-align:center;color:var(--soft)">Noch keine Gruppen-Progressdaten</td></tr>`;
+}
+
+function renderIftttEvents(){
+  const box = document.getElementById('ifttt-list');
+  if(!box) return;
+  if(!iftttEvents.length){
+    box.innerHTML = '<div style="font-size:11px;color:var(--soft)">Noch keine IFTTT-Payloads gespeichert.</div>';
+    return;
+  }
+  box.innerHTML = iftttEvents.slice().reverse().map(e=>`
+    <div class="cal-session-detail" style="margin-bottom:6px">
+      <div style="font-size:11px;font-weight:700">${e.date || 'ohne Datum'} · ${e.calories ?? '-'} kcal</div>
+      <div style="font-size:10px;color:var(--soft)">P:${e.protein ?? '-'} · C:${e.carbs ?? '-'} · F:${e.fat ?? '-'} · Event: ${e.event || '-'}</div>
+    </div>
+  `).join('');
+}
+
+function saveIftttEvent(){
+  const eventName = (document.getElementById('ifttt-event-name')?.value || '').trim() || 'mfp_event';
+  const raw = (document.getElementById('ifttt-payload')?.value || '').trim();
+  if(!raw){
+    alert('Bitte JSON-Payload einfügen.');
+    return;
+  }
+  try{
+    const parsed = JSON.parse(raw);
+    const entry = {
+      event: eventName,
+      date: parsed.date || new Date().toISOString().slice(0,10),
+      calories: Number(parsed.calories ?? parsed.kcal ?? 0) || 0,
+      protein: Number(parsed.protein ?? 0) || 0,
+      carbs: Number(parsed.carbs ?? 0) || 0,
+      fat: Number(parsed.fat ?? 0) || 0,
+      payload: parsed,
+      savedAt: new Date().toISOString()
+    };
+    iftttEvents.push(entry);
+    localStorage.setItem('ifl_ifttt_events', JSON.stringify(iftttEvents));
+    scheduleAutoSync();
+    renderIftttEvents();
+    alert('IFTTT-Payload gespeichert.');
+  }catch(err){
+    alert('Ungültiges JSON: ' + err.message);
+  }
+}
+
+function clearIftttEvents(){
+  if(!confirm('Alle IFTTT-Payloads löschen?')) return;
+  iftttEvents = [];
+  localStorage.setItem('ifl_ifttt_events', JSON.stringify(iftttEvents));
+  scheduleAutoSync();
+  renderIftttEvents();
+}
+
+function calcUpdate(){
+  const group = document.getElementById('calc-group')?.value;
+  const baseStudio = document.getElementById('calc-base-studio')?.value;
+  const studio = document.getElementById('calc-studio')?.value;
+  const factor = parseFloat(document.getElementById('calc-factor')?.value) || 1;
+  const reps = parseInt(document.getElementById('calc-reps')?.value)||8;
+  const res = document.getElementById('calc-result');
+  const val = document.getElementById('calc-val');
+  const sub = document.getElementById('calc-sub');
+  if(!group||!studio||!baseStudio||!res) return;
+
+  const baseRM = groupBestRM(group, baseStudio) || 0;
+  const fallbackBestRM = Math.max(...studios.map(s=>groupBestRM(group,s)||0));
+  const sourceRM = baseRM || fallbackBestRM;
+  if(!sourceRM){ res.style.display='none'; return; }
+
+  const target1RM = +(sourceRM * factor).toFixed(1);
+  const targetWeight = +(target1RM/(1+reps/30)).toFixed(1);
+  res.style.display='block';
+  val.textContent = targetWeight + ' kg';
+  sub.textContent = `für ${reps} Wdh bei ${studio} · Basis: ${sourceRM} kg (${baseRM?baseStudio:'Auto-Bestwert'}) · Faktor k=${factor.toFixed(2)}`;
+}
+
+function factorKey(group, fromStudio, toStudio){
+  return `${group}||${fromStudio}||${toStudio}`;
+}
+
+function calcLoadFactor(){
+  const group = document.getElementById('calc-group')?.value;
+  const fromStudio = document.getElementById('calc-base-studio')?.value;
+  const toStudio = document.getElementById('calc-studio')?.value;
+  const factorInput = document.getElementById('calc-factor');
+  if(!group || !fromStudio || !toStudio || !factorInput) return;
+
+  const key = factorKey(group, fromStudio, toStudio);
+  if(factorMap[key]){
+    factorInput.value = Number(factorMap[key]).toFixed(2);
+    return;
+  }
+
+  const fromRM = groupBestRM(group, fromStudio) || 0;
+  const toRM = groupBestRM(group, toStudio) || 0;
+  if(fromRM > 0 && toRM > 0){
+    factorInput.value = (toRM / fromRM).toFixed(2);
+  } else {
+    factorInput.value = '1.00';
+  }
+}
+
+function saveCalcFactor(){
+  const group = document.getElementById('calc-group')?.value;
+  const fromStudio = document.getElementById('calc-base-studio')?.value;
+  const toStudio = document.getElementById('calc-studio')?.value;
+  const factor = parseFloat(document.getElementById('calc-factor')?.value);
+  if(!group || !fromStudio || !toStudio || !factor || factor <= 0){
+    alert('Bitte gültige Werte für Gruppe, Studios und Faktor eingeben.');
+    return;
+  }
+  factorMap[factorKey(group, fromStudio, toStudio)] = +factor.toFixed(2);
+  localStorage.setItem('ifl_factor_map', JSON.stringify(factorMap));
+  alert('Faktor gespeichert.');
+  calcUpdate();
+}
+
+// ═══ KALENDER ════════════════════════════════════════════════
+const CAL_DOT_COLOR = {push:'var(--gold)',pull:'var(--teal)',pull_a:'var(--teal)',pull_b:'rgba(88,185,176,.65)',legs:'var(--red)',free:'var(--warn)'};
+const CAL_TYPE_LABEL = {push:'Push',pull:'Pull',pull_a:'Pull A',pull_b:'Pull B',legs:'Beine',free:'Frei'};
+const MONTH_DE = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+
+function calPrev(){ calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderKalender(); }
+function calNext(){ calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderKalender(); }
+
+function renderKalender(){
+  const grid  = document.getElementById('cal-grid');
+  const label = document.getElementById('cal-month-label');
+  const wrap  = document.getElementById('cal-sessions-wrap');
+  if(!grid||!label||!wrap) return;
+
+  label.textContent = MONTH_DE[calMonth] + ' ' + calYear;
+
+  // Build map: dateStr → [sessions]
+  const sessionMap = {};
+  sessionLog.forEach(s=>{ (sessionMap[s.date]||(sessionMap[s.date]=[])).push(s); });
+
+  // Calendar grid
+  const today = new Date().toISOString().slice(0,10);
+  const firstDay = new Date(calYear, calMonth, 1);
+  // Start on Monday (ISO week)
+  let startOffset = firstDay.getDay() - 1; // 0=Mon
+  if(startOffset < 0) startOffset = 6;
+
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const daysInPrev  = new Date(calYear, calMonth, 0).getDate();
+
+  const DAYS = ['Mo','Di','Mi','Do','Fr','Sa','So'];
+  let html = DAYS.map(d=>`<div class="cal-day-hdr">${d}</div>`).join('');
+
+  // Prev month padding
+  for(let i=0; i<startOffset; i++){
+    const d = daysInPrev - startOffset + 1 + i;
+    html += `<div class="cal-day other-month"><span>${d}</span></div>`;
+  }
+
+  // This month days
+  for(let d=1; d<=daysInMonth; d++){
+    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const sessions = sessionMap[dateStr]||[];
+    const isToday   = dateStr===today;
+    const isSelected = dateStr===calSelectedDate;
+    let cls = 'cal-day';
+    if(sessions.length) cls += ' has-session';
+    if(isToday)   cls += ' today';
+    if(isSelected) cls += ' selected';
+    const dots = sessions.length
+      ? `<div class="cal-dots">${sessions.map(s=>`<div class="cal-dot" style="background:${CAL_DOT_COLOR[s.type]||'var(--muted)'}"></div>`).join('')}</div>`
+      : '';
+    const onclick = sessions.length ? `onclick="selectCalDate('${dateStr}')"` : '';
+    html += `<div class="${cls}" ${onclick}><span>${d}</span>${dots}</div>`;
+  }
+
+  // Next month padding (fill to complete last row)
+  const total = startOffset + daysInMonth;
+  const trailing = total % 7 === 0 ? 0 : 7 - (total % 7);
+  for(let i=1; i<=trailing; i++){
+    html += `<div class="cal-day other-month"><span>${i}</span></div>`;
+  }
+  grid.innerHTML = html;
+
+  // Session detail for selected date
+  renderCalSessions(wrap, sessionMap);
+  renderRecentSessions();
+}
+
+function selectCalDate(dateStr){
+  calSelectedDate = calSelectedDate === dateStr ? null : dateStr;
+  renderKalender();
+}
+
+// ─── Session Edit Modal ───────────────────────────────────────
+function openSesMdl(id){
+  editingSession = sessionLog.find(s=>s.id===id);
+  if(!editingSession) return;
+  const [y,m,d] = editingSession.date.split('-');
+  document.getElementById('ses-edit-title').textContent =
+    `${CAL_TYPE_LABEL[editingSession.type]||editingSession.type} Session bearbeiten`;
+  document.getElementById('ses-edit-sub').textContent =
+    `${d}.${m}.${y} · ${editingSession.studio}`;
+  const body = document.getElementById('ses-edit-body');
+  body.innerHTML = editingSession.exercises.map((ex, eIdx)=>`
+    <div style="margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--line)">
+      <div style="font-size:12px;font-weight:700;margin-bottom:8px;color:var(--text)">${ex.name}</div>
+      <div class="set-hdr" style="margin-bottom:4px"><span></span><span>kg</span><span>Wdh</span><span></span></div>
+      <div id="ses-sets-${eIdx}"></div>
+      <button onclick="addSesRow(${eIdx})" class="btn btn-secondary btn-sm" style="margin-top:6px;width:100%">+ Satz</button>
+    </div>`).join('');
+  // Fill set rows after innerHTML is set (avoids nested template escaping issues)
+  editingSession.exercises.forEach((ex, eIdx)=>{
+    (ex.sets||[]).forEach((st,i)=>_appendSesRow(eIdx, st.w, st.r));
+  });
+  document.getElementById('ses-edit-modal').classList.add('open');
+}
+
+function closeSesMdl(){
+  document.getElementById('ses-edit-modal').classList.remove('open');
+  editingSession = null;
+}
+
+function _appendSesRow(eIdx, w='', r=''){
+  const container = document.getElementById(`ses-sets-${eIdx}`);
+  if(!container) return;
+  const i = container.children.length;
+  const div = document.createElement('div');
+  div.className = 'set-row';
+  div.innerHTML = `<span class="set-num">S${i+1}</span>
+    <input class="set-input ses-w" type="number" value="${w}" placeholder="kg" inputmode="decimal">
+    <input class="set-input ses-r" type="number" value="${r}" placeholder="Wdh" inputmode="numeric">
+    <button class="set-del" onclick="this.parentElement.remove();_renumSes(${eIdx})">×</button>`;
+  container.appendChild(div);
+}
+
+function addSesRow(eIdx){ _appendSesRow(eIdx); document.querySelector(`#ses-sets-${eIdx} .ses-w:last-of-type`)?.focus(); }
+
+function _renumSes(eIdx){
+  document.getElementById(`ses-sets-${eIdx}`)?.querySelectorAll('.set-num').forEach((n,i)=>n.textContent=`S${i+1}`);
+}
+
+function saveSessionEdit(){
+  if(!editingSession) return;
+  editingSession.exercises.forEach((ex, eIdx)=>{
+    const sets=[];
+    document.getElementById(`ses-sets-${eIdx}`)?.querySelectorAll('.set-row').forEach(row=>{
+      const w=parseFloat(row.querySelector('.ses-w')?.value);
+      const r=parseInt(row.querySelector('.ses-r')?.value);
+      if(!isNaN(w)&&w>0) sets.push({w, r:isNaN(r)?0:r});
+    });
+    ex.sets=sets; ex.rm=maxRM(sets);
+  });
+  saveSessionLog();
+  closeSesMdl();
+  renderKalender();
+}
+
+function deleteCalSession(id){
+  if(!confirm('Session löschen?')) return;
+  sessionLog=sessionLog.filter(s=>s.id!==id);
+  saveSessionLog();
+  renderKalender();
+}
+
+function renderCalSessions(wrap, sessionMap){
+  if(!calSelectedDate || !sessionMap[calSelectedDate]){
+    wrap.innerHTML=''; return;
+  }
+  const sessions=sessionMap[calSelectedDate];
+  const [y,m,d]=calSelectedDate.split('-');
+  const dateLabel=`${d}.${m}.${y}`;
+  wrap.innerHTML=sessions.map(s=>`
+    <div class="cal-session-detail">
+      <div class="cal-session-hdr">
+        <div class="cal-session-title">${CAL_TYPE_LABEL[s.type]||s.type} Session – ${dateLabel}</div>
+        <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+          <span class="pill" style="cursor:default">${s.studio}</span>
+          <span class="pill" style="cursor:default;color:${CAL_DOT_COLOR[s.type]||'var(--muted)'};border-color:currentColor;opacity:.7">${s.exercises.length} Übungen</span>
+          <button onclick="openSesMdl(${s.id})" class="btn btn-secondary btn-sm" title="Bearbeiten">✎</button>
+          <button onclick="deleteCalSession(${s.id})" class="btn btn-secondary btn-sm" style="color:var(--red);border-color:rgba(222,113,113,.25)" title="Löschen">✕</button>
+        </div>
+      </div>
+      ${s.exercises.map(ex=>`
+        <div class="cal-ex-row">
+          <div class="cal-ex-name">${ex.name}</div>
+          <div class="cal-ex-sets">${(ex.sets||[]).map((st,i)=>`S${i+1}: ${st.w}kg×${st.r}`).join(' &nbsp;·&nbsp; ')||'–'}</div>
+          ${ex.rm?`<div class="cal-ex-rm">1RM ~${ex.rm} kg</div>`:''}
+          ${ex.notes?`<div style="width:100%;font-size:10px;color:var(--soft);margin-top:2px">Notiz: ${ex.notes}</div>`:''}
+        </div>`).join('')}
+    </div>`).join('');
+}
+
+function renderRecentSessions(){
+  const wrap = document.getElementById('recent-sessions-wrap');
+  if(!wrap) return;
+  const latest = [...sessionLog].sort((a,b)=>b.id-a.id).slice(0, 12);
+  if(!latest.length){
+    wrap.innerHTML = '';
+    return;
+  }
+  wrap.innerHTML = `
+    <div class="sh" style="margin-top:8px"><div class="sh-title">Letzte Sessions (direkt bearbeitbar)</div></div>
+    ${latest.map(s=>{
+      const [y,m,d]=(s.date||'').split('-');
+      return `<div class="cal-session-detail" style="margin-bottom:8px">
+        <div class="cal-session-hdr">
+          <div class="cal-session-title">${CAL_TYPE_LABEL[s.type]||s.type} · ${d}.${m}.${y}</div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap">
+            <span class="pill" style="cursor:default">${s.studio}</span>
+            <button onclick="openSesMdl(${s.id})" class="btn btn-secondary btn-sm">Bearbeiten</button>
+            <button onclick="deleteCalSession(${s.id})" class="btn btn-secondary btn-sm" style="color:var(--red)">Löschen</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('')}
+  `;
+}
+
+// ═══ ÜBUNGEN ═════════════════════════════════════════════════
+function renderUebungen(){
+  const list = document.getElementById('group-assign-list');
+  if(!list) return;
+  const countPill = document.getElementById('db-count-pill');
+  if(countPill) countPill.textContent = db.length + ' Übungen';
+  const sorted = [...db].sort((a,b)=>a.name.localeCompare(b.name));
+  const groups = getGroups();
+  list.innerHTML = sorted.map(ex=>`
+    <div class="group-assign-row">
+      <div>
+        <div class="group-assign-name">${ex.name}</div>
+        <div style="font-size:10px;color:${CAT_COLOR[ex.cat]||'var(--soft)'};font-weight:700;letter-spacing:.08em;margin-top:1px">${ex.cat}</div>
+      </div>
+      <div>
+        <input style="background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:6px 10px;font-family:Manrope;font-size:12px;width:100%;outline:none"
+          value="${ex.group||''}" placeholder="Gruppe eingeben"
+          list="groups-list-assign"
+          onchange="setGroup(${ex.id}, this.value)"
+          oninput="setGroup(${ex.id}, this.value)">
+      </div>
+    </div>`).join('');
+  const dl = document.createElement('datalist');
+  dl.id = 'groups-list-assign';
+  dl.innerHTML = groups.map(g=>`<option value="${g}">`).join('');
+  list.appendChild(dl);
+  if(!catalogMatches.length){
+    catalogStatusText = 'Kein Hersteller gewählt. Wähle Hersteller und klicke DB suchen.';
+    renderCatalogResults(false);
+  }else{
+    renderCatalogResults(false);
+  }
+}
+
+function getCatalogFilters(){
+  const rawBrand = (document.getElementById('catalog-brand')?.value || '').trim();
+  const rawTarget = (document.getElementById('catalog-target')?.value || '').trim();
+  const rawSType = (document.getElementById('catalog-stype')?.value || '').trim();
+  const rawQ = (document.getElementById('catalog-search')?.value || '').trim();
+  return {
+    brand: normalizeBrandFilter(rawBrand),
+    brandRaw: rawBrand,
+    targetRaw: rawTarget,
+    sTypeRaw: rawSType,
+    qRaw: rawQ,
+    target: normalizeSearchText(rawTarget),
+    sType: normalizeSearchText(rawSType),
+    q: normalizeSearchText(rawQ)
+  };
+}
+
+function normalizeSearchText(str){
+  return String(str || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/ä/g,'a')
+    .replace(/ö/g,'o')
+    .replace(/ü/g,'u')
+    .replace(/ß/g,'ss')
+    .trim();
+}
+
+async function catalogSearch(reset){
+  const filters = getCatalogFilters();
+  if(filters.brand === 'all'){
+    catalogMatches = [];
+    if(reset) catalogOffset = 0;
+    catalogSource = 'local';
+    catalogStatusText = 'Bitte zuerst Hersteller wählen, dann suchen.';
+    renderCatalogResults(true);
+    return;
+  }
+  const { brand, target, sType, q } = filters;
+  catalogMatches = DEVICE_CATALOG.filter(item=>{
+    const byBrand = brand === 'all' || !brand || normalizeBrandFilter(item.brand)===brand;
+    const byTarget = !target || target === 'alle' || normalizeSearchText(item.target).includes(target) || normalizeSearchText(item.cat).includes(target);
+    const bySType = !sType || sType === 'alle' || normalizeSearchText(item.sType) === sType;
+    const byText = !q || normalizeSearchText(`${item.name} ${item.brand} ${item.type} ${item.target} ${item.group||''} ${item.art||''}`).includes(q);
+    return byBrand && byTarget && bySType && byText;
+  });
+  if(reset) catalogOffset = 0;
+  catalogSource = 'local';
+  catalogStatusText = 'Offline-Katalog aktiv.';
+  renderCatalogResults(true);
+}
+
+async function catalogSearchDb(reset){
+  const filters = getCatalogFilters();
+  if(filters.brand === 'all'){
+    catalogMatches = [];
+    if(reset) catalogOffset = 0;
+    catalogSource = 'db';
+    catalogStatusText = 'Bitte Hersteller wählen, dann DB suchen.';
+    renderCatalogResults(true);
+    return;
+  }
+  const remoteOk = await catalogSearchRemoteDbFirst(filters, reset);
+  if(!remoteOk){
+    catalogMatches = [];
+    catalogOffset = 0;
+    catalogSource = 'db';
+    catalogStatusText = 'DB-Suche ohne Treffer. Tipp: Suche breiter (z.B. nur "Matrix" oder "Brustpresse").';
+    renderCatalogResults(true);
+    return;
+  }
+  renderCatalogResults(true);
+}
+
+async function catalogSearchCloud(reset){
+  return catalogSearchDb(reset);
+}
+
+function catalogLoadMore(){
+  catalogOffset += CATALOG_PAGE_SIZE;
+  renderCatalogResults(false);
+}
+
+async function catalogSearchRemote(filters, reset){
+  const fromSupabase = await catalogSearchSupabase(filters, reset);
+  if(fromSupabase) return true;
+  const fromDb = await catalogSearchDatabase(filters, reset);
+  if(fromDb) return true;
+  return false;
+}
+
+async function catalogSearchRemoteDbFirst(filters, reset){
+  const fromDb = await catalogSearchDatabase(filters, reset);
+  if(fromDb) return true;
+  const fromSupabase = await catalogSearchSupabase(filters, reset);
+  if(fromSupabase) return true;
+  return false;
+}
+
+async function catalogSearchSupabase(filters, reset){
+  const cfg = getSyncConfig();
+  if(!cfg.supabaseUrl || !cfg.anonKey){
+    return false;
+  }
+  const clauses = [
+    'select=brand,name,type,target,cat,s_type,movement_group,art,img',
+    'order=name.asc',
+    'limit=250'
+  ];
+  if(filters.brand){
+    clauses.push(`brand=ilike.${encodeURIComponent(filters.brand)}`);
+  }
+  const sTypeFilter = normalizeSearchText(filters.sTypeRaw || filters.sType);
+  if(sTypeFilter){
+    clauses.push(`s_type=eq.${encodeURIComponent(sTypeFilter)}`);
+  }
+  const targetFilter = (filters.targetRaw || '').trim();
+  if(targetFilter){
+    const t = encodeURIComponent(`*${targetFilter}*`);
+    clauses.push(`or=(target.ilike.${t},cat.ilike.${t},movement_group.ilike.${t})`);
+  }
+  try{
+    const res = await sbFetch(`ifl_device_catalog?${clauses.join('&')}`, cfg, {});
+    const rows = await res.json();
+    if(!rows.length){
+      return false;
+    }
+    const q = (filters.q || '').toLowerCase();
+    catalogMatches = rows
+      .map(r=>({
+        brand: r.brand || 'Unknown',
+        name: r.name || 'Unbenanntes Gerät',
+        type: r.type || 'Gerät',
+        target: r.target || r.cat || '',
+        cat: r.cat || inferCatFromTarget(r.target || ''),
+        sType: r.s_type || inferSTypeFromCat(r.cat || r.target || ''),
+        group: r.movement_group || null,
+        art: r.art || null,
+        img: r.img || null
+      }))
+      .filter(item=>{
+        if(!q) return true;
+        return `${item.name} ${item.brand} ${item.type} ${item.target} ${item.group || ''} ${item.art || ''}`.toLowerCase().includes(q);
+      });
+    if(!catalogMatches.length){
+      return false;
+    }
+    if(reset) catalogOffset = 0;
+    catalogSource = 'supabase';
+    catalogStatusText = 'Cloud-Katalog aus Supabase aktiv.';
+    return true;
+  }catch(_err){
+    return false;
+  }
+}
+
+async function catalogSearchDatabase(filters, reset){
+  try{
+    const brand = encodeURIComponent(filters.brand === 'all' ? '' : (filters.brandRaw || filters.brand));
+    const target = encodeURIComponent((filters.targetRaw || '').trim());
+    const sType = encodeURIComponent(normalizeSearchText(filters.sTypeRaw || filters.sType || ''));
+    const q = encodeURIComponent(filters.qRaw || filters.q || '');
+    const res = await fetch(`/import/catalog/search?brand=${brand}&target=${target}&session_type=${sType}&q=${q}&limit=500&offset=0`);
+    if(!res.ok) return false;
+    const data = await res.json();
+    const items = Array.isArray(data?.items) ? data.items : [];
+    if(!items.length) return false;
+    catalogMatches = dedupeCatalogItems(items);
+    if(reset) catalogOffset = 0;
+    catalogSource = 'db';
+    catalogStatusText = `Zusatzpool-DB aktiv (${data.total || catalogMatches.length} Treffer).`;
+    return true;
+  }catch(_err){
+    return false;
+  }
+}
+
+function normalizeBrandFilter(brand){
+  const b = normalizeSearchText(brand);
+  if(!b) return 'all';
+  if(b === 'alle' || b === 'all') return 'all';
+  if(b.includes('gym80')) return 'gym80';
+  if(b.includes('matrix')) return 'matrix';
+  if(b.includes('egym') || b.includes('e-gym')) return 'egym';
+  if(b.includes('freihantel')) return 'freihantel';
+  return b;
+}
+
+function applyCatalogTextFilter(items, q){
+  const query = normalizeSearchText(q);
+  if(!query) return items;
+  return items.filter(item=>
+    normalizeSearchText(`${item.name} ${item.brand} ${item.type} ${item.target} ${item.group || ''} ${item.art || ''}`).includes(query)
+  );
+}
+
+function dedupeCatalogItems(items){
+  const map = new Map();
+  items.forEach(item=>{
+    const key = `${normalizeSearchText(item.brand)}|${normalizeSearchText(item.name)}|${normalizeSearchText(item.target || item.cat)}`;
+    if(!map.has(key)){
+      map.set(key, item);
+      return;
+    }
+    const prev = map.get(key);
+    if(!prev.img && item.img){
+      map.set(key, { ...prev, ...item });
+    }
+  });
+  return Array.from(map.values());
+}
+
+async function fetchGym80Official(filters){
+  const brandFilter = normalizeBrandFilter(filters.brand);
+  if(brandFilter !== 'all' && brandFilter !== 'gym80'){
+    return [];
+  }
+  try{
+    const categoryMap = await getGym80CategoryMap();
+    const picked = [];
+    for(let page=1; page<=25; page++){
+      const eqRes = await fetch(`https://gym80.de/wp-json/wp/v2/fitness_equipment?per_page=100&page=${page}`);
+      if(!eqRes.ok) break;
+      const eqRows = await eqRes.json();
+      if(!eqRows.length) break;
+      picked.push(...eqRows
+        .map(row=>({
+          id: row.id,
+          name: (row.title?.rendered || '').replace(/^\d+\s*[–-]\s*/,'').trim(),
+          rawName: (row.title?.rendered || '').trim(),
+          categories: Array.isArray(row.equipment_category) ? row.equipment_category : []
+        }))
+        .filter(x=>x.name)
+        .filter(x=>isGym80StrengthCategory(x.categories, categoryMap))
+        .filter(x=>isLikelyGym80MachineName(x.rawName || x.name))
+      );
+      if(picked.length >= 260) break;
+    }
+    const mediaCalls = picked.slice(0, 120).map(async p=>{
+      const mediaRes = await fetch(`https://gym80.de/wp-json/wp/v2/media?parent=${p.id}&per_page=6`);
+      if(!mediaRes.ok) return null;
+      const mediaRows = await mediaRes.json();
+      const img = pickGym80MediaImage(mediaRows);
+      return {
+        brand: 'gym80',
+        name: p.name,
+        type: 'Machine',
+        target: inferFromName(p.name).target,
+        cat: inferFromName(p.name).cat,
+        sType: inferFromName(p.name).sType,
+        group: inferFromName(p.name).group,
+        art: extractMachineCode(p.rawName),
+        img
+      };
+    });
+    const rows = (await Promise.all(mediaCalls)).filter(Boolean);
+    return rows.filter(item=>matchesCatalogFilters(item, filters))
+      .filter(item=>matchesTextFilters(item, filters));
+  }catch(_err){
+    return [];
+  }
+}
+
+async function getGym80CategoryMap(){
+  if(gym80CategoryMap) return gym80CategoryMap;
+  try{
+    const res = await fetch('https://gym80.de/wp-json/wp/v2/equipment_category?per_page=100&page=1');
+    if(!res.ok){
+      gym80CategoryMap = {};
+      return gym80CategoryMap;
+    }
+    const rows = await res.json();
+    gym80CategoryMap = rows.reduce((acc, row)=>{
+      acc[row.id] = (row.name || '').toLowerCase();
+      return acc;
+    }, {});
+    return gym80CategoryMap;
+  }catch(_err){
+    gym80CategoryMap = {};
+    return gym80CategoryMap;
+  }
+}
+
+function isGym80StrengthCategory(categoryIds, categoryMap){
+  if(!categoryIds.length) return true;
+  const names = categoryIds.map(id=>categoryMap[id] || '').filter(Boolean);
+  if(!names.length) return true;
+  const excluded = ['accessories', 'essentials', 'storage', 'additionals', 'free weights', 'outdoor', 'fashion'];
+  if(names.some(n=>excluded.some(ex=>n.includes(ex)))) return false;
+  return true;
+}
+
+function pickGym80MediaImage(mediaRows){
+  for(const m of (mediaRows || [])){
+    const sizes = m?.media_details?.sizes || {};
+    const candidate =
+      sizes.large?.source_url ||
+      sizes.medium?.source_url ||
+      sizes.thumbnail?.source_url ||
+      sizes.full?.source_url ||
+      null;
+    if(candidate && /\.(jpg|jpeg|png|webp)(\?|$)/i.test(candidate)) return candidate;
+  }
+  return null;
+}
+
+function extractMachineCode(name){
+  const m = String(name || '').match(/\b\d{3,5}[a-z]?\b/i);
+  return m ? m[0] : null;
+}
+
+function isLikelyMachineName(name){
+  const n = String(name || '').toLowerCase();
+  if(!n) return false;
+  const bad = [
+    'pdf','catalog','brochure','hanger','bumper','matte','accessories','lubricant',
+    'expansion','pack','storage','barbell','dumbbell','plate','printer','toyota',
+    'shirt','fashion','apparel','cover','bag','strap','poster','sticker','book'
+  ];
+  if(bad.some(x=>n.includes(x))) return false;
+  return true;
+}
+
+function isLikelyGym80MachineName(name){
+  const n = String(name || '').toLowerCase();
+  if(!isLikelyMachineName(n)) return false;
+  const bad = ['rpu', 'barbell', 'bumper', 'hanger', 'matte', 'rack'];
+  if(bad.some(x=>n.includes(x))) return false;
+  const machineHints = [
+    'press', 'row', 'pull', 'lat', 'leg', 'curl', 'extension', 'butterfly',
+    'abductor', 'adductor', 'shoulder', 'triceps', 'biceps', 'hip thrust', 'glute'
+  ];
+  return machineHints.some(x=>n.includes(x));
+}
+
+async function fetchMatrixOfficial(filters){
+  const brandFilter = normalizeBrandFilter(filters.brand);
+  if(brandFilter !== 'all' && brandFilter !== 'matrix'){
+    return [];
+  }
+  try{
+    const res = await fetch('https://matrixhomefitness.com/products.json?limit=250');
+    if(!res.ok) return [];
+    const rows = await res.json();
+    return (rows.products || [])
+      .map(p=>{
+        const name = (p.title || '').trim();
+        if(!name) return null;
+        if(!isLikelyMachineName(name)) return null;
+        if(!isLikelyMatrixMachine(p)) return null;
+        const inferred = inferFromName(`${name} ${p.product_type || ''}`);
+        const targetFromType = deriveTargetFromProductType(p.product_type || '');
+        const catFromType = targetFromType ? inferCatFromTarget(targetFromType) : inferred.cat;
+        const img = p.images?.[0]?.src || p.image?.src || null;
+        if(!img) return null;
+        return {
+          brand: 'Matrix',
+          name,
+          type: (p.product_type || 'Machine'),
+          target: targetFromType || inferred.target,
+          cat: catFromType,
+          sType: inferred.sType,
+          group: inferred.group,
+          art: null,
+          img
+        };
+      })
+      .filter(Boolean)
+      .filter(item=>matchesCatalogFilters(item, filters))
+      .filter(item=>matchesTextFilters(item, filters));
+  }catch(_err){
+    return [];
+  }
+}
+
+function isLikelyMatrixMachine(product){
+  const type = String(product?.product_type || '').toLowerCase();
+  const tags = Array.isArray(product?.tags) ? product.tags.join(' ').toLowerCase() : '';
+  const text = `${type} ${tags}`.toLowerCase();
+  const rejected = ['lubricant', 'storage', 'access', 'parts', 'replacement', 'apparel', 'gift', 'membership', 'bench'];
+  if(rejected.some(x=>text.includes(x))) return false;
+  const allowed = [
+    'treadmill','elliptical','bike','cycle','climb','rower','trainer','bench',
+    'functional','press','leg','lat','pulldown','extension','curl','abdominal',
+    'strength','home gym','multi'
+  ];
+  return allowed.some(x=>text.includes(x));
+}
+
+function deriveTargetFromProductType(productType){
+  const t = String(productType || '').toLowerCase();
+  if(!t) return '';
+  if(t.includes('treadmill') || t.includes('bike') || t.includes('stepper') || t.includes('elliptical') || t.includes('cardio') || t.includes('climb') || t.includes('climbmill')) return 'Beine';
+  if(t.includes('row') || t.includes('lat') || t.includes('back')) return 'Rücken';
+  if(t.includes('chest') || t.includes('press')) return 'Brust';
+  if(t.includes('shoulder')) return 'Schulter';
+  if(t.includes('abdominal') || t.includes('core')) return 'Core';
+  if(t.includes('leg') || t.includes('glute') || t.includes('ham')) return 'Beine';
+  return '';
+}
+
+async function fetchEgymOfficial(filters){
+  const brandFilter = normalizeBrandFilter(filters.brand);
+  if(brandFilter !== 'all' && brandFilter !== 'egym'){
+    return [];
+  }
+  const machineNames = [
+    'Squat','Leg Extension','Abdominal Trainer','Back Trainer','Hamstrings',
+    'Chest Press','Rudder Pull','Lat Pull Down','Leg Press','Abductor',
+    'Adductor','Rotator','Butterfly','Butterfly Reverse','Biceps',
+    'Shoulder Press','Triceps','Hip Thrust'
+  ];
+  try{
+    const brandImg = await fetchEgymBrandImage();
+    const rows = machineNames.map(name=>{
+      const inferred = inferFromName(name);
+      return {
+        brand: 'eGym',
+        name,
+        type: 'Digital',
+        target: inferred.target,
+        cat: inferred.cat,
+        sType: inferred.sType,
+        group: inferred.group,
+        art: null,
+        img: brandImg
+      };
+    });
+    return rows
+    .filter(Boolean)
+    .filter(item=>matchesCatalogFilters(item, filters))
+    .filter(item=>matchesTextFilters(item, filters));
+  }catch(_err){
+    return [];
+  }
+}
+
+async function fetchEgymBrandImage(){
+  try{
+    const res = await fetch('https://us.egym.com/en-us/workouts/smartstrength');
+    if(!res.ok) return null;
+    const html = await res.text();
+    const og = html.match(/property=["']og:image["'][^>]*content=["']([^"']+)["']/i);
+    if(og?.[1]) return og[1];
+    const any = html.match(/https?:\/\/[^"']+\.(?:jpg|jpeg|png|webp)/i);
+    return any?.[0] || null;
+  }catch(_err){
+    return null;
+  }
+}
+
+function matchesTextFilters(item, filters){
+  const q = normalizeSearchText(filters.q);
+  if(!q) return true;
+  const text = normalizeSearchText(`${item.name} ${item.brand} ${item.type} ${item.target} ${item.group || ''} ${item.art || ''}`);
+  return text.includes(q);
+}
+
+function inferFromName(name){
+  const n = (name || '').toLowerCase();
+  if(n.includes('incline') || n.includes('schräg') || n.includes('chest') || n.includes('brust')){
+    return { target: 'Brust', cat: 'Brust', sType: 'push', group: 'Brustpresse schräg' };
+  }
+  if(n.includes('row') || n.includes('ruder') || n.includes('lat') || n.includes('rücken')){
+    return { target: 'Rücken', cat: 'Rücken', sType: 'pull', group: 'Rudern' };
+  }
+  if(n.includes('leg') || n.includes('quad') || n.includes('ham') || n.includes('glute') || n.includes('bein')){
+    return { target: 'Beine', cat: 'Beine', sType: 'legs', group: 'Kniebeuge' };
+  }
+  if(n.includes('shoulder') || n.includes('deltoid') || n.includes('schulter') || n.includes('seitheben')){
+    return { target: 'Schulter', cat: 'Schulter', sType: 'push', group: 'Schulterdrücken' };
+  }
+  if(n.includes('biceps') || n.includes('triceps') || n.includes('arm') || n.includes('bizeps') || n.includes('trizeps')){
+    return { target: 'Arme', cat: 'Arme', sType: 'push', group: 'Trizeps' };
+  }
+  if(n.includes('core') || n.includes('abs') || n.includes('bauch')){
+    return { target: 'Core', cat: 'Core', sType: 'free', group: 'Core' };
+  }
+  return { target: 'Brust', cat: 'Brust', sType: 'push', group: 'Brustpresse flach' };
+}
+
+function matchesCatalogFilters(item, filters){
+  const brand = normalizeBrandFilter(filters.brand);
+  const target = normalizeSearchText(filters.target);
+  const sType = normalizeSearchText(filters.sType);
+  const itemBrand = normalizeBrandFilter(item.brand);
+  const byBrand = brand === 'all' || !brand || itemBrand === brand;
+  const byTarget = !target || target === 'alle' || normalizeSearchText(item.target).includes(target) || normalizeSearchText(item.cat).includes(target);
+  const bySType = !sType || sType === 'alle' || normalizeSearchText(item.sType) === sType;
+  return byBrand && byTarget && bySType;
+}
+
+function inferCatFromTarget(target){
+  const t = (target || '').toLowerCase();
+  if(t.includes('brust')) return 'Brust';
+  if(t.includes('rücken') || t.includes('lat')) return 'Rücken';
+  if(t.includes('bein') || t.includes('glute') || t.includes('quad') || t.includes('ham')) return 'Beine';
+  if(t.includes('schulter') || t.includes('delts')) return 'Schulter';
+  if(t.includes('arm') || t.includes('bizeps') || t.includes('trizeps')) return 'Arme';
+  if(t.includes('core') || t.includes('bauch')) return 'Core';
+  return 'Brust';
+}
+
+function inferSTypeFromCat(catLike){
+  const c = (catLike || '').toLowerCase();
+  if(c.includes('cardio') || c.includes('laufband') || c.includes('bike') || c.includes('treadmill') || c.includes('elliptical')) return 'cardio';
+  if(c.includes('bein') || c.includes('glute') || c.includes('ham') || c.includes('quad')) return 'legs';
+  if(c.includes('rücken') || c.includes('lat') || c.includes('bizeps')) return 'pull';
+  if(c.includes('core') || c.includes('bauch')) return 'free';
+  return 'push';
+}
+
+function getCatalogImage(item){
+  return item?.img || '';
+}
+
+function handleImageError(img, brand){
+  if(!img) return;
+  img.style.display = 'none';
+  const parent = img.parentElement;
+  if(!parent) return;
+  parent.innerHTML = `<div class="catalog-img" style="display:flex;align-items:center;justify-content:center;color:var(--soft);border:1px dashed var(--line)">[${brand || 'Gerät'} ohne Bild]</div>`;
+}
+
+function renderCatalogResults(resetOffset){
+  const list = document.getElementById('catalog-list');
+  const pill = document.getElementById('catalog-pill');
+  const moreBtn = document.getElementById('catalog-more-btn');
+  const status = document.getElementById('catalog-status');
+  if(!list || !pill || !moreBtn) return;
+
+  if(resetOffset) catalogOffset = 0;
+  const sourceLabel = catalogSource === 'supabase' ? 'Cloud' : (catalogSource === 'db' ? 'DB' : 'Lokal');
+  pill.textContent = `${catalogMatches.length} Treffer · ${sourceLabel}`;
+  if(status){
+    status.textContent = catalogStatusText || (catalogSource === 'supabase' ? 'Cloud-Katalog bereit.' : (catalogSource === 'db' ? 'DB-Katalog bereit.' : 'Lokaler Katalog bereit.'));
+  }
+  const end = catalogOffset + CATALOG_PAGE_SIZE;
+  const slice = catalogMatches.slice(0, end);
+  list.innerHTML = slice.length ? slice.map((item, idx)=>`
+    <div class="catalog-row">
+      ${getCatalogImage(item)
+        ? `<img class="catalog-img" src="${getCatalogImage(item)}" alt="" loading="lazy" onerror="handleImageError(this, '${(item.brand || 'Gerät').replace(/'/g, '&apos;')}')">`
+        : `<div class="catalog-img" style="display:flex;align-items:center;justify-content:center;color:var(--soft);border:1px dashed var(--line)">[${(item.brand || 'Gerät')} ohne Bild]</div>`
+      }
+      <div>
+        <div style="font-size:12px;font-weight:700">${item.name}</div>
+        <div class="catalog-meta">${item.brand} · ${item.type} · ${item.target}</div>
+      </div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">
+        <button onclick="addCatalogExerciseByIndex(${idx}, 'global')" class="btn btn-secondary btn-sm">+ Standard-Pool</button>
+        <button onclick="addCatalogExerciseByIndex(${idx}, 'studio')" class="btn btn-secondary btn-sm">+ Studio-Pool</button>
+        <button onclick="addCatalogExerciseByIndex(${idx}, true)" class="btn btn-teal btn-sm">+ Session</button>
+      </div>
+    </div>
+  `).join('') : `<div class="drop-empty">Keine Treffer – Filter anpassen</div>`;
+  moreBtn.style.display = slice.length < catalogMatches.length ? '' : 'none';
+}
+
+function addCatalogExerciseByIndex(idx, target){
+  const item = catalogMatches[idx];
+  if(!item) return;
+  const name = item.name?.trim();
+  if(!name) return;
+  const toSession = target === true;
+  const scope = target === 'studio' ? 'studio' : 'global';
+  const exists = db.some(ex=>
+    ex.name.toLowerCase()===name.toLowerCase() &&
+    (ex.brand||'') === (item.brand||'') &&
+    (ex.poolScope||'global')===scope &&
+    (scope==='global' || ex.gym===currentStudio)
+  );
+  if(exists){
+    alert('Übung ist bereits im passenden Pool vorhanden.');
+    return;
+  }
+  const newEx = {
+    id: nextId++,
+    name,
+    art: item.art || null,
+    brand: item.brand || null,
+    cat: item.cat || 'Brust',
+    sType: item.sType || 'push',
+    group: item.group || null,
+    gym: scope === 'studio' ? currentStudio : null,
+    poolScope: scope,
+    status: 'pool',
+    order: nextId,
+    img: item.img || null,
+    history: {},
+    prev: {}
+  };
+  if(toSession){
+    newEx.status = 'active';
+    newEx.sType = currentTab;
+    const maxOrder = Math.max(
+      ...db.filter(x=>x.status==='active' && x.sType===currentTab).map(x=>x.order||0),
+      0
+    );
+    newEx.order = maxOrder + 1;
+  }
+  db.push(newEx);
+  saveDB();
+  render();
+}
+
+function resetDB(){
+  if(!confirm('Alle Trainingseinträge löschen und auf die gym80-Geräteliste zurücksetzen?')) return;
+  localStorage.removeItem('ifl_training_db');
+  db = loadDB();
+  nextId = Math.max(...db.map(x=>x.id)) + 1;
+  saveDB(); render();
+}
+
+function setGroup(id, group){
+  const ex = db.find(x=>x.id===id);
+  if(ex){ ex.group = group.trim()||null; saveDB(); renderAnalyse(); }
+}
+
+function promptGroup(id){
+  const ex = db.find(x=>x.id===id);
+  if(!ex) return;
+  const g = prompt(`Bewegungsgruppe für "${ex.name}":`, ex.group||'');
+  if(g !== null){ ex.group = g.trim()||null; saveDB(); render(); }
+}
+
+function addExercise(){
+  const name = document.getElementById('new-ex-name').value.trim();
+  if(!name){ alert('Name eingeben'); return; }
+  db.push({
+    id: nextId++, name,
+    cat:   document.getElementById('new-ex-cat').value,
+    sType: document.getElementById('new-ex-type').value,
+    group: document.getElementById('new-ex-group').value.trim()||null,
+    poolScope: document.getElementById('new-ex-scope').value,
+    gym: document.getElementById('new-ex-scope').value === 'studio' ? currentStudio : null,
+    status:'pool', order: nextId,
+    history:{}, prev:{}
+  });
+  document.getElementById('new-ex-name').value='';
+  document.getElementById('new-ex-group').value='';
+  saveDB(); render();
+}
+
+// ═══ LOGGER MODAL ════════════════════════════════════════════
+function openLogger(ex){
+  activeEx = ex;
+  document.getElementById('modal-name').textContent = ex.name;
+  const artInfo = ex.art ? ` · ${ex.brand||'gym80'} ${ex.art}` : '';
+  document.getElementById('modal-info').textContent = [ex.cat, ex.group].filter(Boolean).join(' · ') + artInfo;
+  const modalImg = document.getElementById('modal-ex-img');
+  if(ex.img){ modalImg.src = ex.img; modalImg.style.display = 'block'; }
+  else { modalImg.style.display = 'none'; }
+  const prev = ex.history[currentStudio]||[];
+  const pw = document.getElementById('prev-wrap');
+  const pr = document.getElementById('prev-row');
+  if(prev.length){
+    pw.style.display='block';
+    const rm = maxRM(prev);
+    pr.innerHTML = prev.map((s,i)=>`<span>S${i+1}: ${s.w}kg×${s.r}</span>`).join('')
+      + (rm?`<span style="color:var(--gold);margin-left:4px">1RM ~${rm}kg</span>`:'');
+  } else pw.style.display='none';
+  const rows = document.getElementById('set-rows');
+  rows.innerHTML='';
+  (prev.length?prev:[{w:'',r:''}]).forEach(s=>addSetRow(s.w||'',s.r||''));
+  const notesInput = document.getElementById('ex-notes');
+  if(notesInput){
+    notesInput.value = ex.notes?.[currentStudio] || '';
+  }
+  syncModalTimer();
+  document.getElementById('logger-modal').classList.add('open');
+}
+
+function addSetRow(w='',r=''){
+  const rows=document.getElementById('set-rows'), i=rows.children.length+1;
+  const div=document.createElement('div'); div.className='set-row';
+  div.innerHTML=`<span class="set-num">S${i}</span>
+    <input class="set-input w-val" type="number" value="${w}" placeholder="kg" inputmode="decimal">
+    <input class="set-input r-val" type="number" value="${r}" placeholder="Wdh" inputmode="numeric">
+    <button class="set-del" onclick="this.parentElement.remove();renumberRows()">×</button>`;
+  rows.appendChild(div);
+  // Auto-focus first empty kg field
+  if(!w) setTimeout(()=>div.querySelector('.w-val').focus(),50);
+}
+
+function renumberRows(){
+  document.querySelectorAll('#set-rows .set-row').forEach((r,i)=>{
+    const n=r.querySelector('.set-num'); if(n) n.textContent=`S${i+1}`;
+  });
+}
+
+function finalizeLog(goNext){
+  const ws=document.querySelectorAll('#set-rows .w-val'), rs=document.querySelectorAll('#set-rows .r-val');
+  const sets=[]; ws.forEach((v,i)=>{ if(v.value) sets.push({w:+v.value,r:+rs[i].value||0}); });
+  if(sets.length && activeEx){
+    const loggedId = activeEx.id;
+    activeEx.prev[currentStudio]=[...(activeEx.history[currentStudio]||[])];
+    activeEx.history[currentStudio]=sets;
+    // Datum des letzten Logs merken (für Focus-Bar)
+    activeEx.loggedDate = activeEx.loggedDate || {};
+    activeEx.loggedDate[currentStudio] = new Date().toISOString().slice(0,10);
+    const notes = (document.getElementById('ex-notes')?.value || '').trim();
+    activeEx.notes = activeEx.notes || {};
+    activeEx.notes[currentStudio] = notes;
+    saveDB(); startTimer(); closeModal(); render();
+    if(goNext){
+      openNextExerciseAfter(loggedId);
+    }
+  }
+}
+
+function openNextExerciseAfter(id){
+  const actives = db.filter(x=>x.status==='active'&&x.sType===currentTab).sort((a,b)=>a.order-b.order);
+  if(!actives.length) return;
+  const idx = actives.findIndex(x=>x.id===id);
+  const next = idx >= 0 && idx < actives.length - 1 ? actives[idx+1] : actives[0];
+  if(next) setTimeout(()=>openLogger(next), 120);
+}
+function closeModal(){ document.getElementById('logger-modal').classList.remove('open'); }
+function closeModalOutside(e){ if(e.target.id==='logger-modal') closeModal(); }
+
+// ═══ TIMER ═══════════════════════════════════════════════════
+function startTimer(){
+  clearInterval(timerInterval); timerSec=0;
+  const wrap=document.getElementById('active-rest-timer'), val=document.getElementById('rest-val');
+  wrap.style.display='block';
+  timerRunning = true;
+  syncModalTimer();
+  timerInterval=setInterval(()=>{
+    timerSec++;
+    const m=Math.floor(timerSec/60), s=timerSec%60;
+    val.textContent=`${m}:${s.toString().padStart(2,'0')}`;
+    val.className='rest-timer-val'+(timerSec>=120?' over':'');
+    syncModalTimer();
+    if(timerSec>=300){
+      clearInterval(timerInterval);
+      timerRunning = false;
+      wrap.style.display='none';
+      syncModalTimer();
+    }
+  },1000);
+}
+
+function stopTimer(){
+  clearInterval(timerInterval);
+  timerInterval = null;
+  timerRunning = false;
+  timerSec = 0;
+  const wrap=document.getElementById('active-rest-timer');
+  const val=document.getElementById('rest-val');
+  if(wrap) wrap.style.display='none';
+  if(val) val.textContent='0:00';
+  syncModalTimer();
+}
+
+function formatTimer(sec){
+  const m = Math.floor(sec/60), s = sec % 60;
+  return `${m}:${String(s).padStart(2,'0')}`;
+}
+
+function syncModalTimer(){
+  const timerEl = document.getElementById('modal-timer-val');
+  if(!timerEl) return;
+  timerEl.textContent = timerRunning ? `Pause: ${formatTimer(timerSec)}` : 'Pause: aus';
+}
+
+// ═══ TEMPLATE LOAD ═══════════════════════════════════════════
+function loadTemplate(){
+  const tpl = SESSION_TEMPLATES[currentTab];
+  if(!tpl) return;
+  if(!confirm(`Standard-Session "${SESSION_LABELS[currentTab]}" laden?\nAktuelle Session wird geleert.`)) return;
+  // Return active exercises of this tab back to pool
+  db.filter(x=>x.status==='active'&&x.sType===currentTab).forEach(x=>x.status='pool');
+  // Activate template exercises in defined order
+  tpl.forEach((id, i)=>{
+    const ex = db.find(x=>x.id===id);
+    if(ex){ ex.status='active'; ex.sType=currentTab; ex.order=i+1; }
+  });
+  saveDB(); render();
+}
+
+// ═══ NAVIGATION ══════════════════════════════════════════════
+function changeTab(tab){
+  exitEditMode();
+  currentTab = tab;
+  document.querySelectorAll('.session-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+tab)?.classList.add('active');
+  const isTrain = TRAIN_TABS.includes(tab);
+
+  // Views mit iOS-Transition einblenden
+  ['view-training','view-analyse','view-kalender','view-uebungen'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    const show = (id==='view-training' && isTrain)
+               || (id==='view-analyse'  && tab==='analyse')
+               || (id==='view-kalender' && tab==='kalender')
+               || (id==='view-uebungen' && tab==='uebungen');
+    if(show && el.style.display==='none'){
+      el.classList.add('view-entering');
+      el.style.display='';
+      requestAnimationFrame(()=>{ requestAnimationFrame(()=>el.classList.remove('view-entering')); });
+    } else if(!show){
+      el.style.display='none';
+    }
+  });
+
+  const tplBtn = document.getElementById('btn-load-tpl');
+  if(tplBtn) tplBtn.style.display = SESSION_TEMPLATES[tab] ? '' : 'none';
+
+  // Mobile Training-Subtabs synchronisieren
+  document.querySelectorAll('.mobile-train-tab').forEach(b=>{
+    b.classList.toggle('active', b.id==='m-tab-'+tab);
+  });
+  // Wenn Training-Tab → Main-View auf "Training" setzen
+  if(isTrain) { _setMobileMainActive('training'); _showMobileTrainTabs(true); }
+  else if(tab==='kalender'){ _setMobileMainActive('history'); _showMobileTrainTabs(false); }
+  else { _showMobileTrainTabs(false); }
+
+  if(isTrain) render();
+  if(tab==='kalender') renderKalender();
+}
+
+function _setMobileMainActive(view){
+  ['stats','training','history'].forEach(v=>{
+    document.getElementById('m-main-'+v)?.classList.toggle('active', v===view);
+  });
+}
+
+function _showMobileTrainTabs(show){
+  const el = document.getElementById('mobile-train-tabs');
+  if(el) el.classList.toggle('show', show);
+}
+
+function switchMobileMainView(view){
+  _setMobileMainActive(view);
+  if(view==='stats'){
+    // Scrolla sanft zum Seitenanfang (Studio-Card)
+    window.scrollTo({top:0, behavior:'smooth'});
+    // Aktuelle Training-View sichtbar lassen damit Tab-State erhalten bleibt
+    _showMobileTrainTabs(true);
+  } else if(view==='training'){
+    // Zur aktuellen Training-Tab wechseln
+    if(!TRAIN_TABS.includes(currentTab)) changeTab('push');
+    else changeTab(currentTab);
+    _showMobileTrainTabs(true);
+  } else if(view==='history'){
+    changeTab('kalender');
+    _showMobileTrainTabs(false);
+  }
+}
+
+function filterCat(cat){ activePoolCat=cat; renderCatFilters(); renderPool(); }
+function switchStudio(){ currentStudio=document.getElementById('studio-select').value; localStorage.setItem('ifl_studio',currentStudio); render(); }
+function addStudio(){
+  const n=prompt('Studio-Name:');
+  if(n?.trim()){ studios.push(n.trim()); currentStudio=n.trim(); localStorage.setItem('ifl_studios',JSON.stringify(studios)); localStorage.setItem('ifl_studio',currentStudio); render(); }
+}
+
+function clearSession(){
+  db.filter(x=>x.status==='active'&&x.sType===currentTab).forEach(x=>x.status='pool');
+  saveDB(); render();
+}
+function finishSession(){
+  const items = db.filter(x=>x.status==='active'&&x.sType===currentTab);
+  if(items.length){
+    const snap = {
+      id: Date.now(),
+      date: new Date().toISOString().slice(0,10),
+      studio: currentStudio,
+      type: currentTab,
+      exercises: items.sort((a,b)=>a.order-b.order).map(ex=>({
+        id: ex.id,
+        name: ex.name,
+        cat: ex.cat,
+        group: ex.group||null,
+        sets: [...(ex.history[currentStudio]||[])],
+        rm: maxRM(ex.history[currentStudio]||[]),
+        notes: ex.notes?.[currentStudio] || ''
+      }))
+    };
+    sessionLog.push(snap);
+    saveSessionLog();
+  }
+  const cnt=(parseInt(localStorage.getItem('ifl_session_count')||'0')+1);
+  localStorage.setItem('ifl_session_count',cnt);
+  clearInterval(timerInterval);
+  timerRunning = false;
+  document.getElementById('active-rest-timer').style.display='none';
+  syncModalTimer();
+  clearSession();
+}
+
+function exportSession(){
+  const items=db.filter(x=>x.status==='active'&&x.sType===currentTab).sort((a,b)=>a.order-b.order);
+  if(!items.length){ alert('Keine aktiven Übungen.'); return; }
+  const d=new Date().toLocaleDateString('de-DE');
+  let t=`*IRON FORGE – ${SESSION_LABELS[currentTab]?.toUpperCase()}*\n${d} · ${currentStudio}\n\n`;
+  items.forEach(ex=>{
+    t+=`*${ex.name.toUpperCase()}*\n`;
+    (ex.history[currentStudio]||[]).forEach((s,i)=>t+=`  Satz ${i+1}: ${s.w} kg × ${s.r} Wdh\n`);
+    const rm=maxRM(ex.history[currentStudio]||[]);
+    if(rm) t+=`  ↑ Est. 1RM: ~${rm} kg\n`;
+    if(isGroupRecord(ex)) t+=`  ★ Gruppenrekord!\n`;
+    t+='\n';
+  });
+  navigator.clipboard.writeText(t).then(()=>alert('Kopiert!')).catch(()=>{ const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); alert('Kopiert!'); });
+}
+
+// ═══ BACKUP / RESTORE ════════════════════════════════════════
+function exportBackup(){
+  const payload = {
+    app: 'iron-forge-training',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    data: {
+      studios,
+      currentStudio,
+      db,
+      sessionLog,
+      sessionCount: parseInt(localStorage.getItem('ifl_session_count') || '0'),
+      theme: localStorage.getItem('ifl-theme') || 'dark'
+    }
+  };
+  const stamp = new Date().toISOString().slice(0, 10);
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `iron-forge-training-backup-${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function importBackup(){
+  const input = document.getElementById('backup-file-input');
+  if(input){
+    input.value = '';
+    input.click();
+  }
+}
+
+function handleBackupFile(event){
+  const file = event.target.files && event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const parsed = JSON.parse(reader.result);
+      const data = parsed && parsed.data ? parsed.data : parsed;
+      if(!data || !Array.isArray(data.db) || !Array.isArray(data.studios)){
+        throw new Error('Ungültige Backup-Struktur');
+      }
+      if(!confirm('Backup importieren? Aktuelle lokale Trainingsdaten werden ersetzt.')) return;
+      db = data.db;
+      studios = data.studios.length ? data.studios : [...DEFAULT_STUDIOS];
+      currentStudio = data.currentStudio && studios.includes(data.currentStudio) ? data.currentStudio : studios[0];
+      sessionLog = Array.isArray(data.sessionLog) ? data.sessionLog : [];
+      nextId = db.length ? Math.max(...db.map(x=>x.id||0)) + 1 : 1;
+      localStorage.setItem('ifl_training_db', JSON.stringify(db));
+      localStorage.setItem('ifl_studios', JSON.stringify(studios));
+      localStorage.setItem('ifl_studio', currentStudio);
+      localStorage.setItem('ifl_session_log', JSON.stringify(sessionLog));
+      localStorage.setItem('ifl_session_count', String(parseInt(data.sessionCount || '0')));
+      if(data.theme === 'dark' || data.theme === 'light'){
+        document.documentElement.setAttribute('data-theme', data.theme);
+        localStorage.setItem('ifl-theme', data.theme);
+      }
+      render();
+      alert('Backup erfolgreich importiert.');
+    } catch(err){
+      alert('Backup konnte nicht importiert werden: ' + (err?.message || 'Unbekannter Fehler'));
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ═══ SETUP / CLOUD SYNC (SUPABASE) ═══════════════════════════
+function getSyncConfig(){
+  return JSON.parse(localStorage.getItem('ifl_sync_config') || '{}');
+}
+
+function saveSyncConfig(cfg){
+  localStorage.setItem('ifl_sync_config', JSON.stringify(cfg));
+  updateSyncStatus();
+  scheduleAutoSync();
+}
+
+function updateSyncStatus(text){
+  const cfg = getSyncConfig();
+  const el = document.getElementById('sync-status');
+  if(!el) return;
+  if(text){ el.textContent = text; return; }
+  el.textContent = (cfg.supabaseUrl && cfg.anonKey)
+    ? `Sync aktiv · ${cfg.profile || 'Profil'} · ${cfg.supabaseUrl}`
+    : 'Sync: noch nicht eingerichtet';
+}
+
+function openSetupWizard(force){
+  const cfg = getSyncConfig();
+  const overlay = document.getElementById('setup-overlay');
+  if(!overlay) return;
+  document.getElementById('setup-profile').value = cfg.profile || '';
+  document.getElementById('setup-pages-url').value = cfg.pagesUrl || '';
+  document.getElementById('setup-supabase-url').value = cfg.supabaseUrl || '';
+  document.getElementById('setup-supabase-key').value = cfg.anonKey || '';
+  document.getElementById('setup-vault-pass').value = cfg.vaultPass || '';
+  document.getElementById('setup-sync-mode').value = cfg.syncMode || 'state_v1';
+  document.getElementById('setup-help').textContent = force
+    ? 'Bitte vollständig ausfüllen und speichern.'
+    : '';
+  overlay.classList.add('open');
+}
+
+function closeSetupWizard(){
+  document.getElementById('setup-overlay')?.classList.remove('open');
+}
+
+function validateSetupFields(){
+  const profile = document.getElementById('setup-profile').value.trim();
+  const pagesUrl = document.getElementById('setup-pages-url').value.trim();
+  const supabaseUrl = document.getElementById('setup-supabase-url').value.trim();
+  const anonKey = document.getElementById('setup-supabase-key').value.trim();
+  const vaultPass = document.getElementById('setup-vault-pass').value.trim();
+  const syncMode = document.getElementById('setup-sync-mode').value || 'state_v1';
+  if(!profile || !pagesUrl || !supabaseUrl || !anonKey){
+    throw new Error('Bitte Profilname, Pages URL, Supabase URL und anon key ausfüllen.');
+  }
+  return { profile, pagesUrl, supabaseUrl: supabaseUrl.replace(/\/+$/,''), anonKey, vaultPass, syncMode };
+}
+
+async function testSyncConfig(){
+  const help = document.getElementById('setup-help');
+  try{
+    const cfg = validateSetupFields();
+    help.textContent = 'Teste Verbindung...';
+    const testTable = cfg.syncMode === 'structured_v1' ? 'ifl_sync_meta' : 'ifl_sync_state';
+    const res = await fetch(`${cfg.supabaseUrl}/rest/v1/${testTable}?select=profile&limit=1`, {
+      headers: { apikey: cfg.anonKey, Authorization: `Bearer ${cfg.anonKey}` }
+    });
+    if(!res.ok){
+      throw new Error(`Supabase antwortet mit ${res.status}. Tabelle/Policies evtl. noch nicht eingerichtet.`);
+    }
+    help.textContent = 'Verbindung OK. Du kannst jetzt speichern.';
+  }catch(err){
+    help.textContent = `Test fehlgeschlagen: ${err.message}
+SQL-Hinweis einfach: create table ifl_sync_state (id text primary key, payload jsonb not null, updated_at timestamptz not null default now(), profile text);
+SQL-Hinweis strukturiert: ifl_sync_meta, ifl_sync_studios, ifl_sync_exercises, ifl_sync_sessions, ifl_sync_sets anlegen.`;
+  }
+}
+
+function saveSetupWizard(){
+  try{
+    const cfg = validateSetupFields();
+    saveSyncConfig(cfg);
+    closeSetupWizard();
+    alert('Setup gespeichert.');
+  }catch(err){
+    document.getElementById('setup-help').textContent = err.message;
+  }
+}
+
+function buildAppState(){
+  return {
+    studios, currentStudio, db, sessionLog, factorMap,
+    iftttEvents,
+    sessionCount: parseInt(localStorage.getItem('ifl_session_count') || '0'),
+    theme: localStorage.getItem('ifl-theme') || 'dark',
+    updatedAt: new Date().toISOString()
+  };
+}
+
+function profileFilter(profile){
+  return `profile=eq.${encodeURIComponent(profile)}`;
+}
+
+async function sbFetch(path, cfg, options){
+  const res = await fetch(`${cfg.supabaseUrl}/rest/v1/${path}`, {
+    ...options,
+    headers: {
+      apikey: cfg.anonKey,
+      Authorization: `Bearer ${cfg.anonKey}`,
+      ...(options?.headers || {})
+    }
+  });
+  if(!res.ok){
+    throw new Error(`${path}: ${res.status}`);
+  }
+  return res;
+}
+
+async function buildStructuredSyncRows(cfg){
+  const profile = cfg.profile;
+  const studiosRows = studios.map((name, idx)=>({ profile, studio: name, order_idx: idx }));
+  const exerciseRows = db.map(ex=>({
+    profile,
+    exercise_id: ex.id,
+    name: ex.name,
+    cat: ex.cat || null,
+    s_type: ex.sType || null,
+    movement_group: ex.group || null,
+    pool_scope: ex.poolScope || 'global',
+    gym: ex.gym || null,
+    brand: ex.brand || null,
+    art: ex.art || null,
+    img: ex.img || null,
+    status: ex.status || 'pool',
+    order_idx: ex.order || 0,
+    history: ex.history || {},
+    prev: ex.prev || {},
+    notes: ex.notes || {}
+  }));
+  const sessionRows = sessionLog.map(s=>({
+    profile,
+    session_id: s.id,
+    date: s.date,
+    studio: s.studio,
+    type: s.type
+  }));
+  const setRows = [];
+  sessionLog.forEach(s=>{
+    (s.exercises||[]).forEach(ex=>{
+      (ex.sets||[]).forEach((st, idx)=>{
+        setRows.push({
+          profile,
+          session_id: s.id,
+          exercise_id: ex.id || null,
+          exercise_name: ex.name,
+          movement_group: ex.group || null,
+          set_idx: idx + 1,
+          w: st.w,
+          r: st.r,
+          rm: ex.rm || null
+        });
+      });
+    });
+  });
+  const secureBlob = await createSecureBlob(cfg);
+  const metaRows = [
+    { profile, key: 'current_studio', payload: { value: currentStudio } },
+    { profile, key: 'session_count', payload: { value: parseInt(localStorage.getItem('ifl_session_count') || '0') } },
+    { profile, key: 'factor_map', payload: factorMap || {} },
+    { profile, key: 'theme', payload: { value: localStorage.getItem('ifl-theme') || 'dark' } },
+    { profile, key: 'secure_blob', payload: secureBlob }
+  ];
+  return { studiosRows, exerciseRows, sessionRows, setRows, metaRows };
+}
+
+async function syncToCloudState(cfg){
+  const payload = [{ id:'primary', payload: buildAppState(), updated_at: new Date().toISOString(), profile: cfg.profile || null }];
+  await sbFetch('ifl_sync_state', cfg, {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json', Prefer: 'resolution=merge-duplicates,return=representation' },
+    body: JSON.stringify(payload)
+  });
+}
+
+async function syncFromCloudState(cfg){
+  const res = await sbFetch('ifl_sync_state?id=eq.primary&select=payload,updated_at&limit=1', cfg, {});
+  const rows = await res.json();
+  if(!rows.length || !rows[0].payload){
+    throw new Error('Keine Cloud-Daten gefunden.');
+  }
+  return rows[0].payload;
+}
+
+async function syncToCloudStructured(cfg){
+  const profile = cfg.profile;
+  const { studiosRows, exerciseRows, sessionRows, setRows, metaRows } = await buildStructuredSyncRows(cfg);
+  await sbFetch(`ifl_sync_studios?${profileFilter(profile)}`, cfg, { method:'DELETE' });
+  await sbFetch(`ifl_sync_exercises?${profileFilter(profile)}`, cfg, { method:'DELETE' });
+  await sbFetch(`ifl_sync_sessions?${profileFilter(profile)}`, cfg, { method:'DELETE' });
+  await sbFetch(`ifl_sync_sets?${profileFilter(profile)}`, cfg, { method:'DELETE' });
+  await sbFetch(`ifl_sync_meta?${profileFilter(profile)}`, cfg, { method:'DELETE' });
+  if(studiosRows.length) await sbFetch('ifl_sync_studios', cfg, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(studiosRows) });
+  if(exerciseRows.length) await sbFetch('ifl_sync_exercises', cfg, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(exerciseRows) });
+  if(sessionRows.length) await sbFetch('ifl_sync_sessions', cfg, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(sessionRows) });
+  if(setRows.length) await sbFetch('ifl_sync_sets', cfg, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(setRows) });
+  if(metaRows.length) await sbFetch('ifl_sync_meta', cfg, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(metaRows) });
+}
+
+async function syncFromCloudStructured(cfg){
+  const profile = cfg.profile;
+  const [studiosRes, exRes, sessRes, setsRes, metaRes] = await Promise.all([
+    sbFetch(`ifl_sync_studios?${profileFilter(profile)}&select=studio,order_idx&order=order_idx.asc`, cfg, {}),
+    sbFetch(`ifl_sync_exercises?${profileFilter(profile)}&select=*`, cfg, {}),
+    sbFetch(`ifl_sync_sessions?${profileFilter(profile)}&select=*`, cfg, {}),
+    sbFetch(`ifl_sync_sets?${profileFilter(profile)}&select=*`, cfg, {}),
+    sbFetch(`ifl_sync_meta?${profileFilter(profile)}&select=*`, cfg, {})
+  ]);
+  const [studioRows, exRows, sessRows, setRows, metaRows] = await Promise.all([
+    studiosRes.json(), exRes.json(), sessRes.json(), setsRes.json(), metaRes.json()
+  ]);
+  if(!exRows.length && !sessRows.length){
+    throw new Error('Keine strukturierten Cloud-Daten gefunden.');
+  }
+  const restoredStudios = studioRows.map(r=>r.studio).filter(Boolean);
+  const restoredDb = exRows.map(r=>({
+    id: r.exercise_id, name: r.name, cat: r.cat, sType: r.s_type, group: r.movement_group,
+    poolScope: r.pool_scope || 'global', gym: r.gym, brand: r.brand, art: r.art, img: r.img,
+    status: r.status || 'pool', order: r.order_idx || 0, history: r.history || {}, prev: r.prev || {}, notes: r.notes || {}
+  }));
+  const setsBySession = {};
+  setRows.forEach(sr=>{
+    const key = String(sr.session_id);
+    if(!setsBySession[key]) setsBySession[key] = {};
+    const exKey = String(sr.exercise_id || sr.exercise_name);
+    if(!setsBySession[key][exKey]) setsBySession[key][exKey] = { id: sr.exercise_id, name: sr.exercise_name, group: sr.movement_group, sets: [], rm: sr.rm || null };
+    setsBySession[key][exKey].sets.push({ w: sr.w, r: sr.r, idx: sr.set_idx });
+  });
+  const restoredSessions = sessRows.map(s=>{
+    const exMap = setsBySession[String(s.session_id)] || {};
+    const exercises = Object.values(exMap).map(ex=>({
+      id: ex.id, name: ex.name, group: ex.group,
+      sets: ex.sets.sort((a,b)=>a.idx-b.idx).map(x=>({w:x.w, r:x.r})),
+      rm: ex.rm || maxRM(ex.sets.map(x=>({w:x.w, r:x.r})))
+    }));
+    return { id: s.session_id, date: s.date, studio: s.studio, type: s.type, exercises };
+  });
+  const meta = {};
+  metaRows.forEach(m=>{ meta[m.key] = m.payload; });
+  const secureData = await parseSecureBlob(meta.secure_blob || null, cfg);
+  return {
+    studios: restoredStudios.length ? restoredStudios : studios,
+    currentStudio: meta.current_studio?.value || currentStudio,
+    db: restoredDb.length ? restoredDb : db,
+    sessionLog: restoredSessions,
+    factorMap: meta.factor_map || factorMap,
+    iftttEvents: Array.isArray(secureData.iftttEvents) ? secureData.iftttEvents : iftttEvents,
+    sessionCount: meta.session_count?.value || parseInt(localStorage.getItem('ifl_session_count') || '0'),
+    theme: meta.theme?.value || (localStorage.getItem('ifl-theme') || 'dark')
+  };
+}
+
+function applyAppState(data){
+  db = Array.isArray(data.db) ? data.db : db;
+  studios = Array.isArray(data.studios) && data.studios.length ? data.studios : studios;
+  currentStudio = data.currentStudio && studios.includes(data.currentStudio) ? data.currentStudio : studios[0];
+  sessionLog = Array.isArray(data.sessionLog) ? data.sessionLog : sessionLog;
+  factorMap = data.factorMap && typeof data.factorMap === 'object' ? data.factorMap : factorMap;
+  iftttEvents = Array.isArray(data.iftttEvents) ? data.iftttEvents : iftttEvents;
+  localStorage.setItem('ifl_training_db', JSON.stringify(db));
+  localStorage.setItem('ifl_studios', JSON.stringify(studios));
+  localStorage.setItem('ifl_studio', currentStudio);
+  localStorage.setItem('ifl_session_log', JSON.stringify(sessionLog));
+  localStorage.setItem('ifl_factor_map', JSON.stringify(factorMap));
+  localStorage.setItem('ifl_ifttt_events', JSON.stringify(iftttEvents));
+  localStorage.setItem('ifl_session_count', String(parseInt(data.sessionCount || '0')));
+  if(data.theme === 'dark' || data.theme === 'light'){
+    document.documentElement.setAttribute('data-theme', data.theme);
+    localStorage.setItem('ifl-theme', data.theme);
+  }
+  nextId = db.length ? Math.max(...db.map(x=>x.id||0)) + 1 : 1;
+  renderIftttEvents();
+}
+
+function scheduleAutoSync(){
+  const cfg = getSyncConfig();
+  if(!cfg.supabaseUrl || !cfg.anonKey) return;
+  clearTimeout(autoSyncTimer);
+  autoSyncTimer = setTimeout(()=>{ syncToCloud({ silent: true }); }, 1200);
+}
+
+async function syncToCloud(options = {}){
+  const silent = !!options.silent;
+  const cfg = getSyncConfig();
+  if(!cfg.supabaseUrl || !cfg.anonKey){ openSetupWizard(true); return; }
+  updateSyncStatus(silent ? 'Sync: automatische Sicherung...' : 'Sync: lade in Cloud hoch...');
+  try{
+    if(cfg.syncMode === 'structured_v1') await syncToCloudStructured(cfg);
+    else await syncToCloudState(cfg);
+    updateSyncStatus(silent ? 'Sync: automatische Sicherung erfolgreich' : 'Sync: Cloud-Upload erfolgreich');
+  }catch(err){
+    updateSyncStatus('Sync-Fehler beim Upload');
+    if(!silent){
+      alert(`Upload fehlgeschlagen: ${err.message}\nBitte Tabellen/Policies für den gewählten Sync-Modus prüfen.`);
+    }
+  }
+}
+
+async function createSecureBlob(cfg){
+  const payload = { iftttEvents };
+  if(!cfg.vaultPass){
+    return { mode: 'plain', payload };
+  }
+  return {
+    mode: 'aes-gcm',
+    encrypted: await encryptJSON(payload, cfg.vaultPass)
+  };
+}
+
+async function parseSecureBlob(blob, cfg){
+  if(!blob || typeof blob !== 'object') return {};
+  if(blob.mode === 'plain') return blob.payload || {};
+  if(blob.mode !== 'aes-gcm') return {};
+  if(!cfg.vaultPass){
+    throw new Error('Cloud enthält verschlüsselte Daten. Bitte Vault-Passwort im Setup setzen.');
+  }
+  return await decryptJSON(blob.encrypted, cfg.vaultPass);
+}
+
+async function encryptJSON(value, passphrase){
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(passphrase), 'PBKDF2', false, ['deriveKey']);
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations: 120000, hash: 'SHA-256' },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt']
+  );
+  const cipher = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(JSON.stringify(value)));
+  return { v: 1, salt: bytesToBase64(salt), iv: bytesToBase64(iv), data: bytesToBase64(new Uint8Array(cipher)) };
+}
+
+async function decryptJSON(blob, passphrase){
+  if(!blob?.salt || !blob?.iv || !blob?.data){
+    throw new Error('Ungültige verschlüsselte Daten.');
+  }
+  const enc = new TextEncoder();
+  const dec = new TextDecoder();
+  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(passphrase), 'PBKDF2', false, ['deriveKey']);
+  const key = await crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt: base64ToBytes(blob.salt), iterations: 120000, hash: 'SHA-256' },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['decrypt']
+  );
+  const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: base64ToBytes(blob.iv) }, key, base64ToBytes(blob.data));
+  return JSON.parse(dec.decode(plain));
+}
+
+function bytesToBase64(bytes){
+  let s = '';
+  bytes.forEach(b=>{ s += String.fromCharCode(b); });
+  return btoa(s);
+}
+
+function base64ToBytes(base64){
+  const s = atob(base64);
+  const arr = new Uint8Array(s.length);
+  for(let i=0;i<s.length;i++) arr[i] = s.charCodeAt(i);
+  return arr;
+}
+
+async function syncFromCloud(){
+  const cfg = getSyncConfig();
+  if(!cfg.supabaseUrl || !cfg.anonKey){ openSetupWizard(true); return; }
+  updateSyncStatus('Sync: lade Cloud-Daten...');
+  try{
+    const payload = cfg.syncMode === 'structured_v1'
+      ? await syncFromCloudStructured(cfg)
+      : await syncFromCloudState(cfg);
+    if(!confirm('Cloud-Daten laden? Lokale Daten werden ersetzt.')) return;
+    applyAppState(payload);
+    render();
+    updateSyncStatus('Sync: Cloud-Daten geladen');
+  }catch(err){
+    updateSyncStatus('Sync-Fehler beim Laden');
+    alert(`Download fehlgeschlagen: ${err.message}`);
+  }
+}
+
+// ═══ INIT ════════════════════════════════════════════════════
+render();
+updateSyncStatus();
+if(!getSyncConfig().supabaseUrl || !getSyncConfig().anonKey){
+  openSetupWizard(true);
+}
+window.addEventListener('resize', renderMobilePhase);
+</script>
+</body>
+</html>

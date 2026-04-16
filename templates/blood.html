@@ -2,56 +2,149 @@
 {% block title %}Blutbilder{% endblock %}
 
 {% block content %}
-<h1 class="page-title">Blutbilder</h1>
 
-<!-- Aktionen -->
-<div class="card" style="margin-bottom:1.25rem">
-  <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end">
-
-    <!-- PDF Hochladen -->
-    <form action="/blutbilder/pdf-upload" method="post" enctype="multipart/form-data" style="display:flex;gap:.5rem;align-items:flex-end">
-      <div class="form-group" style="margin:0">
-        <label>PDF hochladen</label>
-        <input type="file" name="file" accept=".pdf" required style="width:auto">
-      </div>
-      <button class="btn btn-primary">📄 Parsen & speichern</button>
+<!-- ══ PAGE TOP ══════════════════════════════════════════════════ -->
+<div class="page-top">
+  <div>
+    <div class="page-title">Blutbild</div>
+    <div class="page-meta">Labor · Verlauf · Bewertung</div>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button class="btn btn-secondary btn-sm" onclick="toggleForm('form-upload')">📄 PDF hochladen</button>
+    <form action="/blutbilder/pdf-scan" method="post" style="display:inline">
+      <button class="btn btn-secondary btn-sm">🔍 Ordner scannen</button>
     </form>
-
-    <!-- Ordner scannen -->
-    <form action="/blutbilder/pdf-scan" method="post">
-      <button class="btn btn-secondary">🔍 Ordner scannen (data/Blutbilder/)</button>
-    </form>
-
-    <!-- Manuell anlegen -->
-    <button class="btn btn-secondary" onclick="document.getElementById('modalManuell').classList.add('open')">
-      + Manuell anlegen
-    </button>
+    <button class="btn btn-primary btn-sm" onclick="toggleForm('form-manuell')">+ Manuell anlegen</button>
   </div>
 </div>
 
-<!-- Blutbild-Liste -->
+<!-- Upload-Form (einklappbar) -->
+<div id="form-upload" style="display:none;margin-bottom:12px">
+  <div class="card" style="padding:18px">
+    <div class="sh-title" style="margin-bottom:12px">PDF hochladen & parsen</div>
+    <form action="/blutbilder/pdf-upload" method="post" enctype="multipart/form-data" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+      <div class="form-group" style="margin:0;flex:1;min-width:200px">
+        <label>PDF-Datei</label>
+        <input type="file" name="file" accept=".pdf" required>
+      </div>
+      <button class="btn btn-primary btn-sm">Parsen &amp; speichern</button>
+    </form>
+  </div>
+</div>
+
+<!-- Manuell-Form (einklappbar) -->
+<div id="form-manuell" style="display:none;margin-bottom:12px">
+  <div class="card" style="padding:18px">
+    <div class="sh-title" style="margin-bottom:12px">Blutbild manuell anlegen</div>
+    <form action="/blutbilder/manuell" method="post" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">
+      <div class="form-group" style="margin:0">
+        <label>Datum</label>
+        <input type="date" name="panel_date" value="{{ today.isoformat() }}" required>
+      </div>
+      <div class="form-group" style="margin:0">
+        <label>Labor</label>
+        <input type="text" name="lab" placeholder="z.B. Synlab Bremen">
+      </div>
+      <div class="form-group" style="margin:0">
+        <label>Aktiver Stack (optional)</label>
+        <select name="active_stack_id">
+          <option value="">–</option>
+          {% for s in stacks %}
+          <option value="{{ s.id }}">{{ s.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group" style="margin:0;grid-column:span 3">
+        <label>Notizen</label>
+        <textarea name="notes" rows="2"></textarea>
+      </div>
+      <div>
+        <button class="btn btn-primary btn-sm">Anlegen</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ══ PANEL-LISTE ══════════════════════════════════════════════ -->
 {% if panels %}
-<div class="card" style="margin-bottom:1.25rem">
-  <div class="table-wrap">
-    <table>
+<div class="card" style="margin-bottom:18px">
+  <div class="sh">
+    <div class="sh-title">Alle Blutbilder</div>
+    <span class="pill">{{ panels|length }} Panel(s)</span>
+  </div>
+  <table class="btable">
+    <thead>
+      <tr>
+        <th>Datum</th>
+        <th>Labor</th>
+        <th>Marker</th>
+        <th>Notizen</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for panel in panels %}
+      <tr>
+        <td style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--gold)">
+          {{ panel.date.strftime("%d.%m.%Y") }}
+        </td>
+        <td style="color:var(--muted)">{{ panel.lab or "–" }}</td>
+        <td>
+          <span class="tag ok">{{ panel.values|length }} Werte</span>
+        </td>
+        <td style="font-size:12px;color:var(--soft)">
+          {{ (panel.notes or "")[:60] }}{% if panel.notes and panel.notes|length > 60 %}…{% endif %}
+        </td>
+        <td style="display:flex;gap:6px;justify-content:flex-end">
+          <a href="/blutbilder/{{ panel.id }}" class="btn btn-primary btn-sm">Öffnen →</a>
+          <form action="/blutbilder/{{ panel.id }}/loeschen" method="post" onsubmit="return confirm('Blutbild löschen?')" style="display:inline">
+            <button class="btn btn-sm" style="background:rgba(222,113,113,.12);color:var(--red);border-color:rgba(222,113,113,.25)">✕</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% else %}
+<div class="card" style="text-align:center;padding:2.5rem;margin-bottom:18px">
+  <div style="font-family:'Cormorant Garamond',serif;font-size:2rem;color:var(--soft);margin-bottom:8px">Keine Blutbilder</div>
+  <div style="font-size:13px;color:var(--soft);margin-bottom:16px">PDF hochladen oder Ordner scannen um zu beginnen.</div>
+  <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+    <button class="btn btn-primary btn-sm" onclick="toggleForm('form-upload')">PDF hochladen</button>
+    <form action="/blutbilder/pdf-scan" method="post">
+      <button class="btn btn-secondary btn-sm">Ordner scannen</button>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<!-- ══ BIOMARKER-ÜBERSICHT ════════════════════════════════════ -->
+{% if biomarkers %}
+<div class="card" style="cursor:pointer" onclick="toggleForm('form-biomarker');this.querySelector('.pill').textContent=document.getElementById('form-biomarker').style.display==='none'?'▾':'▴'">
+  <div style="display:flex;align-items:center;justify-content:space-between">
+    <div class="sh-title">Biomarker-Bibliothek ({{ biomarkers|length }})</div>
+    <span class="pill">▾</span>
+  </div>
+</div>
+<div id="form-biomarker" style="display:none;margin-top:4px">
+  <div class="card" style="padding:18px">
+    <table class="btable">
       <thead>
-        <tr>
-          <th>Datum</th>
-          <th>Labor</th>
-          <th>Notizen</th>
-          <th>Marker</th>
-          <th></th>
-        </tr>
+        <tr><th>Name</th><th>Kategorie</th><th>Einheit</th><th>Referenz</th></tr>
       </thead>
       <tbody>
-        {% for panel in panels %}
+        {% for bm in biomarkers %}
         <tr>
-          <td><strong>{{ panel.date.strftime("%d.%m.%Y") }}</strong></td>
-          <td>{{ panel.lab or "–" }}</td>
-          <td style="font-size:.8rem;color:var(--gray-500)">{{ panel.notes or "" }}</td>
-          <td>{{ panel.values|length }} Werte</td>
-          <td>
-            <a href="/blutbilder/{{ panel.id }}" class="btn btn-primary btn-sm">Öffnen →</a>
+          <td style="font-weight:600">{{ bm.name }}</td>
+          <td style="color:var(--soft);font-size:12px">{{ bm.category or "–" }}</td>
+          <td style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted)">{{ bm.unit or "–" }}</td>
+          <td style="font-size:12px;color:var(--soft)">
+            {% if bm.ref_min is not none and bm.ref_max is not none %}{{ bm.ref_min }} – {{ bm.ref_max }}
+            {% elif bm.ref_max is not none %}&lt; {{ bm.ref_max }}
+            {% elif bm.ref_min is not none %}&gt; {{ bm.ref_min }}
+            {% else %}–{% endif %}
           </td>
         </tr>
         {% endfor %}
@@ -59,121 +152,15 @@
     </table>
   </div>
 </div>
-{% else %}
-<div class="card">
-  <p style="color:var(--gray-500)">Noch keine Blutbilder vorhanden. PDF hochladen oder manuell anlegen.</p>
-</div>
 {% endif %}
 
-<!-- Verlauf-Chart: Biomarker wählen -->
-<div class="card">
-  <div class="section-header">
-    <div class="section-title">Verlaufs-Diagramm</div>
-  </div>
-  <div class="form-group" style="max-width:300px">
-    <label>Marker auswählen</label>
-    <select id="markerSelect" onchange="loadMarkerChart()">
-      <option value="">– Marker wählen –</option>
-      {% for bm in biomarkers %}
-        <option value="{{ bm.id }}">{{ bm.name }} ({{ bm.category }})</option>
-      {% endfor %}
-    </select>
-  </div>
-  <div class="chart-container" style="height:220px">
-    <canvas id="markerChart"></canvas>
-  </div>
-</div>
-
-<!-- Modal: Manuell anlegen -->
-<div class="modal-overlay" id="modalManuell">
-  <div class="modal">
-    <div class="modal-title">
-      Blutbild manuell anlegen
-      <button class="modal-close" onclick="document.getElementById('modalManuell').classList.remove('open')">×</button>
-    </div>
-    <form action="/blutbilder/manuell" method="post">
-      <div class="form-group">
-        <label>Datum</label>
-        <input type="date" name="panel_date" required>
-      </div>
-      <div class="form-group">
-        <label>Labor (optional)</label>
-        <input type="text" name="lab">
-      </div>
-      <div class="form-group">
-        <label>Notizen</label>
-        <textarea name="notes"></textarea>
-      </div>
-      <div class="form-group">
-        <label>Aktiver Stack</label>
-        <select name="active_stack_id">
-          <option value="">– keiner –</option>
-          {% for st in stacks %}
-            <option value="{{ st.id }}">{{ st.name }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <button class="btn btn-primary">Anlegen</button>
-    </form>
-  </div>
-</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-let markerChartInstance = null;
-
-function loadMarkerChart() {
-  const id = document.getElementById("markerSelect").value;
-  if (!id) return;
-  fetch(`/blutbilder/api/verlauf/${id}`)
-    .then(r => r.json())
-    .then(data => {
-      const ctx = document.getElementById("markerChart").getContext("2d");
-      if (markerChartInstance) markerChartInstance.destroy();
-
-      const datasets = [{
-        label: `${data.marker} (${data.unit})`,
-        data: data.data.map(d => d.value),
-        borderColor: "#22c55e",
-        backgroundColor: "rgba(34,197,94,.1)",
-        tension: .3,
-        pointRadius: 5,
-        fill: true,
-      }];
-
-      // Referenzlinien
-      if (data.ref_min) datasets.push({
-        label: `Ref-Min (${data.ref_min})`,
-        data: data.data.map(() => data.ref_min),
-        borderColor: "#ef4444",
-        borderDash: [5,5],
-        pointRadius: 0,
-      });
-      if (data.ref_max) datasets.push({
-        label: `Ref-Max (${data.ref_max})`,
-        data: data.data.map(() => data.ref_max),
-        borderColor: "#ef4444",
-        borderDash: [5,5],
-        pointRadius: 0,
-      });
-
-      markerChartInstance = new Chart(ctx, {
-        type: "line",
-        data: { labels: data.data.map(d => d.date), datasets },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { position: "top" } },
-          scales: { y: { title: { display: true, text: data.unit } } }
-        }
-      });
-    });
+function toggleForm(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
-
-// Klick außerhalb schließt Modal
-document.getElementById("modalManuell").addEventListener("click", function(e) {
-  if (e.target === this) this.classList.remove("open");
-});
 </script>
 {% endblock %}

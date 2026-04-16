@@ -6,3 +6,6 @@ python-multipart==0.0.18
 pdfplumber==0.11.4
 aiofiles==24.1.0
 python-dateutil==2.9.0
+requests>=2.31.0
+python-dotenv>=1.0.0
+myfitnesspal>=2.1.2

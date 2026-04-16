@@ -2,80 +2,276 @@
 {% block title %}Stack{% endblock %}
 
 {% block content %}
-<h1 class="page-title">Stack & Substanzen</h1>
+
+{% set slot_icons = {
+  "07:00 – Nüchtern":  "☀",
+  "10–11 Uhr":         "🥣",
+  "17–18 Uhr":         "🥗",
+  "21–22 Uhr":         "🌙",
+  "Injektionen":       "💉",
+  "Sonstige":          "⚙",
+} %}
+{% set slot_ids = {
+  "07:00 – Nüchtern":  "slot-07",
+  "10–11 Uhr":         "slot-10",
+  "17–18 Uhr":         "slot-17",
+  "21–22 Uhr":         "slot-21",
+  "Injektionen":       "slot-inj",
+  "Sonstige":          "slot-rest",
+} %}
+{% set cat_colors = {
+  "Steroid":    "var(--red)",
+  "Hormon":     "var(--gold)",
+  "Peptid":     "#eccc68",
+  "Medikament": "#70a1ff",
+  "Supplement": "var(--teal)",
+  "Sonstiges":  "var(--soft)",
+} %}
+
+<!-- ══ PAGE TOP ══════════════════════════════════════════════════ -->
+<div class="page-top">
+  <div>
+    <div class="page-title">Stack</div>
+    <div class="page-meta">
+      {% if active_stack %}{{ active_stack.goal or "16 Wochen Recomp-Blast" }}{% endif %}
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    {% if active_stack %}
+    <span class="pill" style="background:var(--goldSoft);color:var(--gold);border-color:rgba(208,163,90,.25)">Aktiv</span>
+    {% endif %}
+    <a href="/stack/download" class="btn btn-secondary btn-sm">⬇ Plan (.docx)</a>
+  </div>
+</div>
 
 {% if active_stack %}
-<!-- Aktiver Stack Header -->
-<div class="card" style="margin-bottom:1.25rem;border-left:4px solid var(--green-500)">
-  <div style="display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap">
-    <div style="flex:1">
-      <div style="font-weight:700;font-size:1.1rem">{{ active_stack.name }}</div>
-      <div style="color:var(--gray-500);font-size:.85rem;margin-top:.25rem">
-        Ziel: {{ active_stack.goal }} ·
-        {{ active_stack.start_date.strftime("%d.%m.%Y") }} →
-        {{ active_stack.end_date.strftime("%d.%m.%Y") if active_stack.end_date else "offen" }}
+<!-- ══ HERO CARD ════════════════════════════════════════════════ -->
+<div class="card" style="position:relative;overflow:hidden;margin-bottom:18px">
+  <div class="float-wrap">
+    <div class="fi">⚡</div><div class="fi">💉</div>
+    <div class="fi">🧬</div><div class="fi">🔬</div>
+  </div>
+  <div style="position:relative;z-index:1">
+    <div class="sh">
+      <div class="sh-title">Aktueller Stack</div>
+      <span class="pill">
+        {{ active_stack.start_date.strftime("%d.%m.%Y") }}
+        {% if active_stack.end_date %} – {{ active_stack.end_date.strftime("%d.%m.%Y") }}{% endif %}
+      </span>
+    </div>
+
+    <div class="mg mg-4" style="margin-bottom:18px">
+      <div class="metric">
+        <div class="m-label">Stack</div>
+        <div class="m-val" style="font-size:16px;color:var(--text)">{{ active_stack.name }}</div>
       </div>
-      {% if active_stack.notes %}
-        <div style="font-size:.8rem;color:var(--gray-600);margin-top:.4rem">{{ active_stack.notes }}</div>
+      <div class="metric">
+        <div class="m-label">Ziel</div>
+        <div class="m-val" style="font-size:16px;color:var(--teal)">{{ active_stack.goal or "–" }}</div>
+      </div>
+      {% set ns = namespace(n=0) %}{% for sl in slot_order %}{% set ns.n = ns.n + doses_by_slot[sl]|length %}{% endfor %}
+      <div class="metric">
+        <div class="m-label">Substanzen</div>
+        <div class="m-val">{{ ns.n }}</div>
+      </div>
+      <div class="metric">
+        <div class="m-label">Status</div>
+        <div class="m-val" style="color:var(--gold)">ON</div>
+      </div>
+    </div>
+
+    <!-- Slot-Navigation -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px">
+      {% for slot in slot_order %}
+      {% if doses_by_slot[slot] %}
+      <a href="#{{ slot_ids[slot] }}" class="chip" style="text-decoration:none">
+        {{ slot_icons[slot] }} {{ slot }}
+      </a>
       {% endif %}
+      {% endfor %}
     </div>
-    <span class="badge badge-ok">Aktiv</span>
-  </div>
-</div>
 
-<!-- Dosierungen nach Kategorie -->
-{% for category, items in active_doses.items() %}
-<div class="card" style="margin-bottom:1rem">
-  <div class="section-header">
-    <div class="section-title">
-      <span class="badge badge cat-{{ category.lower() }}">{{ category }}</span>
-    </div>
-  </div>
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Substanz</th>
-          <th>Dosis</th>
-          <th>Frequenz</th>
-          <th>Timing</th>
-          <th>Seit</th>
-          <th>Notizen</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for item in items %}
-        <tr>
-          <td><strong>{{ item.substance.name }}</strong></td>
-          <td><strong>{{ item.dose.dose_amount }} {{ item.dose.dose_unit }}</strong></td>
-          <td>{{ item.dose.frequency or "–" }}</td>
-          <td style="font-size:.8rem;color:var(--gray-500)">{{ item.dose.timing or "–" }}</td>
-          <td style="font-size:.8rem">{{ item.dose.start_date.strftime("%d.%m.%y") }}</td>
-          <td style="font-size:.8rem;color:var(--gray-500);max-width:200px">{{ item.dose.notes or "" }}</td>
-          <td>
-            <form action="/stack/dosis/{{ item.dose.id }}/abschliessen" method="post" style="display:inline">
-              <button class="btn btn-danger btn-sm" onclick="return confirm('Dosis als beendet markieren?')">✕</button>
-            </form>
-          </td>
-        </tr>
+    <!-- Top 3 Slots als Columns (07, 10, 17) -->
+    <div class="stack-rows">
+      {% for slot in ["07:00 – Nüchtern", "10–11 Uhr", "17–18 Uhr"] %}
+      {% if doses_by_slot[slot] %}
+      <div class="stack-col" id="{{ slot_ids[slot] }}">
+        <h4>{{ slot_icons[slot] }} {{ slot }}</h4>
+        {% for item in doses_by_slot[slot] %}
+        {% set de = item.dose %}{% set sub = item.substance %}
+        <div class="dose" id="item-{{ de.id }}">
+          <span onclick="toggleEdit({{ de.id }})" style="cursor:pointer">
+            <span style="color:{{ cat_colors.get(sub.category, 'var(--soft)') }};font-size:10px;font-weight:800;letter-spacing:.1em;margin-right:4px">{{ sub.category[:3].upper() }}</span>{{ sub.name }}
+          </span>
+          <b>{{ de.dose_amount|int if de.dose_amount == de.dose_amount|int else de.dose_amount }} {{ de.dose_unit }}</b>
+        </div>
+        <!-- Inline Edit -->
+        <div id="edit-{{ de.id }}" style="display:none;margin-top:4px;padding:12px;background:rgba(255,255,255,.04);border-radius:12px;border:1px solid var(--line)">
+          <form action="/stack/dosis/{{ de.id }}/bearbeiten" method="post">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+              <div class="form-group" style="margin:0"><label>Dosis</label><input type="number" name="dose_amount" step="any" value="{{ de.dose_amount }}" required></div>
+              <div class="form-group" style="margin:0"><label>Einheit</label><input type="text" name="dose_unit" value="{{ de.dose_unit }}"></div>
+              <div class="form-group" style="margin:0;grid-column:span 2"><label>Timing</label><input type="text" name="timing" value="{{ de.timing or '' }}"></div>
+              <div class="form-group" style="margin:0;grid-column:span 2"><label>Frequenz</label><input type="text" name="frequency" value="{{ de.frequency or '' }}"></div>
+              <div class="form-group" style="margin:0;grid-column:span 2"><label>Notiz</label><input type="text" name="notes" value="{{ de.notes or '' }}"></div>
+            </div>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-primary btn-sm">Speichern</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="toggleEdit({{ de.id }})">Abbrechen</button>
+              <button type="button" class="btn btn-sm" style="margin-left:auto;background:rgba(222,113,113,.15);color:var(--red);border-color:rgba(222,113,113,.3)"
+                onclick="if(confirm('Beenden?')){document.getElementById('end-{{ de.id }}').submit()}">Beenden</button>
+            </div>
+          </form>
+          <form id="end-{{ de.id }}" action="/stack/dosis/{{ de.id }}/abschliessen" method="post" style="display:none"></form>
+        </div>
         {% endfor %}
-      </tbody>
-    </table>
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
   </div>
 </div>
-{% endfor %}
 
-{% else %}
-<div class="card"><div class="badge badge-gray">Kein aktiver Stack</div></div>
+<!-- ══ ABEND + INJEKTIONEN ══════════════════════════════════════ -->
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-bottom:18px">
+  {% for slot in ["21–22 Uhr", "Injektionen"] %}
+  {% if doses_by_slot[slot] %}
+  <div class="card" id="{{ slot_ids[slot] }}">
+    <div class="sh">
+      <div class="sh-title">{{ slot_icons[slot] }} {{ slot }}</div>
+      <span class="pill">{{ doses_by_slot[slot]|length }} Positionen</span>
+    </div>
+    <div class="llist">
+      {% for item in doses_by_slot[slot] %}
+      {% set de = item.dose %}{% set sub = item.substance %}
+      <div class="litem" id="item-{{ de.id }}" onclick="toggleEdit({{ de.id }})" style="cursor:pointer">
+        <span style="font-size:13px;font-weight:700">{{ sub.name }}</span>
+        <span style="font-family:'JetBrains Mono',monospace;color:{% if sub.category == 'Steroid' %}var(--gold){% elif sub.category == 'Peptid' %}var(--teal){% else %}var(--muted){% endif %};font-size:12px">
+          {{ de.dose_amount|int if de.dose_amount == de.dose_amount|int else de.dose_amount }} {{ de.dose_unit }}{% if de.frequency %} · {{ de.frequency }}{% endif %}
+        </span>
+      </div>
+      <div id="edit-{{ de.id }}" style="display:none;padding:12px;background:rgba(255,255,255,.04);border-radius:12px;border:1px solid var(--line);margin-bottom:4px">
+        <form action="/stack/dosis/{{ de.id }}/bearbeiten" method="post">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+            <div class="form-group" style="margin:0"><label>Dosis</label><input type="number" name="dose_amount" step="any" value="{{ de.dose_amount }}" required></div>
+            <div class="form-group" style="margin:0"><label>Einheit</label><input type="text" name="dose_unit" value="{{ de.dose_unit }}"></div>
+            <div class="form-group" style="margin:0;grid-column:span 2"><label>Timing</label><input type="text" name="timing" value="{{ de.timing or '' }}"></div>
+            <div class="form-group" style="margin:0;grid-column:span 2"><label>Frequenz</label><input type="text" name="frequency" value="{{ de.frequency or '' }}"></div>
+            <div class="form-group" style="margin:0;grid-column:span 2"><label>Notiz</label><input type="text" name="notes" value="{{ de.notes or '' }}"></div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-primary btn-sm">Speichern</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="toggleEdit({{ de.id }})">Abbrechen</button>
+            <button type="button" class="btn btn-sm" style="margin-left:auto;background:rgba(222,113,113,.15);color:var(--red);border-color:rgba(222,113,113,.3)"
+              onclick="if(confirm('Beenden?')){document.getElementById('end2-{{ de.id }}').submit()}">Beenden</button>
+          </div>
+        </form>
+        <form id="end2-{{ de.id }}" action="/stack/dosis/{{ de.id }}/abschliessen" method="post" style="display:none"></form>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+  {% endfor %}
+</div>
+
+<!-- Sonstige -->
+{% if doses_by_slot["Sonstige"] %}
+<div class="card" style="margin-bottom:18px" id="slot-rest">
+  <div class="sh"><div class="sh-title">⚙ Sonstige</div><span class="pill">{{ doses_by_slot["Sonstige"]|length }}</span></div>
+  <div class="llist">
+    {% for item in doses_by_slot["Sonstige"] %}
+    {% set de = item.dose %}{% set sub = item.substance %}
+    <div class="litem" onclick="toggleEdit({{ de.id }})" style="cursor:pointer">
+      <span style="font-size:13px;font-weight:700">{{ sub.name }}</span>
+      <span style="font-family:'JetBrains Mono',monospace;color:var(--muted);font-size:12px">{{ de.dose_amount|int if de.dose_amount == de.dose_amount|int else de.dose_amount }} {{ de.dose_unit }}{% if de.frequency %} · {{ de.frequency }}{% endif %}</span>
+    </div>
+    <div id="edit-{{ de.id }}" style="display:none;padding:12px;background:rgba(255,255,255,.04);border-radius:12px;border:1px solid var(--line);margin-bottom:4px">
+      <form action="/stack/dosis/{{ de.id }}/bearbeiten" method="post">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <div class="form-group" style="margin:0"><label>Dosis</label><input type="number" name="dose_amount" step="any" value="{{ de.dose_amount }}" required></div>
+          <div class="form-group" style="margin:0"><label>Einheit</label><input type="text" name="dose_unit" value="{{ de.dose_unit }}"></div>
+          <div class="form-group" style="margin:0;grid-column:span 2"><label>Timing</label><input type="text" name="timing" value="{{ de.timing or '' }}"></div>
+          <div class="form-group" style="margin:0;grid-column:span 2"><label>Frequenz</label><input type="text" name="frequency" value="{{ de.frequency or '' }}"></div>
+          <div class="form-group" style="margin:0;grid-column:span 2"><label>Notiz</label><input type="text" name="notes" value="{{ de.notes or '' }}"></div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-primary btn-sm">Speichern</button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="toggleEdit({{ de.id }})">Abbrechen</button>
+          <button type="button" class="btn btn-sm" style="margin-left:auto;background:rgba(222,113,113,.15);color:var(--red);border-color:rgba(222,113,113,.3)"
+            onclick="if(confirm('Beenden?')){document.getElementById('end3-{{ de.id }}').submit()}">Beenden</button>
+        </div>
+      </form>
+      <form id="end3-{{ de.id }}" action="/stack/dosis/{{ de.id }}/abschliessen" method="post" style="display:none"></form>
+    </div>
+    {% endfor %}
+  </div>
+</div>
 {% endif %}
 
-<!-- Neue Dosis hinzufügen -->
-<div class="card" style="margin-bottom:1.25rem">
-  <div class="section-title" style="margin-bottom:.75rem">+ Dosierung hinzufügen</div>
+{% endif %}{# /active_stack #}
+
+<!-- ══ STACK BEARBEITEN (einklappbar) ══════════════════════════ -->
+{% if active_stack %}
+<div class="card" style="cursor:pointer;margin-bottom:4px" onclick="toggleForm('form-stack-edit');this.querySelector('.pill').textContent=document.getElementById('form-stack-edit').style.display==='none'?'+':'−'">
+  <div style="display:flex;align-items:center;justify-content:space-between">
+    <div class="sh-title">Stack bearbeiten</div>
+    <span class="pill">+</span>
+  </div>
+</div>
+<div id="form-stack-edit" style="display:none;margin-bottom:4px">
+<div class="card" style="padding:22px">
+  <form action="/stack/{{ active_stack.id }}/bearbeiten" method="post">
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px">
+      <div class="form-group" style="margin:0;grid-column:span 2">
+        <label>Name</label>
+        <input type="text" name="name" value="{{ active_stack.name }}" required>
+      </div>
+      <div class="form-group" style="margin:0;grid-column:span 2">
+        <label>Ziel / Beschreibung</label>
+        <input type="text" name="goal" value="{{ active_stack.goal or '' }}" placeholder="z.B. Recomp, Cut, Bulk">
+      </div>
+      <div class="form-group" style="margin:0">
+        <label>Start-Datum</label>
+        <input type="date" name="start_date" value="{{ active_stack.start_date.isoformat() }}" required>
+      </div>
+      <div class="form-group" style="margin:0">
+        <label>End-Datum (optional)</label>
+        <input type="date" name="end_date" value="{{ active_stack.end_date.isoformat() if active_stack.end_date else '' }}">
+      </div>
+      <div class="form-group" style="margin:0">
+        <label>Status</label>
+        <select name="status">
+          <option value="aktiv" {% if active_stack.status == "aktiv" %}selected{% endif %}>Aktiv</option>
+          <option value="geplant" {% if active_stack.status == "geplant" %}selected{% endif %}>Geplant</option>
+          <option value="cruise" {% if active_stack.status == "cruise" %}selected{% endif %}>Cruise</option>
+          <option value="abgeschlossen" {% if active_stack.status == "abgeschlossen" %}selected{% endif %}>Abgeschlossen</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin:0">
+        <label>Notizen</label>
+        <input type="text" name="notes" value="{{ active_stack.notes or '' }}">
+      </div>
+    </div>
+    <button class="btn btn-primary btn-sm">Änderungen speichern</button>
+    <button type="button" class="btn btn-secondary btn-sm" style="margin-left:8px" onclick="toggleForm('form-stack-edit')">Abbrechen</button>
+  </form>
+</div>
+</div>
+{% endif %}
+
+<!-- ══ NEUE DOSIS (einklappbar) ════════════════════════════════ -->
+<div class="card" style="cursor:pointer;margin-bottom:4px" onclick="toggleForm('form-dosis');this.querySelector('.pill').textContent=document.getElementById('form-dosis').style.display==='none'?'+':'−'">
+  <div style="display:flex;align-items:center;justify-content:space-between">
+    <div class="sh-title">Dosierung hinzufügen</div>
+    <span class="pill">+</span>
+  </div>
+</div>
+<div id="form-dosis" style="display:none;margin-bottom:4px">
+<div class="card" style="padding:22px">
   <form action="/stack/dosis/neu" method="post">
-    <div class="grid-3">
-      <div class="form-group">
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px">
+      <div class="form-group" style="margin:0">
         <label>Substanz</label>
         <select name="substance_id" required>
           {% for s in substances %}
@@ -83,7 +279,7 @@
           {% endfor %}
         </select>
       </div>
-      <div class="form-group">
+      <div class="form-group" style="margin:0">
         <label>Stack</label>
         <select name="stack_id" required>
           {% for st in stacks %}
@@ -91,60 +287,60 @@
           {% endfor %}
         </select>
       </div>
-      <div class="form-group">
+      <div class="form-group" style="margin:0">
         <label>Start-Datum</label>
         <input type="date" name="start_date" value="{{ today.isoformat() }}" required>
       </div>
-      <div class="form-group">
+      <div class="form-group" style="margin:0">
         <label>Dosis</label>
         <input type="number" name="dose_amount" step="any" placeholder="z.B. 500" required>
       </div>
-      <div class="form-group">
+      <div class="form-group" style="margin:0">
         <label>Einheit</label>
         <input type="text" name="dose_unit" placeholder="mg / mcg / IU" value="mg">
       </div>
-      <div class="form-group">
+      <div class="form-group" style="margin:0">
         <label>Frequenz</label>
         <input type="text" name="frequency" placeholder="täglich / 2x/Woche">
       </div>
-      <div class="form-group">
+      <div class="form-group" style="margin:0;grid-column:span 2">
         <label>Timing</label>
         <input type="text" name="timing" placeholder="07:00 nüchtern / 21-22 Uhr">
       </div>
-      <div class="form-group">
-        <label>Grund (optional)</label>
-        <input type="text" name="change_reason" placeholder="Dosiserhöhung nach Blutbild">
+      <div class="form-group" style="margin:0">
+        <label>Grund</label>
+        <input type="text" name="change_reason" placeholder="optional">
       </div>
-      <div class="form-group">
+      <div class="form-group" style="margin:0;grid-column:span 3">
         <label>Notiz</label>
         <input type="text" name="notes">
       </div>
     </div>
-    <button class="btn btn-primary">Dosierung speichern</button>
+    <button class="btn btn-primary btn-sm">Dosierung speichern</button>
   </form>
 </div>
+</div>
 
-<!-- Neue Substanz -->
-<div class="card">
-  <div class="section-title" style="margin-bottom:.75rem">+ Neue Substanz anlegen</div>
+<!-- ══ NEUE SUBSTANZ (einklappbar) ═════════════════════════════ -->
+<div class="card" style="cursor:pointer;margin-bottom:4px" onclick="toggleForm('form-sub');this.querySelector('.pill').textContent=document.getElementById('form-sub').style.display==='none'?'+':'−'">
+  <div style="display:flex;align-items:center;justify-content:space-between">
+    <div class="sh-title">Neue Substanz anlegen</div>
+    <span class="pill">+</span>
+  </div>
+</div>
+<div id="form-sub" style="display:none;margin-bottom:4px">
+<div class="card" style="padding:22px">
   <form action="/stack/substanz/neu" method="post">
-    <div class="grid-3">
-      <div class="form-group">
-        <label>Name</label>
-        <input type="text" name="name" required>
-      </div>
-      <div class="form-group">
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px">
+      <div class="form-group" style="margin:0"><label>Name</label><input type="text" name="name" required></div>
+      <div class="form-group" style="margin:0">
         <label>Kategorie</label>
         <select name="category">
-          <option>Supplement</option>
-          <option>Medikament</option>
-          <option>Steroid</option>
-          <option>Peptid</option>
-          <option>Hormon</option>
-          <option>Sonstiges</option>
+          <option>Supplement</option><option>Medikament</option><option>Steroid</option>
+          <option>Peptid</option><option>Hormon</option><option>Sonstiges</option>
         </select>
       </div>
-      <div class="form-group">
+      <div class="form-group" style="margin:0">
         <label>Route</label>
         <select name="route">
           <option value="oral">oral</option>
@@ -152,16 +348,47 @@
           <option value="intramuskulaer">intramuskulär</option>
         </select>
       </div>
-      <div class="form-group">
-        <label>Standard-Einheit</label>
-        <input type="text" name="default_unit" value="mg">
-      </div>
-      <div class="form-group" style="grid-column:span 2">
-        <label>Beschreibung</label>
-        <input type="text" name="description">
-      </div>
+      <div class="form-group" style="margin:0"><label>Standard-Einheit</label><input type="text" name="default_unit" value="mg"></div>
+      <div class="form-group" style="margin:0;grid-column:span 2"><label>Beschreibung</label><input type="text" name="description"></div>
     </div>
-    <button class="btn btn-primary">Substanz anlegen</button>
+    <button class="btn btn-primary btn-sm">Substanz anlegen</button>
   </form>
 </div>
+</div>
+
+<!-- ══ NEUER STACK (einklappbar) ═══════════════════════════════ -->
+<div class="card" style="cursor:pointer" onclick="toggleForm('form-stack');this.querySelector('.pill').textContent=document.getElementById('form-stack').style.display==='none'?'+':'−'">
+  <div style="display:flex;align-items:center;justify-content:space-between">
+    <div class="sh-title">Neuen Stack erstellen</div>
+    <span class="pill">+</span>
+  </div>
+</div>
+<div id="form-stack" style="display:none;margin-bottom:4px">
+<div class="card" style="padding:22px">
+  <form action="/stack/neu" method="post">
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px">
+      <div class="form-group" style="margin:0;grid-column:span 2"><label>Name</label><input type="text" name="name" required placeholder="z.B. 16 Wochen Recomp-Blast 2026"></div>
+      <div class="form-group" style="margin:0"><label>Start</label><input type="date" name="start_date" value="{{ today.isoformat() }}" required></div>
+      <div class="form-group" style="margin:0"><label>Ende (optional)</label><input type="date" name="end_date"></div>
+      <div class="form-group" style="margin:0;grid-column:span 2"><label>Ziel</label><input type="text" name="goal" placeholder="z.B. Recomp, Cut, Bulk"></div>
+      <div class="form-group" style="margin:0;grid-column:span 2"><label>Notizen</label><textarea name="notes" rows="2"></textarea></div>
+    </div>
+    <button class="btn btn-primary btn-sm">Stack erstellen</button>
+  </form>
+</div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleEdit(id) {
+  const el = document.getElementById('edit-' + id);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+function toggleForm(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+</script>
 {% endblock %}

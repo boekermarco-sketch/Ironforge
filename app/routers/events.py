@@ -6,7 +6,7 @@ from datetime import date
 from pathlib import Path
 
 from app.database import get_db
-from app.models import MedicalEvent
+from app.models import MedicalEvent, DoseEvent, Substance, Stack
 
 router = APIRouter()
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -18,11 +18,23 @@ EVENT_TYPES = ["Aderlass", "Blutspende", "Arzttermin", "Impfung", "Sonstiges"]
 @router.get("/", include_in_schema=False)
 async def events_overview(request: Request, db: Session = Depends(get_db)):
     events = db.query(MedicalEvent).order_by(MedicalEvent.date.desc()).all()
+
+    # Stack-Timeline: alle DoseEvents mit Substanz + Stack
+    dose_rows = (
+        db.query(DoseEvent, Substance, Stack)
+        .join(Substance, DoseEvent.substance_id == Substance.id)
+        .outerjoin(Stack, DoseEvent.stack_id == Stack.id)
+        .order_by(DoseEvent.start_date.desc())
+        .limit(200)
+        .all()
+    )
+
     return templates.TemplateResponse("events.html", {
         "request": request,
         "events": events,
         "event_types": EVENT_TYPES,
         "today": date.today(),
+        "dose_rows": dose_rows,
     })
 
 

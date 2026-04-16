@@ -174,13 +174,22 @@ class DailyLog(Base):
     steps = Column(Integer)
     vo2max = Column(Float)
     stress_avg = Column(Integer)
+    light_sleep_min = Column(Integer)
+    training_readiness = Column(Integer)  # 0-100 (Garmin)
+    training_status = Column(String(100)) # "Produktiv", "Überbelastet" etc.
 
     # Withings
     weight = Column(Float)            # kg
     body_fat = Column(Float)          # %
+    fat_mass_kg = Column(Float)       # kg (aus fat_pct * weight)
     muscle_mass = Column(Float)       # kg
+    water_percent = Column(Float)     # % Körperwasser
     bmi = Column(Float)
     resting_pulse = Column(Integer)
+    bp_systolic = Column(Integer)     # mmHg
+    bp_diastolic = Column(Integer)    # mmHg
+    vascular_age = Column(Integer)    # Gefäßalter (Withings Body Scan)
+    pulse_wave_velocity = Column(Float)  # m/s (Pulswellengeschwindigkeit)
 
     # MyFitnessPal / Ernährung
     calories = Column(Integer)
@@ -238,3 +247,18 @@ class JournalEntry(Base):
     body_fat_at_time = Column(Float)
     notes = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+# ─── Zusatzpool: Gerätekatalog (gym80 etc.) ──────────────────────────────────
+
+class Gym80Device(Base):
+    __tablename__ = "gym80_devices"
+
+    id = Column(Integer, primary_key=True, index=True)
+    category = Column(String(50), nullable=False)
+    serie = Column(String(100))
+    model = Column(String(255), nullable=False)
+    product_url = Column(Text)
+    image_url = Column(Text)
+    muscle_groups = Column(Text)
+    notes = Column(Text)
