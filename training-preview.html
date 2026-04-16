@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 :root {
   --bg:#050608; --panel:#101317; --panel2:#13171c; --line:rgba(214,198,169,.08);
@@ -315,6 +316,36 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
   /* Alte bottom-tabs ausblenden falls vorhanden */
   .mobile-bottom-tabs{display:none}
 }
+
+/* FORGE ANALYTICS */
+.forge-card-title{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--gold)}
+.forge-tabs{display:flex;gap:6px;margin-bottom:14px}
+.forge-tab{padding:7px 14px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid var(--line);color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:.18s}
+.forge-tab:hover{color:var(--gold);border-color:rgba(208,163,90,.2)}
+.forge-tab.active{background:var(--goldSoft);color:var(--gold);border-color:rgba(208,163,90,.3)}
+.compound-row{display:grid;grid-template-columns:1fr 90px 110px 18px 26px;gap:7px;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.compound-row:last-child{border-bottom:none}
+.compound-color-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;border:2px solid rgba(255,255,255,.18);cursor:default}
+.compound-remove{background:transparent;border:none;color:var(--soft);font-size:15px;cursor:pointer;padding:0;line-height:1;display:flex;align-items:center;justify-content:center}
+.compound-remove:hover{color:var(--red)}
+.saturation-block{display:grid;gap:5px;margin-top:12px}
+.sat-row{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.02);border:1px solid var(--line);font-size:12px}
+.sat-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;display:inline-block;margin-right:6px}
+.sat-pill{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;white-space:nowrap;background:rgba(208,163,90,.08);color:var(--gold)}
+.sat-pill.teal{background:rgba(88,185,176,.08);color:var(--teal)}
+.peptide-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.peptide-result{background:rgba(208,163,90,.05);border:1px solid rgba(208,163,90,.14);border-radius:14px;padding:14px 16px;margin-top:14px}
+.peptide-result-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.peptide-result-row:last-child{border-bottom:none}
+.peptide-result-label{font-size:11px;color:var(--muted)}
+.peptide-result-val{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:var(--gold)}
+.peptide-big{font-size:28px;text-align:center;padding:12px 0 4px}
+.peptide-big-sub{text-align:center;font-size:11px;color:var(--soft);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+@media(max-width:640px){
+  .compound-row{grid-template-columns:1fr 80px 26px}
+  .compound-row .compound-interval,.compound-row .compound-color-dot{display:none}
+  .peptide-grid{grid-template-columns:1fr 1fr}
+}
 </style>
 </head>
 <body>
@@ -554,7 +585,66 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
         </div>
       </div>
 
-      
+      <!-- ═══ FORGE ANALYTICS ══════════════════════════════════ -->
+      <div class="card">
+        <div class="sh">
+          <div class="forge-card-title">Forge Analytics</div>
+          <span class="pill pill-gold">Compound Plotter · Peptid-Rechner</span>
+        </div>
+
+        <div class="forge-tabs">
+          <button class="forge-tab active" id="ftab-plotter" onclick="switchForgeTab('plotter')">Compound Plotter</button>
+          <button class="forge-tab" id="ftab-peptid" onclick="switchForgeTab('peptid')">Peptid-Rechner</button>
+        </div>
+
+        <!-- COMPOUND PLOTTER -->
+        <div id="forge-plotter">
+          <div id="compound-rows" style="margin-bottom:10px"></div>
+          <button class="btn btn-secondary btn-sm" onclick="addCompoundRow()">+ Wirkstoff hinzufügen</button>
+          <div style="margin-top:16px;position:relative;height:260px">
+            <canvas id="compound-chart"></canvas>
+          </div>
+          <div id="saturation-block" class="saturation-block" style="margin-top:10px"></div>
+        </div>
+
+        <!-- PEPTID-RECHNER -->
+        <div id="forge-peptid" style="display:none">
+          <div class="peptide-grid">
+            <div class="form-group" style="margin:0">
+              <label>Vial (mg)</label>
+              <input type="number" id="pep-vial" value="5" min="0.1" step="0.1" oninput="runPeptideCalc()">
+            </div>
+            <div class="form-group" style="margin:0">
+              <label>BAC-Wasser (ml)</label>
+              <input type="number" id="pep-water" value="2" min="0.1" step="0.1" oninput="runPeptideCalc()">
+            </div>
+            <div class="form-group" style="margin:0">
+              <label>Dosis (mcg)</label>
+              <input type="number" id="pep-dose" value="250" min="1" step="1" oninput="runPeptideCalc()">
+            </div>
+          </div>
+          <div class="peptide-result" id="peptide-result">
+            <div class="peptide-big" id="pep-iu">–</div>
+            <div class="peptide-big-sub">IU aufziehen (U-100 Spritze)</div>
+            <div class="peptide-result-row">
+              <span class="peptide-result-label">Konzentration</span>
+              <span class="peptide-result-val" id="pep-conc">–</span>
+            </div>
+            <div class="peptide-result-row">
+              <span class="peptide-result-label">Volumen pro Dosis</span>
+              <span class="peptide-result-val" id="pep-vol">–</span>
+            </div>
+            <div class="peptide-result-row">
+              <span class="peptide-result-label">Ticks (je 0.01 ml)</span>
+              <span class="peptide-result-val" id="pep-ticks">–</span>
+            </div>
+            <div class="peptide-result-row">
+              <span class="peptide-result-label">Dosen je Vial</span>
+              <span class="peptide-result-val" id="pep-doses">–</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
     </div>
   </div>
@@ -838,7 +928,7 @@ let catalogSource = 'local';
 let autoSyncTimer = null;
 let catalogStatusText = '';
 let gym80CategoryMap = null;
-const BUILD_STAMP = '2026-04-16 10:00';
+const BUILD_STAMP = '2026-04-16 14:30';
 
 const CATS = ['Brust','Rücken','Beine','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -1444,6 +1534,7 @@ function renderAnalyse(){
   renderProgressTables();
   renderIftttEvents();
   calcUpdate();
+  renderCompoundRows();
 }
 
 function trendLabel(last, best){
@@ -3221,6 +3312,253 @@ async function syncFromCloud(){
     updateSyncStatus('Sync-Fehler beim Laden');
     alert(`Download fehlgeschlagen: ${err.message}`);
   }
+}
+
+// ════════════════════════════════════════════════════════════
+// FORGE ANALYTICS – Compound Plotter + Peptid-Rechner
+// ════════════════════════════════════════════════════════════
+
+const COMPOUND_DB = [
+  { name:'Testosteron Enanthat',   hl:4.5  },
+  { name:'Testosteron Cypionat',   hl:5.0  },
+  { name:'Testosteron Propionat',  hl:0.8  },
+  { name:'Testosteron Decanoat',   hl:7.5  },
+  { name:'Sustanon 250',           hl:4.0  },
+  { name:'Trenbolon Enanthat',     hl:5.5  },
+  { name:'Trenbolon Acetat',       hl:1.0  },
+  { name:'Masteron Enanthat',      hl:4.5  },
+  { name:'Masteron Propionat',     hl:2.5  },
+  { name:'Primobolan Depot',       hl:5.0  },
+  { name:'Deca Durabolin',         hl:8.0  },
+  { name:'NPP',                    hl:2.5  },
+  { name:'Boldenon',               hl:14.0 },
+  { name:'Semaglutid (GLP-1)',     hl:7.0  },
+  { name:'Tirzepatid (GLP-1)',     hl:5.0  },
+  { name:'HGH',                    hl:0.2  },
+  { name:'BPC-157',                hl:0.12 },
+  { name:'TB-500',                 hl:5.0  },
+];
+
+const COMPOUND_COLORS = [
+  '#d0a35a','#58b9b0','#de7171','#c084fc',
+  '#e8a64a','#60a5fa','#4ade80','#f472b6',
+];
+
+const COMPOUND_INTERVALS = [
+  { label:'ED (täglich)',    val:1   },
+  { label:'EOD (2 Tage)',    val:2   },
+  { label:'E3D (3 Tage)',    val:3   },
+  { label:'2x/Woche',        val:3.5 },
+  { label:'1x/Woche',        val:7   },
+  { label:'E10D',            val:10  },
+  { label:'E14D (2 Wochen)', val:14  },
+];
+
+let compoundRows = [
+  { compound: 'Testosteron Enanthat', dose: 125, interval: 3.5, colorIdx: 0 },
+];
+let compoundChart = null;
+
+function switchForgeTab(tab){
+  document.getElementById('forge-plotter').style.display = tab==='plotter' ? '' : 'none';
+  document.getElementById('forge-peptid').style.display  = tab==='peptid'  ? '' : 'none';
+  document.querySelectorAll('.forge-tab').forEach(b=>b.classList.remove('active'));
+  const btn = document.getElementById('ftab-'+tab);
+  if(btn) btn.classList.add('active');
+  if(tab==='plotter') renderCompoundRows();
+  if(tab==='peptid')  runPeptideCalc();
+}
+
+function addCompoundRow(){
+  compoundRows.push({
+    compound: COMPOUND_DB[0].name,
+    dose: 100,
+    interval: 3.5,
+    colorIdx: compoundRows.length % COMPOUND_COLORS.length,
+  });
+  renderCompoundRows();
+}
+
+function removeCompoundRow(idx){
+  compoundRows.splice(idx,1);
+  renderCompoundRows();
+}
+
+function renderCompoundRows(){
+  const wrap = document.getElementById('compound-rows');
+  if(!wrap) return;
+
+  const compoundOptions = COMPOUND_DB.map(c=>`<option value="${c.name}">${c.name}</option>`).join('');
+  const intervalOptions = COMPOUND_INTERVALS.map(i=>`<option value="${i.val}">${i.label}</option>`).join('');
+
+  wrap.innerHTML = compoundRows.map((row,i)=>`
+    <div class="compound-row">
+      <select class="compound-select" onchange="compoundRows[${i}].compound=this.value;updatePlot()" style="background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:5px 8px;font-size:12px;font-family:'Manrope',sans-serif;outline:none;width:100%">
+        ${COMPOUND_DB.map(c=>`<option value="${c.name}"${c.name===row.compound?' selected':''}>${c.name}</option>`).join('')}
+      </select>
+      <input type="number" value="${row.dose}" min="1" max="2000" step="1"
+        onchange="compoundRows[${i}].dose=+this.value;updatePlot()"
+        style="background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:5px 8px;font-size:12px;font-family:'JetBrains Mono',monospace;text-align:right;width:100%;outline:none"
+        title="Dosis in mg">
+      <select class="compound-interval" onchange="compoundRows[${i}].interval=+this.value;updatePlot()" style="background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:5px 8px;font-size:11px;font-family:'Manrope',sans-serif;outline:none;width:100%">
+        ${COMPOUND_INTERVALS.map(iv=>`<option value="${iv.val}"${iv.val===row.interval?' selected':''}>${iv.label}</option>`).join('')}
+      </select>
+      <span class="compound-color-dot" style="background:${COMPOUND_COLORS[row.colorIdx%COMPOUND_COLORS.length]}"></span>
+      <button class="compound-remove" onclick="removeCompoundRow(${i})" title="Entfernen">✕</button>
+    </div>
+  `).join('');
+
+  updatePlot();
+}
+
+function simulateCompound(doseMg, intervalDays, halfLifeDays, totalDays){
+  const decayPerDay = Math.pow(0.5, 1 / halfLifeDays);
+  const levels = [];
+  let level = 0;
+  for(let d = 0; d < totalDays; d++){
+    level *= decayPerDay;
+    // Inject if this integer day is within 0.5 of any injection time
+    const injIndex = Math.round(d / intervalDays);
+    const injDay   = injIndex * intervalDays;
+    if(Math.abs(d - injDay) < 0.5) level += doseMg;
+    levels.push(+level.toFixed(3));
+  }
+  return levels;
+}
+
+function steadyStateTrough(doseMg, intervalDays, halfLifeDays){
+  const ratio = Math.pow(0.5, intervalDays / halfLifeDays);
+  if(ratio >= 1) return doseMg * 10; // safety
+  const peakSS = doseMg / (1 - ratio);
+  return +(peakSS * ratio).toFixed(1);
+}
+
+function daysTo90(levels, ssTrough){
+  const target = ssTrough * 0.9;
+  for(let i=0;i<levels.length;i++){
+    if(levels[i] >= target) return i;
+  }
+  return levels.length;
+}
+
+function updatePlot(){
+  const DAYS = 56;
+  const labels = Array.from({length:DAYS},(_,i)=>'T'+i);
+
+  const datasets = compoundRows.map(row=>{
+    const entry = COMPOUND_DB.find(c=>c.name===row.compound) || COMPOUND_DB[0];
+    const color = COMPOUND_COLORS[row.colorIdx % COMPOUND_COLORS.length];
+    const data  = simulateCompound(row.dose, row.interval, entry.hl, DAYS);
+    return {
+      label: `${row.compound} (${row.dose}mg)`,
+      data,
+      borderColor: color,
+      backgroundColor: color+'22',
+      borderWidth: 2,
+      pointRadius: 0,
+      tension: 0.4,
+      fill: false,
+    };
+  });
+
+  const ctx = document.getElementById('compound-chart');
+  if(!ctx) return;
+
+  if(compoundChart){
+    compoundChart.data.labels   = labels;
+    compoundChart.data.datasets = datasets;
+    compoundChart.update();
+  } else {
+    compoundChart = new Chart(ctx, {
+      type: 'line',
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 300 },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: {
+            labels: {
+              color: '#b9b1a2',
+              font: { family: 'Manrope', size: 11 },
+              boxWidth: 12,
+              padding: 12,
+            },
+          },
+          tooltip: {
+            backgroundColor: '#13171c',
+            borderColor: 'rgba(214,198,169,.12)',
+            borderWidth: 1,
+            titleColor: '#b9b1a2',
+            bodyColor: '#d0a35a',
+            callbacks: {
+              label: ctx => ` ${ctx.dataset.label.split('(')[0].trim()}: ${ctx.parsed.y.toFixed(1)} mg aktiv`,
+            },
+          },
+        },
+        scales: {
+          x: {
+            ticks: { color:'#898174', font:{size:10}, maxTicksLimit:15 },
+            grid:  { color:'rgba(255,255,255,.04)' },
+          },
+          y: {
+            ticks: { color:'#898174', font:{size:10,family:'JetBrains Mono'} },
+            grid:  { color:'rgba(255,255,255,.04)' },
+            title: { display:true, text:'mg aktiv im Körper', color:'#898174', font:{size:10} },
+          },
+        },
+      },
+    });
+  }
+
+  updateSaturationInfo(DAYS);
+}
+
+function updateSaturationInfo(DAYS){
+  const block = document.getElementById('saturation-block');
+  if(!block) return;
+
+  block.innerHTML = compoundRows.map(row=>{
+    const entry  = COMPOUND_DB.find(c=>c.name===row.compound) || COMPOUND_DB[0];
+    const color  = COMPOUND_COLORS[row.colorIdx % COMPOUND_COLORS.length];
+    const levels = simulateCompound(row.dose, row.interval, entry.hl, DAYS);
+    const sst    = steadyStateTrough(row.dose, row.interval, entry.hl);
+    const d90    = daysTo90(levels, sst);
+    const final  = levels[DAYS-1];
+    const pct    = sst > 0 ? Math.min(100, Math.round(final/sst*100)) : 0;
+    return `
+      <div class="sat-row">
+        <div><span class="sat-dot" style="background:${color}"></span><span style="font-size:12px;color:var(--text)">${row.compound}</span></div>
+        <span class="sat-pill">SS-Trough: ~${sst} mg</span>
+        <span class="sat-pill teal">90% ab T${d90} · jetzt ${pct}%</span>
+      </div>`;
+  }).join('');
+}
+
+// ── Peptid-Rechner ────────────────────────────────────────────
+
+function runPeptideCalc(){
+  const vial  = parseFloat(document.getElementById('pep-vial')?.value  || 5);
+  const water = parseFloat(document.getElementById('pep-water')?.value || 2);
+  const dose  = parseFloat(document.getElementById('pep-dose')?.value  || 250);
+
+  if(!vial || !water || !dose || water === 0) return;
+
+  const concMcgPerMl = (vial * 1000) / water;   // mcg/ml
+  const volMl        = dose / concMcgPerMl;       // ml pro Dosis
+  const iu           = volMl * 100;               // IU auf U-100-Spritze
+  const ticks        = Math.round(volMl * 100);   // 0.01ml Ticks
+  const dosesPerVial = Math.floor((vial * 1000) / dose);
+
+  const fmt = (n,dec=2) => Number(n.toFixed(dec)).toLocaleString('de-DE', {minimumFractionDigits:dec});
+
+  const setEl = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+  setEl('pep-iu',    fmt(iu,1) + ' IU');
+  setEl('pep-conc',  fmt(concMcgPerMl,0) + ' mcg/ml');
+  setEl('pep-vol',   fmt(volMl,3) + ' ml');
+  setEl('pep-ticks', ticks + ' Ticks');
+  setEl('pep-doses', dosesPerVial + ' Dosen');
 }
 
 // ═══ INIT ════════════════════════════════════════════════════
