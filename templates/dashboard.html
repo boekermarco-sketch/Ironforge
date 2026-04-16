@@ -44,6 +44,29 @@
         <span class="pill pill-teal" style="margin-left:auto">KFA {{ "%.1f"|format(L.body_fat) }} %</span>
         {% endif %}
       </div>
+      {% if kfa_progress is not none %}
+      <div style="margin-top:14px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;font-size:11px;color:var(--soft);margin-bottom:5px">
+          <span>KFA-Ziel {{ KFA_TARGET_MIN|int }}–{{ KFA_TARGET_MAX|int }}%
+            <span style="color:var(--muted);margin-left:6px">Start: {{ kfa_start_val }}%</span>
+          </span>
+          <span style="font-family:'JetBrains Mono',monospace;
+                color:{% if kfa_current <= KFA_TARGET_MAX %}var(--teal){% elif kfa_current <= KFA_TARGET_MAX + 2 %}var(--gold){% else %}var(--muted){% endif %}">
+            {{ kfa_progress }}%
+            {% if kfa_current <= KFA_TARGET_MAX %} · Ziel erreicht!{% elif kfa_current <= KFA_TARGET_MAX + 2 %} · fast da{% endif %}
+          </span>
+        </div>
+        <div style="height:6px;background:rgba(255,255,255,.08);border-radius:99px;overflow:hidden">
+          <div style="height:100%;width:{{ kfa_progress }}%;border-radius:99px;
+               background:{% if kfa_current <= KFA_TARGET_MAX %}var(--teal){% elif kfa_current <= KFA_TARGET_MAX + 2 %}var(--gold){% else %}var(--orange){% endif %};
+               transition:width .4s ease"></div>
+        </div>
+        {% if kfa_current > KFA_TARGET_MAX %}
+        <div style="font-size:11px;color:var(--soft);margin-top:4px">
+          Noch {{ "%.1f"|format(kfa_current - KFA_TARGET_MAX) }}% bis Ziel ({{ "%.1f"|format(kfa_current) }}% → {{ KFA_TARGET_MAX|int }}%)
+        </div>
+        {% endif %}
+      </div>
     </div>
     <div style="position:relative;z-index:1">
       <div class="mg mg-4" style="margin-top:18px">

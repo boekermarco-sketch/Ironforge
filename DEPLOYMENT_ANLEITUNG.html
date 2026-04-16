@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deployment-Anleitung – Fitness Dashboard auf Render.com</title>
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --card: #1a1a1a;
+    --border: #2a2a2a;
+    --text: #e8e8e8;
+    --soft: #888;
+    --muted: #666;
+    --orange: #f97316;
+    --teal: #3fb9a4;
+    --gold: #e8a630;
+    --red: #e06060;
+    --green: #4ade80;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.65;
+    padding: 40px 20px;
+  }
+  .wrap { max-width: 820px; margin: 0 auto; }
+
+  h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -.03em;
+    color: var(--orange);
+    margin-bottom: 6px;
+  }
+  .subtitle {
+    font-size: .95rem;
+    color: var(--soft);
+    margin-bottom: 40px;
+  }
+
+  /* TOC */
+  .toc {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 24px;
+    margin-bottom: 36px;
+  }
+  .toc-title { font-weight: 700; color: var(--text); margin-bottom: 10px; font-size: .85rem; text-transform: uppercase; letter-spacing: .08em; }
+  .toc a { display: block; color: var(--soft); text-decoration: none; font-size: .9rem; padding: 3px 0; }
+  .toc a:hover { color: var(--orange); }
+  .toc-step { color: var(--orange); font-weight: 700; margin-right: 8px; }
+
+  /* Step cards */
+  .step {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 28px 24px;
+    margin-bottom: 20px;
+    scroll-margin-top: 20px;
+  }
+  .step-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+  .step-num {
+    background: var(--orange);
+    color: #000;
+    font-weight: 900;
+    font-size: 1rem;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .step-title { font-size: 1.2rem; font-weight: 700; }
+  .step-time {
+    margin-left: auto;
+    font-size: .75rem;
+    color: var(--soft);
+    background: rgba(255,255,255,.05);
+    border-radius: 8px;
+    padding: 3px 10px;
+    white-space: nowrap;
+  }
+
+  p { margin-bottom: 12px; color: var(--soft); font-size: .92rem; }
+  p strong { color: var(--text); }
+  p em { color: var(--gold); font-style: normal; }
+
+  /* Numbered action list */
+  .actions { list-style: none; padding: 0; }
+  .actions li {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,.04);
+    font-size: .9rem;
+  }
+  .actions li:last-child { border-bottom: none; }
+  .action-num {
+    background: rgba(249,115,22,.15);
+    color: var(--orange);
+    font-weight: 700;
+    font-size: .75rem;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .action-text { flex: 1; color: var(--text); line-height: 1.5; }
+  .action-text .hint { color: var(--soft); font-size: .82rem; margin-top: 3px; }
+
+  /* Code blocks */
+  code {
+    background: rgba(255,255,255,.08);
+    color: var(--gold);
+    padding: 2px 7px;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
+    font-size: .85em;
+  }
+  .code-block {
+    background: #0a0a0a;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin: 12px 0;
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
+    font-size: .83rem;
+    color: var(--teal);
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .code-comment { color: var(--muted); }
+  .code-key { color: var(--orange); }
+
+  /* Info/warn boxes */
+  .box {
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin: 14px 0;
+    font-size: .88rem;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .box-icon { flex-shrink: 0; font-size: 1rem; }
+  .box-text { flex: 1; line-height: 1.55; }
+  .box-info  { background: rgba(63,185,164,.08); border: 1px solid rgba(63,185,164,.2); color: var(--teal); }
+  .box-warn  { background: rgba(232,166,48,.08); border: 1px solid rgba(232,166,48,.2); color: var(--gold); }
+  .box-ok    { background: rgba(74,222,128,.08); border: 1px solid rgba(74,222,128,.2); color: var(--green); }
+  .box-err   { background: rgba(224,96,96,.08);  border: 1px solid rgba(224,96,96,.2);  color: var(--red); }
+
+  /* Screenshot placeholder */
+  .screen {
+    background: #111;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    margin: 14px 0;
+    text-align: center;
+    color: var(--muted);
+    font-size: .82rem;
+  }
+  .screen-title { color: var(--soft); font-weight: 700; font-size: .9rem; margin-bottom: 6px; }
+
+  /* Field table */
+  .field-table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: .88rem; }
+  .field-table th {
+    text-align: left;
+    padding: 8px 12px;
+    background: rgba(255,255,255,.04);
+    color: var(--soft);
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .field-table td { padding: 10px 12px; border-top: 1px solid rgba(255,255,255,.04); vertical-align: top; }
+  .field-name { color: var(--text); font-weight: 600; }
+  .field-val  { color: var(--gold); font-family: 'JetBrains Mono',monospace; font-size: .82rem; }
+  .field-desc { color: var(--soft); font-size: .82rem; margin-top: 3px; }
+
+  /* Progress bar (overall) */
+  .progress-wrap { margin-bottom: 32px; }
+  .progress-steps { display: flex; gap: 0; }
+  .progress-step {
+    flex: 1;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 2px;
+  }
+  .progress-step.done { background: var(--orange); }
+
+  /* FAQ */
+  .faq-item { margin-bottom: 16px; }
+  .faq-q { font-weight: 700; color: var(--text); font-size: .92rem; margin-bottom: 5px; }
+  .faq-a { color: var(--soft); font-size: .88rem; }
+
+  /* Final success */
+  .success {
+    text-align: center;
+    padding: 32px;
+    background: var(--card);
+    border: 1px solid rgba(74,222,128,.2);
+    border-radius: 16px;
+    margin-bottom: 20px;
+  }
+  .success-icon { font-size: 3rem; margin-bottom: 12px; }
+  .success-title { font-size: 1.4rem; font-weight: 800; color: var(--green); margin-bottom: 8px; }
+  .success-sub { color: var(--soft); font-size: .9rem; }
+
+  a { color: var(--orange); }
+  hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Fitness Dashboard online stellen</h1>
+  <div class="subtitle">Schritt-für-Schritt-Anleitung · Render.com · kostenlos · kein Server-Wissen nötig</div>
+
+  <div class="box box-ok">
+    <div class="box-icon">✓</div>
+    <div class="box-text">
+      <strong>Was du am Ende hast:</strong> Dein Fitness-Dashboard ist unter einer eigenen URL (z.B. <code>mein-dashboard.onrender.com</code>) erreichbar – von überall, auch vom iPhone.
+      Kostet <strong>nichts</strong>. Kein Server, kein Linux, kein SSH.
+    </div>
+  </div>
+
+  <div class="box box-warn">
+    <div class="box-icon">⚠</div>
+    <div class="box-text">
+      <strong>Render Free Tier schläft nach 15 Minuten Inaktivität ein.</strong>
+      Beim nächsten Aufruf startet er wieder – das dauert ~30 Sekunden.
+      Für den täglichen Gebrauch reicht das vollkommen aus.
+    </div>
+  </div>
+
+  <!-- TOC -->
+  <div class="toc">
+    <div class="toc-title">Übersicht – was dich erwartet</div>
+    <a href="#step1"><span class="toc-step">1</span> GitHub-Repository vorbereiten <span style="color:var(--muted);font-size:.8rem">~5 Min</span></a>
+    <a href="#step2"><span class="toc-step">2</span> Render.com Account erstellen <span style="color:var(--muted);font-size:.8rem">~3 Min</span></a>
+    <a href="#step3"><span class="toc-step">3</span> Neuen Web Service anlegen <span style="color:var(--muted);font-size:.8rem">~5 Min</span></a>
+    <a href="#step4"><span class="toc-step">4</span> Umgebungsvariablen (.env) eintragen <span style="color:var(--muted);font-size:.8rem">~5 Min</span></a>
+    <a href="#step5"><span class="toc-step">5</span> Ersten Deploy starten <span style="color:var(--muted);font-size:.8rem">~5 Min</span></a>
+    <a href="#step6"><span class="toc-step">6</span> Datenbank hochladen <span style="color:var(--muted);font-size:.8rem">~3 Min</span></a>
+    <a href="#step7"><span class="toc-step">7</span> Spätere Updates deployen <span style="color:var(--muted);font-size:.8rem">1 Klick</span></a>
+    <a href="#faq"><span class="toc-step">?</span> Häufige Probleme &amp; Lösungen</a>
+  </div>
+
+  <!-- VORAUSSETZUNGEN -->
+  <div class="step" style="border-color:rgba(249,115,22,.3)">
+    <div class="step-header">
+      <div class="step-num" style="background:var(--gold);font-size:.8rem">VOR</div>
+      <div class="step-title">Voraussetzungen – hast du das schon?</div>
+    </div>
+    <ul class="actions">
+      <li>
+        <div class="action-num">✓</div>
+        <div class="action-text">
+          <strong>GitHub-Account</strong> – du hast bereits einen, da der GitHub-Sync funktioniert.
+        </div>
+      </li>
+      <li>
+        <div class="action-num">✓</div>
+        <div class="action-text">
+          <strong>Projekt-Code ist auf GitHub</strong> – über den Import-Seiten-Button „↑ Zu GitHub pushen" hochgeladen.
+        </div>
+      </li>
+      <li>
+        <div class="action-num">!</div>
+        <div class="action-text">
+          <strong>Wichtig vor dem ersten Deploy:</strong> Die <code>fitness.db</code>-Datenbankdatei darf <em>nicht</em> in .gitignore stehen.
+          Sie muss im Repo sein, damit Render sie direkt nutzen kann.
+          <div class="hint">Alternativ: Datenbank später separat hochladen (Schritt 6).</div>
+        </div>
+      </li>
+      <li>
+        <div class="action-num">!</div>
+        <div class="action-text">
+          <strong>Die <code>.env</code>-Datei darf <em>nicht</em> auf GitHub sein</strong> (enthält Passwörter).
+          Stattdessen trägst du die Werte direkt in Render ein (Schritt 4).
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- SCHRITT 1 -->
+  <div class="step" id="step1">
+    <div class="step-header">
+      <div class="step-num">1</div>
+      <div class="step-title">GitHub-Repository prüfen</div>
+      <div class="step-time">~5 Min</div>
+    </div>
+    <p>Render braucht zwei Dateien im Repo-Root: <code>requirements.txt</code> und eine <code>Procfile</code> (startet die App).</p>
+
+    <p><strong>Schritt 1a – requirements.txt prüfen</strong><br>
+    Deine <code>requirements.txt</code> existiert bereits. Öffne sie kurz und stelle sicher, dass diese Zeilen drin sind:</p>
+
+    <div class="code-block">fastapi
+uvicorn[standard]
+sqlalchemy
+python-multipart
+pdfplumber
+python-docx
+requests
+requests-oauthlib
+garminconnect</div>
+
+    <p><strong>Schritt 1b – Procfile erstellen</strong><br>
+    Render braucht eine Datei namens <code>Procfile</code> (kein Dateiendung!), die sagt wie die App startet.
+    Diese Datei existiert in deinem Projekt noch nicht – du musst sie anlegen.</p>
+
+    <p>Öffne <strong>Notepad</strong>, tippe genau das:</p>
+
+    <div class="code-block">web: uvicorn app.main:app --host 0.0.0.0 --port $PORT</div>
+
+    <p>Speichere die Datei als <strong>Procfile</strong> (kein .txt!) im Projektordner
+    <code>C:\Users\boeke\Meine Ablage\ClaudeAI\Fitness\</code>.</p>
+
+    <div class="box box-warn">
+      <div class="box-icon">⚠</div>
+      <div class="box-text">
+        In Notepad auf „Speichern unter" → Dateiname: <code>Procfile</code> → Dateityp: <strong>Alle Dateien (*.*)</strong> wählen → Speichern.
+        Sonst wird es <code>Procfile.txt</code> und Render erkennt es nicht.
+      </div>
+    </div>
+
+    <p><strong>Schritt 1c – Procfile auf GitHub pushen</strong><br>
+    Gehe auf deiner Import-Seite auf „↑ Zu GitHub pushen". Fertig.</p>
+  </div>
+
+  <!-- SCHRITT 2 -->
+  <div class="step" id="step2">
+    <div class="step-header">
+      <div class="step-num">2</div>
+      <div class="step-title">Render.com Account erstellen</div>
+      <div class="step-time">~3 Min</div>
+    </div>
+
+    <ul class="actions">
+      <li>
+        <div class="action-num">1</div>
+        <div class="action-text">
+          Gehe auf <strong>render.com</strong>
+          <div class="hint">Direktlink: https://render.com</div>
+        </div>
+      </li>
+      <li>
+        <div class="action-num">2</div>
+        <div class="action-text">
+          Klicke oben rechts auf <em>„Get Started for Free"</em>
+        </div>
+      </li>
+      <li>
+        <div class="action-num">3</div>
+        <div class="action-text">
+          Wähle <em>„Continue with GitHub"</em>
+          <div class="hint">So verbindet sich Render direkt mit deinem GitHub – kein separates Passwort nötig.</div>
+        </div>
+      </li>
+      <li>
+        <div class="action-num">4</div>
+        <div class="action-text">
+          GitHub fragt nach Erlaubnis → klicke <em>„Authorize Render"</em>
+        </div>
+      </li>
+      <li>
+        <div class="action-num">5</div>
+        <div class="action-text">
+          E-Mail-Adresse bestätigen falls nötig (Render schickt eine Mail)
+        </div>
+      </li>
+    </ul>
+
+    <div class="box box-ok">
+      <div class="box-icon">✓</div>
+      <div class="box-text">Du landest im Render-Dashboard. Es sieht leer aus – das ist richtig.</div>
+    </div>
+  </div>
+
+  <!-- SCHRITT 3 -->
+  <div class="step" id="step3">
+    <div class="step-header">
+      <div class="step-num">3</div>
+      <div class="step-title">Neuen Web Service anlegen</div>
+      <div class="step-time">~5 Min</div>
+    </div>
+
+    <ul class="actions">
+      <li>
+        <div class="action-num">1</div>
+        <div class="action-text">
+          Klicke oben rechts auf den orangenen Button <em>„New +"</em>
+        </div>
+      </li>
+      <li>
+        <div class="action-num">2</div>
+        <div class="action-text">
+          Wähle <em>„Web Service"</em>
+        </div>
+      </li>
+      <li>
+        <div class="action-num">3</div>
+        <div class="action-text">
+          Wähle <em>„Build and deploy from a Git repository"</em> → klicke <em>„Next"</em>
+        </div>
+      </li>
+      <li>
+        <div class="action-num">4</div>
+        <div class="action-text">
+          Du siehst deine GitHub-Repos. Suche dein Fitness-Repo und klicke daneben auf <em>„Connect"</em>
+          <div class="hint">Falls das Repo nicht erscheint: „Configure account" → dein Repo dort erlauben.</div>
+        </div>
+      </li>
+    </ul>
+
+    <p>Jetzt erscheint ein Formular. Fülle es so aus:</p>
+
+    <table class="field-table">
+      <tr>
+        <th>Feld</th>
+        <th>Was du einträgst</th>
+        <th>Erklärung</th>
+      </tr>
+      <tr>
+        <td><span class="field-name">Name</span></td>
+        <td><span class="field-val">fitness-dashboard</span></td>
+        <td class="field-desc">Frei wählbar – wird Teil der URL</td>
+      </tr>
+      <tr>
+        <td><span class="field-name">Region</span></td>
+        <td><span class="field-val">Frankfurt (EU Central)</span></td>
+        <td class="field-desc">Nächste Server-Region</td>
+      </tr>
+      <tr>
+        <td><span class="field-name">Branch</span></td>
+        <td><span class="field-val">main</span></td>
+        <td class="field-desc">Dein Haupt-Branch</td>
+      </tr>
+      <tr>
+        <td><span class="field-name">Runtime</span></td>
+        <td><span class="field-val">Python 3</span></td>
+        <td class="field-desc">Programmiersprache</td>
+      </tr>
+      <tr>
+        <td><span class="field-name">Build Command</span></td>
+        <td><span class="field-val">pip install -r requirements.txt</span></td>
+        <td class="field-desc">Installiert alle Bibliotheken</td>
+      </tr>
+      <tr>
+        <td><span class="field-name">Start Command</span></td>
+        <td><span class="field-val">uvicorn app.main:app --host 0.0.0.0 --port $PORT</span></td>
+        <td class="field-desc">Startet die App</td>
+      </tr>
+      <tr>
+        <td><span class="field-name">Instance Type</span></td>
+        <td><span class="field-val">Free</span></td>
+        <td class="field-desc">Kostenloser Tarif</td>
+      </tr>
+    </table>
+
+    <div class="box box-info">
+      <div class="box-icon">ℹ</div>
+      <div class="box-text">
+        Klicke noch <strong>nicht</strong> auf Deploy – zuerst Umgebungsvariablen eintragen (Schritt 4)!
+      </div>
+    </div>
+  </div>
+
+  <!-- SCHRITT 4 -->
+  <div class="step" id="step4">
+    <div class="step-header">
+      <div class="step-num">4</div>
+      <div class="step-title">Umgebungsvariablen eintragen</div>
+      <div class="step-time">~5 Min</div>
+    </div>
+
+    <p>Das sind deine Passwörter und API-Keys aus der <code>.env</code>-Datei. Du trägst sie direkt in Render ein – so bleiben sie sicher und kommen nie auf GitHub.</p>
+
+    <p>Scrolle auf der Seite nach unten bis zum Abschnitt <em>„Environment Variables"</em> und trage diese Werte ein:</p>
+
+    <table class="field-table">
+      <tr>
+        <th>Key (linkes Feld)</th>
+        <th>Value (rechtes Feld)</th>
+      </tr>
+      <tr>
+        <td><span class="field-name">GARMIN_EMAIL</span></td>
+        <td><span class="field-val">deine Garmin E-Mail-Adresse</span></td>
+      </tr>
+      <tr>
+        <td><span class="field-name">GARMIN_PASSWORD</span></td>
+        <td><span class="field-val">dein Garmin Passwort</span></td>
+      </tr>
+      <tr>
+        <td><span class="field-name">GITHUB_TOKEN</span></td>
+        <td><span class="field-val">dein Classic PAT (ghp_...)</span></td>
+      </tr>
+      <tr>
+        <td><span class="field-name">SUPABASE_URL</span></td>
+        <td><span class="field-val">deine Supabase URL (falls vorhanden)</span></td>
+      </tr>
+      <tr>
+        <td><span class="field-name">SUPABASE_ANON_KEY</span></td>
+        <td><span class="field-val">dein Supabase Key (falls vorhanden)</span></td>
+      </tr>
+    </table>
+
+    <div class="box box-warn">
+      <div class="box-icon">⚠</div>
+      <div class="box-text">
+        <strong>Withings-Credentials:</strong> Die <code>.withings_credentials.json</code>-Datei kann nicht als Umgebungsvariable eingetragen werden.
+        Du musst sie nach dem ersten Deploy manuell hochladen (ähnlich wie Schritt 6 für die Datenbank).
+        Alternativ: Withings-Abruf erstmal weglassen und nur Garmin nutzen.
+      </div>
+    </div>
+  </div>
+
+  <!-- SCHRITT 5 -->
+  <div class="step" id="step5">
+    <div class="step-header">
+      <div class="step-num">5</div>
+      <div class="step-title">Ersten Deploy starten &amp; warten</div>
+      <div class="step-time">~5 Min</div>
+    </div>
+
+    <ul class="actions">
+      <li>
+        <div class="action-num">1</div>
+        <div class="action-text">
+          Klicke unten auf der Seite auf <em>„Create Web Service"</em>
+          <div class="hint">Render beginnt jetzt den ersten Build.</div>
+        </div>
+      </li>
+      <li>
+        <div class="action-num">2</div>
+        <div class="action-text">
+          Du siehst einen schwarzen Log-Bereich mit laufendem Text – das ist normal.
+          Warte bis dort steht: <em style="color:var(--green)">„Your service is live 🎉"</em>
+          <div class="hint">Dauert beim ersten Mal 2–5 Minuten.</div>
+        </div>
+      </li>
+      <li>
+        <div class="action-num">3</div>
+        <div class="action-text">
+          Oben links siehst du die URL deiner App:
+          <code>https://fitness-dashboard.onrender.com</code>
+          <div class="hint">Name variiert je nachdem was du in Schritt 3 eingetragen hast.</div>
+        </div>
+      </li>
+      <li>
+        <div class="action-num">4</div>
+        <div class="action-text">
+          Klicke auf die URL – dein Dashboard sollte erscheinen!
+        </div>
+      </li>
+    </ul>
+
+    <div class="box box-err">
+      <div class="box-icon">✗</div>
+      <div class="box-text">
+        <strong>Deploy fehlgeschlagen?</strong> Schaue im Log nach der roten Fehlermeldung.
+        Die häufigsten Ursachen stehen im Abschnitt „Häufige Probleme" unten.
+      </div>
+    </div>
+  </div>
+
+  <!-- SCHRITT 6 -->
+  <div class="step" id="step6">
+    <div class="step-header">
+      <div class="step-num">6</div>
+      <div class="step-title">Datenbank hochladen (einmalig)</div>
+      <div class="step-time">~3 Min</div>
+    </div>
+
+    <p>Deine <code>fitness.db</code> enthält alle bisherigen Logs. Wenn sie im Git-Repo ist, wurde sie automatisch mitgenommen. Falls nicht, kannst du sie so hochladen:</p>
+
+    <div class="box box-info">
+      <div class="box-icon">ℹ</div>
+      <div class="box-text">
+        <strong>Option A (einfacher):</strong> Die <code>fitness.db</code> ist in deinem GitHub-Repo → sie wird automatisch deployed. Prüfe ob sie in <code>.gitignore</code> steht – wenn ja, entferne den Eintrag und pushe neu.
+      </div>
+    </div>
+
+    <div class="box box-warn">
+      <div class="box-icon">⚠</div>
+      <div class="box-text">
+        <strong>Wichtiger Hinweis:</strong> Render's Free Tier hat kein persistentes Dateisystem.
+        Das bedeutet: Neue Daten die du online abrufst (Garmin, Withings) gehen verloren sobald der Service neu startet.
+        <br><br>
+        <strong>Lösung:</strong> Nutze die App primär <em>lokal</em> für Datenabruf und Import.
+        Online-Zugriff eignet sich zum Ablesen der Dashboard-Ansicht.
+        Für vollständige Persistenz wäre ein Upgrade auf Render Starter (7$/Monat) nötig.
+      </div>
+    </div>
+  </div>
+
+  <!-- SCHRITT 7 -->
+  <div class="step" id="step7">
+    <div class="step-header">
+      <div class="step-num">7</div>
+      <div class="step-title">Spätere Updates deployen</div>
+      <div class="step-time">1 Klick</div>
+    </div>
+
+    <p>Sobald du etwas am Code änderst und auf GitHub pushst, aktualisiert sich Render <strong>automatisch</strong>.</p>
+
+    <ul class="actions">
+      <li>
+        <div class="action-num">1</div>
+        <div class="action-text">
+          Code ändern, dann Import-Seite → <em>„↑ Zu GitHub pushen"</em>
+        </div>
+      </li>
+      <li>
+        <div class="action-num">2</div>
+        <div class="action-text">
+          Render erkennt den neuen Commit und startet automatisch einen neuen Build
+          <div class="hint">Du siehst das in Render unter „Events" – dauert 1–3 Minuten.</div>
+        </div>
+      </li>
+      <li>
+        <div class="action-num">3</div>
+        <div class="action-text">
+          Nach Abschluss läuft die neue Version live
+        </div>
+      </li>
+    </ul>
+
+    <div class="box box-ok">
+      <div class="box-icon">✓</div>
+      <div class="box-text">
+        Das ist der komplette Workflow: Lokal bearbeiten → GitHub pushen → Render deployed automatisch. Kein weiteres Zutun nötig.
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <div class="step" id="faq">
+    <div class="step-header">
+      <div class="step-num" style="background:var(--soft)">?</div>
+      <div class="step-title">Häufige Probleme &amp; Lösungen</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">🔴 Deploy schlägt fehl mit „No module named X"</div>
+      <div class="faq-a">Ein Python-Paket fehlt in <code>requirements.txt</code>. Schaue welches Modul gemeint ist und füge es in requirements.txt ein, dann neu pushen.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">🔴 „uvicorn: command not found"</div>
+      <div class="faq-a">Stelle sicher dass <code>uvicorn[standard]</code> in requirements.txt steht (mit eckigen Klammern).</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">🟡 Die Seite lädt 30 Sekunden beim ersten Aufruf</div>
+      <div class="faq-a">Normal! Der Free-Tier schläft nach 15 Min Inaktivität ein. Der erste Aufruf weckt ihn auf. Danach reagiert er sofort.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">🟡 Garmin-Abruf schlägt online fehl</div>
+      <div class="faq-a">Garmin kann bei unbekannten IP-Adressen (Render-Server) eine Zwei-Faktor-Bestätigung verlangen oder kurz sperren. Garmin-Abruf lokal machen und Datenbank über GitHub aktuell halten.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">🔴 „sqlite3.OperationalError: unable to open database file"</div>
+      <div class="faq-a">Die Datenbank wurde nicht gefunden. Prüfe ob <code>fitness.db</code> im Repo-Root liegt und in .gitignore <em>nicht</em> eingetragen ist.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">🟡 Ich möchte das Dashboard mit einem Passwort schützen</div>
+      <div class="faq-a">Render bietet unter „Settings" → „Basic Auth" eine einfache Passwort-Absicherung an (HTTP Basic Auth). Das reicht für persönlichen Gebrauch vollkommen aus.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">🟡 Neue Daten online sind nach Neustart weg</div>
+      <div class="faq-a">Das ist das persistente Dateisystem-Problem des Free Tiers (erklärt in Schritt 6). Für die Ansicht/Ablesen ist das kein Problem – nur Datenabruf lokal machen.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">🟢 Ich möchte eine eigene Domain (z.B. marco-fitness.de)</div>
+      <div class="faq-a">In Render unter „Settings" → „Custom Domains" eintragen. Du brauchst eine Domain (~10€/Jahr bei Namecheap/INWX) und richtest dort einen CNAME auf deine Render-URL ein. Render stellt dann automatisch HTTPS aus.</div>
+    </div>
+  </div>
+
+  <!-- SUCCESS -->
+  <div class="success">
+    <div class="success-icon">🎉</div>
+    <div class="success-title">Fertig – Dashboard ist online!</div>
+    <div class="success-sub">
+      Gesamtaufwand: ca. 20–25 Minuten · Kosten: 0€<br>
+      Deine URL: <code>https://[dein-name].onrender.com</code>
+    </div>
+  </div>
+
+  <div style="text-align:center;font-size:.75rem;color:var(--muted);padding-bottom:20px">
+    Fitness Dashboard · Deployment-Anleitung · Stand 16.04.2026
+  </div>
+
+</div>
+</body>
+</html>

@@ -28,6 +28,14 @@
 html{font-size:15px;scroll-behavior:smooth}
 body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;font-size:.875rem;line-height:1.6;overflow-x:hidden}
 
+/* TOAST */
+#toast-container{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{background:rgba(30,30,30,.95);border:1px solid rgba(255,255,255,.12);color:var(--text);border-radius:12px;padding:10px 18px;font-size:13px;font-weight:600;box-shadow:0 6px 24px rgba(0,0,0,.5);animation:toast-in .2s ease forwards;pointer-events:none;white-space:nowrap;max-width:90vw}
+.toast.ok{border-color:rgba(63,185,164,.4);color:var(--teal)}
+.toast.warn{border-color:rgba(232,166,48,.4);color:var(--gold)}
+@keyframes toast-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes toast-out{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(10px)}}
+
 /* SHELL */
 .shell{display:grid;grid-template-columns:260px minmax(0,1fr);min-height:100vh}
 .side{padding:24px 20px;background:linear-gradient(160deg,var(--panel),var(--panel2));border-right:1px solid var(--line);display:flex;flex-direction:column;gap:14px;position:sticky;top:0;height:100vh;overflow:auto}
@@ -230,8 +238,19 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
 .group-assign-name{font-size:12px;font-weight:600}
 [data-theme="light"] .group-assign-row{border-bottom-color:rgba(0,0,0,.06)}
 .catalog-list{display:grid;gap:8px}
-.catalog-row{display:grid;grid-template-columns:52px 1fr auto;gap:10px;align-items:center;padding:8px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.02)}
-.catalog-img{width:52px;height:52px;border-radius:8px;object-fit:cover;border:1px solid var(--line);background:rgba(255,255,255,.03)}
+.catalog-row{display:grid;grid-template-columns:64px 1fr auto;gap:10px;align-items:center;padding:8px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.02)}
+.catalog-img{width:64px;height:64px;border-radius:10px;object-fit:cover;border:1px solid var(--line);background:rgba(255,255,255,.03);cursor:zoom-in;transition:transform .15s ease}
+.catalog-img:hover{transform:scale(1.06)}
+/* Device detail overlay */
+#device-detail-overlay{display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.75);align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+#device-detail-overlay.open{display:flex}
+.device-detail-card{background:var(--panel);border:1px solid var(--line);border-radius:20px;max-width:420px;width:92vw;overflow:hidden;animation:toast-in .2s ease}
+.device-detail-img{width:100%;height:220px;object-fit:contain;background:rgba(255,255,255,.03);border-bottom:1px solid var(--line);padding:16px}
+.device-detail-img-empty{height:120px;display:flex;align-items:center;justify-content:center;color:var(--soft);font-size:13px;border-bottom:1px solid var(--line)}
+.device-detail-body{padding:18px}
+.device-detail-name{font-size:1.1rem;font-weight:800;margin-bottom:4px}
+.device-detail-meta{font-size:11px;color:var(--soft);font-family:'JetBrains Mono',monospace;margin-bottom:16px}
+.device-detail-actions{display:flex;flex-direction:column;gap:8px}
 .catalog-meta{font-size:10px;color:var(--soft);font-family:'JetBrains Mono',monospace}
 [data-theme="light"] .catalog-row{background:rgba(0,0,0,.02)}
 .sync-status{font-size:10px;color:var(--soft);margin-top:6px}
@@ -532,9 +551,256 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
 .peptide-big{font-size:28px;text-align:center;padding:12px 0 4px}
 .peptide-big-sub{text-align:center;font-size:11px;color:var(--soft);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
 @media(max-width:640px){
-  .compound-row{grid-template-columns:1fr 80px 26px}
-  .compound-row .compound-interval,.compound-row .compound-color-dot{display:none}
+  .compound-row{grid-template-columns:1fr 70px 1fr 26px}
+  .compound-row .compound-color-dot{display:none}
   .peptide-grid{grid-template-columns:1fr 1fr}
+}
+
+/* ══ ITEM 7: iOS APP FEEL ════════════════════════════════════════ */
+
+/* Press-scale feedback — universal */
+.btn:active{transform:scale(0.95)!important;transition:transform .07s!important}
+.pill:active{transform:scale(0.93)!important;transition:transform .07s!important}
+.ex-tile:active{transform:scale(0.99)!important;transition:transform .07s!important}
+.nav-btn:active{transform:scale(0.97)!important}
+.cal-nav-btn:active{transform:scale(0.94)!important}
+
+/* Smooth tap color shifts */
+@media(max-width:640px){
+
+  /* ── Glassmorphism: Bottom Nav ─────────────────────────────── */
+  .mobile-bottom-nav{
+    background:rgba(9,9,13,.84) !important;
+    backdrop-filter:blur(32px) saturate(180%) !important;
+    -webkit-backdrop-filter:blur(32px) saturate(180%) !important;
+    border-top:1px solid rgba(255,255,255,.09) !important;
+    box-shadow:0 -4px 40px rgba(0,0,0,.5) !important;
+  }
+  [data-theme="light"] .mobile-bottom-nav{
+    background:rgba(238,235,228,.9) !important;
+    border-top:1px solid rgba(0,0,0,.1) !important;
+    box-shadow:0 -2px 20px rgba(0,0,0,.1) !important;
+  }
+
+  /* Tab press + active dot indicator */
+  .m5-tab{position:relative;overflow:visible}
+  .m5-tab:active{transform:scale(0.82)!important;transition:transform .07s!important}
+  .m5-tab.active{color:var(--gold)!important}
+  .m5-tab.active::after{
+    content:'';
+    position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+    width:22px;height:3px;border-radius:2px;
+    background:var(--gold);
+  }
+  .m5-center.active::after{display:none}
+  /* Center tab: elevated gold disc */
+  .m5-center svg{
+    background:linear-gradient(145deg,#e8b862,var(--gold)) !important;
+    stroke:#0a0a0a !important;
+    box-shadow:0 3px 14px rgba(208,163,90,.45) !important;
+  }
+  .m5-center:active{transform:scale(0.86) translateY(-4px)!important;transition:transform .07s!important}
+
+  /* ── Glassmorphism: App Header ─────────────────────────────── */
+  #m-app-header{
+    background:rgba(9,9,13,.84) !important;
+    backdrop-filter:blur(32px) saturate(180%) !important;
+    -webkit-backdrop-filter:blur(32px) saturate(180%) !important;
+    border-bottom:1px solid rgba(255,255,255,.07) !important;
+    box-shadow:0 2px 24px rgba(0,0,0,.35) !important;
+  }
+  [data-theme="light"] #m-app-header{
+    background:rgba(238,235,228,.9) !important;
+    border-bottom:1px solid rgba(0,0,0,.09) !important;
+  }
+  .m-header-title{
+    font-size:17px !important;
+    font-weight:800 !important;
+    font-family:'Manrope',sans-serif !important;
+    letter-spacing:-.01em !important;
+  }
+
+  /* ── Exercise Focus Card: depth + glass ───────────────────── */
+  .m-ex-card{
+    background:linear-gradient(160deg,rgba(22,20,30,.93),rgba(12,11,20,.9)) !important;
+    border:1px solid rgba(255,255,255,.11) !important;
+    box-shadow:0 16px 56px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.08) !important;
+    border-radius:26px !important;
+  }
+  [data-theme="light"] .m-ex-card{
+    background:linear-gradient(160deg,var(--panel),var(--panel2)) !important;
+    border:1px solid rgba(0,0,0,.07) !important;
+    box-shadow:0 8px 32px rgba(0,0,0,.1) !important;
+  }
+  .m-ex-big-name{
+    font-size:clamp(26px,7.5vw,36px) !important;
+    line-height:1.1 !important;
+  }
+
+  /* ── Log Button: premium gold ──────────────────────────────── */
+  .m-log-btn{
+    background:linear-gradient(150deg,#f0c470,var(--gold) 50%,#c08828) !important;
+    box-shadow:0 5px 24px rgba(208,163,90,.4),inset 0 1px 0 rgba(255,255,255,.22) !important;
+    border-radius:17px !important;
+    font-size:14px !important;
+    letter-spacing:.06em !important;
+    font-weight:900 !important;
+    color:#0a0807 !important;
+  }
+  .m-log-btn:active{
+    transform:scale(0.96) !important;
+    box-shadow:0 2px 10px rgba(208,163,90,.25) !important;
+    transition:transform .07s,box-shadow .07s !important;
+  }
+
+  /* Nav prev/next buttons */
+  .m-nav-btn{
+    border-radius:14px !important;
+    background:rgba(255,255,255,.06) !important;
+    border:1px solid rgba(255,255,255,.1) !important;
+    font-size:20px !important;
+  }
+  .m-nav-btn:active{transform:scale(0.88)!important;transition:transform .07s!important}
+
+  /* ── Rest Timer: pulse glow ───────────────────────────────── */
+  .m-rest-bar{
+    background:linear-gradient(135deg,rgba(208,163,90,.13),rgba(208,163,90,.07)) !important;
+    border:1px solid rgba(208,163,90,.3) !important;
+    border-radius:18px !important;
+    animation:rest-glow 2.2s ease-in-out infinite !important;
+  }
+  @keyframes rest-glow{
+    0%,100%{box-shadow:0 0 0 0 rgba(208,163,90,0)}
+    50%{box-shadow:0 0 22px 3px rgba(208,163,90,.22)}
+  }
+  .m-rest-val{font-size:38px !important;letter-spacing:-.04em !important}
+
+  /* ── Pool Sheet: frosted glass ────────────────────────────── */
+  #m-pool-sheet{
+    background:rgba(12,11,18,.95) !important;
+    backdrop-filter:blur(26px) saturate(150%) !important;
+    -webkit-backdrop-filter:blur(26px) saturate(150%) !important;
+    border-top:1px solid rgba(255,255,255,.1) !important;
+    box-shadow:0 -8px 48px rgba(0,0,0,.55) !important;
+    border-radius:28px 28px 0 0 !important;
+  }
+  [data-theme="light"] #m-pool-sheet{
+    background:rgba(246,244,240,.97) !important;
+    border-top:1px solid rgba(0,0,0,.1) !important;
+  }
+  .m-sheet-handle{
+    width:44px !important;height:5px !important;border-radius:3px !important;
+    background:rgba(255,255,255,.2) !important;
+    margin:0 auto 16px !important;
+  }
+
+  /* Pool list items */
+  .m-pool-item{
+    border-radius:16px !important;
+    background:rgba(255,255,255,.04) !important;
+    border:1px solid rgba(255,255,255,.09) !important;
+    padding:12px 14px !important;
+    transition:background .12s,transform .08s !important;
+  }
+  .m-pool-item:active{background:rgba(208,163,90,.07)!important;transform:scale(0.98)!important}
+  .m-pool-add-btn{
+    border-radius:12px !important;
+    padding:8px 14px !important;
+    font-size:13px !important;
+  }
+  .m-pool-add-btn:active{transform:scale(0.9)!important;transition:transform .07s!important}
+
+  /* ── Sub-tab bar: rounder pills ───────────────────────────── */
+  .m-subtab{
+    padding:7px 16px !important;
+    border-radius:22px !important;
+    font-size:11px !important;
+    border:1px solid rgba(255,255,255,.09) !important;
+    background:rgba(255,255,255,.04) !important;
+    transition:background .15s,transform .07s !important;
+  }
+  .m-subtab:active{transform:scale(0.91)!important}
+
+  /* ── Pool FAB: glow ring ──────────────────────────────────── */
+  .m-pool-fab{
+    background:rgba(208,163,90,.16) !important;
+    border:1px solid rgba(208,163,90,.42) !important;
+    box-shadow:0 4px 22px rgba(208,163,90,.2) !important;
+    padding:11px 28px !important;
+    font-size:12px !important;
+    letter-spacing:.1em !important;
+    border-radius:999px !important;
+  }
+  .m-pool-fab:active{opacity:.8 !important;transition:opacity .07s !important}
+
+  /* ── Stats grid: glass tiles ──────────────────────────────── */
+  .m-stat{
+    border-radius:18px !important;
+    background:rgba(255,255,255,.03) !important;
+    border:1px solid rgba(255,255,255,.09) !important;
+    padding:14px 4px !important;
+  }
+  .m-stat-val{font-size:28px !important;line-height:1 !important}
+
+  /* ── Catalog: 2-column card grid ──────────────────────────── */
+  .catalog-list{
+    grid-template-columns:1fr 1fr !important;
+    gap:10px !important;
+  }
+  .catalog-row{
+    display:flex !important;
+    flex-direction:column !important;
+    grid-template-columns:unset !important;
+    padding:0 !important;
+    overflow:hidden !important;
+    border-radius:18px !important;
+    gap:0 !important;
+    align-items:stretch !important;
+    background:rgba(255,255,255,.04) !important;
+    border:1px solid rgba(255,255,255,.09) !important;
+    transition:transform .1s !important;
+    cursor:pointer !important;
+  }
+  .catalog-row:active{transform:scale(0.96)!important}
+  .catalog-img{
+    width:100% !important;
+    height:96px !important;
+    border-radius:0 !important;
+    border:none !important;
+    border-bottom:1px solid rgba(255,255,255,.07) !important;
+    cursor:pointer !important;
+  }
+  /* Info div: compact */
+  .catalog-row > div:nth-child(2){
+    padding:8px 10px 6px !important;
+  }
+  .catalog-row > div:nth-child(2) > div:first-child{
+    font-size:11px !important;
+    font-weight:800 !important;
+    line-height:1.3 !important;
+    white-space:normal !important;
+  }
+  /* Hide inline buttons on mobile → use detail overlay */
+  .catalog-row > div:last-child:not(:nth-child(2)){
+    display:none !important;
+  }
+
+  /* ── Cards: tighter on mobile ─────────────────────────────── */
+  .card{
+    border-radius:20px !important;
+    box-shadow:0 8px 36px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.05) !important;
+  }
+
+  /* ── Device detail overlay: better on mobile ─────────────── */
+  .device-detail-card{
+    border-radius:26px !important;
+    overflow:hidden !important;
+  }
+  .device-detail-actions .btn{
+    border-radius:14px !important;
+    padding:13px 16px !important;
+    font-size:12px !important;
+  }
 }
 </style>
 </head>
@@ -879,7 +1145,7 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
             <label>Kategorie</label>
             <select id="new-ex-cat">
               <option>Brust</option><option>Rücken</option><option>Beine</option>
-              <option>Schulter</option><option>Arme</option><option>Core</option>
+              <option>Glutes</option><option>Schulter</option><option>Arme</option><option>Core</option>
             </select>
           </div>
           <div class="form-group" style="margin:0">
@@ -926,7 +1192,7 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
             <select id="catalog-target">
               <option value="">Alle</option>
               <option>Brust</option><option>Rücken</option><option>Beine</option>
-              <option>Schulter</option><option>Arme</option><option>Core</option><option>Glutes</option>
+              <option>Glutes</option><option>Schulter</option><option>Arme</option><option>Core</option>
             </select>
           </div>
           <div class="form-group" style="margin:0">
@@ -1133,6 +1399,18 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
   </div>
 </div>
 
+<!-- DEVICE DETAIL OVERLAY -->
+<div id="device-detail-overlay" onclick="if(event.target===this)closeDeviceDetail()">
+  <div class="device-detail-card">
+    <div id="device-detail-img-wrap"></div>
+    <div class="device-detail-body">
+      <div class="device-detail-name" id="device-detail-name">—</div>
+      <div class="device-detail-meta" id="device-detail-meta">—</div>
+      <div class="device-detail-actions" id="device-detail-actions"></div>
+    </div>
+  </div>
+</div>
+
 <!-- LOGGER MODAL -->
 <div id="logger-modal" class="modal-overlay" onclick="closeModalOutside(event)">
   <div class="modal-box">
@@ -1201,10 +1479,10 @@ let catalogSource = 'local';
 let autoSyncTimer = null;
 let catalogStatusText = '';
 let gym80CategoryMap = null;
-const BUILD_STAMP = '2026-04-16 16:00';
+const BUILD_STAMP = '2026-04-16 21:30';
 
-const CATS = ['Brust','Rücken','Beine','Schulter','Arme','Core'];
-const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
+const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
+const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
 const SESSION_LABELS = {push:'Push Session',pull_a:'Pull A Session',pull_b:'Pull B Session',legs:'Beine Session',free:'Freie Session',cardio:'Cardio Session'};
 const TRAIN_TABS = ['push','pull_a','pull_b','legs','free','cardio'];
 
@@ -1237,19 +1515,65 @@ const DEVICE_CATALOG = [
   {brand:'Freihantel', name:'Seitheben Kurzhantel', type:'Hantel', target:'Schulter', cat:'Schulter', sType:'push', group:'Schulter Isolation', art:null, img:null},
   {brand:'Freihantel', name:'Schrägbank Kurzhantel', type:'Hantel', target:'Brust', cat:'Brust', sType:'push', group:'Brustpresse schräg', art:null, img:null}
 ];
-const DB_VERSION = '6';
-// Automatischer Reset wenn alte Demo-Daten im localStorage sind
+const DB_VERSION = '7';
+// Migration: alte Demo-Daten entfernen ODER Version updaten ohne History zu löschen
 (function(){
   const stored = localStorage.getItem('ifl_training_db');
-  if(stored && (stored.includes('Bankdrücken') || stored.includes('Klimmz') || localStorage.getItem('ifl_db_version') !== DB_VERSION)){
+  const storedVer = localStorage.getItem('ifl_db_version');
+  const hasOldDemo = stored && (stored.includes('Bankdrücken') || stored.includes('Klimmz'));
+
+  if(hasOldDemo){
+    // Echte Demo-Daten: komplett wipe ist ok
     localStorage.removeItem('ifl_training_db');
     localStorage.setItem('ifl_db_version', DB_VERSION);
+  } else if(stored && storedVer !== DB_VERSION){
+    // Version-Update: History sichern, dann Basis-Übungen resetten, History zurückspielen
+    try {
+      const existing = JSON.parse(stored);
+      // History je Übungs-Name retten
+      const histMap = {};
+      existing.forEach(ex => { if(ex.name && ex.history && Object.keys(ex.history).length) histMap[ex.name] = ex.history; });
+      const prevMap = {};
+      existing.forEach(ex => { if(ex.name && ex.prev && Object.keys(ex.prev).length) prevMap[ex.name] = ex.prev; });
+      // Benutzerdefinierte Übungen (nicht in Default-IDs 1-28) behalten
+      const customExercises = existing.filter(ex => ex.id > 100);
+      localStorage.removeItem('ifl_training_db');
+      localStorage.setItem('ifl_db_version', DB_VERSION);
+      localStorage.setItem('ifl_history_backup', JSON.stringify(histMap));
+      localStorage.setItem('ifl_prev_backup', JSON.stringify(prevMap));
+      localStorage.setItem('ifl_custom_backup', JSON.stringify(customExercises));
+    } catch(e){
+      localStorage.removeItem('ifl_training_db');
+      localStorage.setItem('ifl_db_version', DB_VERSION);
+    }
   }
 })();
 
 function loadDB(){
   const s = localStorage.getItem('ifl_training_db');
-  if(s) return JSON.parse(s);
+  if(s){
+    const parsed = JSON.parse(s);
+    // History-Backup zurückspielen falls vorhanden (nach Version-Migration)
+    const hb = localStorage.getItem('ifl_history_backup');
+    const pb = localStorage.getItem('ifl_prev_backup');
+    const cb = localStorage.getItem('ifl_custom_backup');
+    if(hb || pb){
+      const histMap = hb ? JSON.parse(hb) : {};
+      const prevMap = pb ? JSON.parse(pb) : {};
+      parsed.forEach(ex => {
+        if(histMap[ex.name]) ex.history = histMap[ex.name];
+        if(prevMap[ex.name]) ex.prev = prevMap[ex.name];
+      });
+    }
+    if(cb){
+      const customs = JSON.parse(cb);
+      customs.forEach(c => { if(!parsed.find(x=>x.id===c.id)) parsed.push(c); });
+      localStorage.removeItem('ifl_custom_backup');
+    }
+    if(hb) localStorage.removeItem('ifl_history_backup');
+    if(pb) localStorage.removeItem('ifl_prev_backup');
+    return parsed;
+  }
   return [
     // ── PUSH · Brust  [Contact Habenhausen] ─────────────────────────
     {id:1,  name:'Brustpresse',            art:'3016', brand:'gym80 Sygnum',     cat:'Brust',    sType:'push', group:'Brustpresse flach',  gym:'Contact Habenhausen', status:'pool', order:1,  img:SB_IMG+'3016.webp', history:{}, prev:{}},
@@ -1276,12 +1600,17 @@ function loadDB(){
     {id:27, name:'Klimmzüge',                   art:null,   brand:null,            cat:'Rücken',   sType:'pull', group:'Latpresse',          gym:'Contact Habenhausen', status:'pool', order:27, img:null,               history:{}, prev:{}},
     // ── BEINE (Freigewicht / Egym) ───────────────────────────────────
     {id:17, name:'Beinbeuger sitzend',          art:null,   brand:null,            cat:'Beine',    sType:'legs', group:'Hamstring',          gym:'Contact Habenhausen', status:'pool', order:17, img:null,               history:{}, prev:{}},
-    {id:26, name:'Hip Thrust',                  art:null,   brand:null,            cat:'Beine',    sType:'legs', group:'Hüfte',              gym:'Contact Habenhausen', status:'pool', order:26, img:null,               history:{}, prev:{}},
+    {id:26, name:'Hip Thrust',                  art:null,   brand:null,            cat:'Glutes',   sType:'legs', group:'Glutes',             gym:'Contact Habenhausen', status:'pool', order:26, img:null,               history:{}, prev:{}},
     // ── PUSH · Brust (Freigewicht / Multipresse) ─────────────────────
     {id:18, name:'Schrägbankdrücken Multipresse', art:null, brand:null,            cat:'Brust',    sType:'push', group:'Brustpresse schräg', gym:'Contact Habenhausen', status:'pool', order:18, img:null,               history:{}, prev:{}},
     // ── PUSH · Schulter ──────────────────────────────────────────────
     {id:19, name:'Schulterdrücken Multipresse', art:null,   brand:null,            cat:'Schulter', sType:'push', group:'Schulterdrücken',    gym:'Contact Habenhausen', status:'pool', order:19, img:null,               history:{}, prev:{}},
-    {id:28, name:'Egym Schulterdrücken',        art:null,   brand:'Egym',          cat:'Schulter', sType:'push', group:'Schulterdrücken',    gym:'Contact Habenhausen', status:'pool', order:28, img:null,               history:{}, prev:{}},
+    {id:28, name:'Egym Schulterdrücken',        art:null,   brand:'eGym',          cat:'Schulter', sType:'push', group:'Schulterdrücken',    gym:'Fitness Park Aumund', status:'pool', order:28, img:null,               history:{}, prev:{}},
+    {id:29, name:'Egym Beinpresse',             art:null,   brand:'eGym',          cat:'Beine',    sType:'legs', group:'Kniebeuge',           gym:'Fitness Park Aumund', status:'pool', order:29, img:null,               history:{}, prev:{}},
+    {id:30, name:'Egym Latpresse',              art:null,   brand:'eGym',          cat:'Rücken',   sType:'pull', group:'Latpresse',           gym:'Fitness Park Aumund', status:'pool', order:30, img:null,               history:{}, prev:{}},
+    {id:31, name:'Egym Brust',                  art:null,   brand:'eGym',          cat:'Brust',    sType:'push', group:'Brustpresse flach',   gym:'Fitness Park Aumund', status:'pool', order:31, img:null,               history:{}, prev:{}},
+    {id:32, name:'Egym Hip Thrust',             art:null,   brand:'eGym',          cat:'Glutes',   sType:'legs', group:'Glutes',              gym:'Fitness Park Aumund', status:'pool', order:32, img:null,               history:{}, prev:{}},
+    {id:33, name:'Egym Bauch',                  art:null,   brand:'eGym',          cat:'Core',     sType:'free', group:'Core',                gym:'Fitness Park Aumund', status:'pool', order:33, img:null,               history:{}, prev:{}},
     {id:20, name:'Seitheben Kabelzug',          art:null,   brand:null,            cat:'Schulter', sType:'push', group:'Schulter Isolation', gym:'Contact Habenhausen', status:'pool', order:20, img:null,               history:{}, prev:{}},
     {id:21, name:'Seitheben Kurzhantel',        art:null,   brand:null,            cat:'Schulter', sType:'push', group:'Schulter Isolation', gym:'Contact Habenhausen', status:'pool', order:21, img:null,               history:{}, prev:{}},
     // ── PUSH · Arme ──────────────────────────────────────────────────
@@ -1594,6 +1923,7 @@ function addToCurrentSession(id){
   ex.order = maxOrder + 1;
   saveDB();
   render();
+  showToast(`✓ ${ex.name} → Session`, 'ok');
 }
 
 function moveExercise(id, step){
@@ -2686,7 +3016,10 @@ function inferFromName(name){
   if(n.includes('row') || n.includes('ruder') || n.includes('lat') || n.includes('rücken')){
     return { target: 'Rücken', cat: 'Rücken', sType: 'pull', group: 'Rudern' };
   }
-  if(n.includes('leg') || n.includes('quad') || n.includes('ham') || n.includes('glute') || n.includes('bein')){
+  if(n.includes('hip thrust') || n.includes('glute') || n.includes('po ') || n.includes('gesäß')){
+    return { target: 'Glutes', cat: 'Glutes', sType: 'legs', group: 'Glutes' };
+  }
+  if(n.includes('leg') || n.includes('quad') || n.includes('ham') || n.includes('bein')){
     return { target: 'Beine', cat: 'Beine', sType: 'legs', group: 'Kniebeuge' };
   }
   if(n.includes('shoulder') || n.includes('deltoid') || n.includes('schulter') || n.includes('seitheben')){
@@ -2741,7 +3074,32 @@ function handleImageError(img, brand){
   img.style.display = 'none';
   const parent = img.parentElement;
   if(!parent) return;
-  parent.innerHTML = `<div class="catalog-img" style="display:flex;align-items:center;justify-content:center;color:var(--soft);border:1px dashed var(--line)">[${brand || 'Gerät'} ohne Bild]</div>`;
+  parent.innerHTML = `<div class="catalog-img" style="display:flex;align-items:center;justify-content:center;color:var(--soft);border:1px dashed var(--line);cursor:default;">[${brand || 'Gerät'} ohne Bild]</div>`;
+}
+
+// ── Device Detail Overlay ─────────────────────────────────────
+function openDeviceDetail(idx){
+  const item = catalogMatches[idx];
+  if(!item) return;
+  const imgUrl = getCatalogImage(item);
+  const imgWrap = document.getElementById('device-detail-img-wrap');
+  imgWrap.innerHTML = imgUrl
+    ? `<img src="${imgUrl}" class="device-detail-img" alt="${item.name}" onerror="this.parentElement.innerHTML='<div class=device-detail-img-empty>Kein Bild verfügbar</div>'">`
+    : `<div class="device-detail-img-empty">Kein Bild verfügbar</div>`;
+  document.getElementById('device-detail-name').textContent = item.name || '—';
+  document.getElementById('device-detail-meta').textContent =
+    [item.brand, item.type, item.target, item.group].filter(Boolean).join(' · ');
+  document.getElementById('device-detail-actions').innerHTML = `
+    <button class="btn btn-secondary btn-sm" onclick="addCatalogExerciseByIndex(${idx},'global');closeDeviceDetail()">+ Standard-Pool</button>
+    <button class="btn btn-secondary btn-sm" onclick="addCatalogExerciseByIndex(${idx},'studio');closeDeviceDetail()">+ Studio-Pool (${currentStudio||'aktuell'})</button>
+    <button class="btn btn-teal btn-sm" onclick="addCatalogExerciseByIndex(${idx},true);closeDeviceDetail()">+ Session</button>
+    <button class="btn btn-secondary btn-sm" style="margin-top:4px;color:var(--soft)" onclick="closeDeviceDetail()">Schließen</button>
+  `;
+  document.getElementById('device-detail-overlay').classList.add('open');
+}
+
+function closeDeviceDetail(){
+  document.getElementById('device-detail-overlay').classList.remove('open');
 }
 
 function renderCatalogResults(resetOffset){
@@ -2762,10 +3120,10 @@ function renderCatalogResults(resetOffset){
   list.innerHTML = slice.length ? slice.map((item, idx)=>`
     <div class="catalog-row">
       ${getCatalogImage(item)
-        ? `<img class="catalog-img" src="${getCatalogImage(item)}" alt="" loading="lazy" onerror="handleImageError(this, '${(item.brand || 'Gerät').replace(/'/g, '&apos;')}')">`
-        : `<div class="catalog-img" style="display:flex;align-items:center;justify-content:center;color:var(--soft);border:1px dashed var(--line)">[${(item.brand || 'Gerät')} ohne Bild]</div>`
+        ? `<img class="catalog-img" src="${getCatalogImage(item)}" alt="" loading="lazy" onclick="openDeviceDetail(${idx})" onerror="handleImageError(this, '${(item.brand || 'Gerät').replace(/'/g, '&apos;')}')">`
+        : `<div class="catalog-img" style="display:flex;align-items:center;justify-content:center;color:var(--soft);border:1px dashed var(--line);cursor:pointer" onclick="openDeviceDetail(${idx})">[${(item.brand || 'Gerät')}]</div>`
       }
-      <div>
+      <div style="cursor:pointer" onclick="openDeviceDetail(${idx})">
         <div style="font-size:12px;font-weight:700">${item.name}</div>
         <div class="catalog-meta">${item.brand} · ${item.type} · ${item.target}</div>
       </div>
@@ -2793,7 +3151,7 @@ function addCatalogExerciseByIndex(idx, target){
     (scope==='global' || ex.gym===currentStudio)
   );
   if(exists){
-    alert('Übung ist bereits im passenden Pool vorhanden.');
+    showToast('Bereits im Pool vorhanden', 'warn');
     return;
   }
   const newEx = {
@@ -2820,6 +3178,10 @@ function addCatalogExerciseByIndex(idx, target){
       0
     );
     newEx.order = maxOrder + 1;
+    showToast(`✓ ${name} → Session`, 'ok');
+  } else {
+    const label = scope === 'studio' ? 'Studio-Pool' : 'Standard-Pool';
+    showToast(`✓ ${name} → ${label}`, 'ok');
   }
   db.push(newEx);
   saveDB();
@@ -3868,13 +4230,11 @@ function syncMobileRestTimer(){
   if(!isMobile()) return;
   const bar = document.getElementById('m-rest-bar');
   const val = document.getElementById('m-rest-val');
-  const mainTimerWrap = document.getElementById('active-rest-timer');
   if(!bar || !val) return;
-  const running = mainTimerWrap && mainTimerWrap.style.display !== 'none';
-  bar.style.display = running ? 'flex' : 'none';
-  if(running){
-    const mainVal = document.getElementById('rest-val');
-    if(mainVal) val.textContent = mainVal.textContent;
+  bar.style.display = timerRunning ? 'flex' : 'none';
+  if(timerRunning){
+    const m = Math.floor(timerSec/60), s = timerSec % 60;
+    val.textContent = `${m}:${String(s).padStart(2,'0')}`;
   }
 }
 
@@ -3919,24 +4279,25 @@ render = function(){
 // ════════════════════════════════════════════════════════════
 
 const COMPOUND_DB = [
-  { name:'Testosteron Enanthat',   hl:4.5  },
-  { name:'Testosteron Cypionat',   hl:5.0  },
-  { name:'Testosteron Propionat',  hl:0.8  },
-  { name:'Testosteron Decanoat',   hl:7.5  },
-  { name:'Sustanon 250',           hl:4.0  },
-  { name:'Trenbolon Enanthat',     hl:5.5  },
-  { name:'Trenbolon Acetat',       hl:1.0  },
-  { name:'Masteron Enanthat',      hl:4.5  },
-  { name:'Masteron Propionat',     hl:2.5  },
-  { name:'Primobolan Depot',       hl:5.0  },
-  { name:'Deca Durabolin',         hl:8.0  },
-  { name:'NPP',                    hl:2.5  },
-  { name:'Boldenon',               hl:14.0 },
-  { name:'Semaglutid (GLP-1)',     hl:7.0  },
-  { name:'Tirzepatid (GLP-1)',     hl:5.0  },
-  { name:'HGH',                    hl:0.2  },
-  { name:'BPC-157',                hl:0.12 },
-  { name:'TB-500',                 hl:5.0  },
+  // Halbwertszeiten: aktive pharmakokinetische HWZ (Tage)
+  { name:'Testosteron Enanthat',   hl:4.5  }, // 4–5 Tage
+  { name:'Testosteron Cypionat',   hl:8.0  }, // 7–8 Tage
+  { name:'Testosteron Propionat',  hl:0.8  }, // ~20h
+  { name:'Testosteron Decanoat',   hl:7.5  }, // 7–8 Tage
+  { name:'Sustanon 250',           hl:4.5  }, // gemischte Ester, effektiv ~4–5 Tage
+  { name:'Trenbolon Enanthat',     hl:5.5  }, // 5–7 Tage
+  { name:'Trenbolon Acetat',       hl:1.0  }, // ~1 Tag
+  { name:'Masteron Enanthat',      hl:5.0  }, // 4–5 Tage
+  { name:'Masteron Propionat',     hl:2.5  }, // 2–3 Tage
+  { name:'Primobolan Depot',       hl:10.0 }, // 10–14 Tage
+  { name:'Deca Durabolin',         hl:15.0 }, // 14–16 Tage
+  { name:'NPP',                    hl:4.0  }, // 3–5 Tage
+  { name:'Boldenon',               hl:14.0 }, // 14 Tage
+  { name:'Semaglutid (GLP-1)',     hl:7.0  }, // 1 Woche
+  { name:'Tirzepatid (GLP-1)',     hl:5.0  }, // 5 Tage
+  { name:'HGH',                    hl:0.2  }, // ~5h s.c.
+  { name:'BPC-157',                hl:0.17 }, // ~4h
+  { name:'TB-500',                 hl:5.0  }, // ~5 Tage
 ];
 
 const COMPOUND_COLORS = [
@@ -4172,6 +4533,24 @@ window.addEventListener('resize', ()=>{
   renderMobilePhase();
   if(isMobile()) initMobile();
 });
+
+// ═══ TOAST ═══════════════════════════════════════════════════
+function showToast(msg, type='ok', durationMs=2200){
+  let container = document.getElementById('toast-container');
+  if(!container){
+    container = document.createElement('div');
+    container.id = 'toast-container';
+    document.body.appendChild(container);
+  }
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  container.appendChild(t);
+  setTimeout(()=>{
+    t.style.animation = 'toast-out .2s ease forwards';
+    setTimeout(()=>t.remove(), 220);
+  }, durationMs);
+}
 </script>
 </body>
 </html>

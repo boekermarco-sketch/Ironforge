@@ -191,7 +191,7 @@ class DailyLog(Base):
     vascular_age = Column(Integer)    # Gefäßalter (Withings Body Scan)
     pulse_wave_velocity = Column(Float)  # m/s (Pulswellengeschwindigkeit)
 
-    # MyFitnessPal / Ernährung
+    # Ernährung
     calories = Column(Integer)
     protein = Column(Float)           # g
     carbs = Column(Float)
@@ -247,6 +247,34 @@ class JournalEntry(Base):
     body_fat_at_time = Column(Float)
     notes = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+# ─── Zusatzpool: Gerätekatalog (gym80 etc.) ──────────────────────────────────
+
+# ─── Stack-Changelog ─────────────────────────────────────────────────────────
+
+class StackChangeLog(Base):
+    """Automatisches Log jeder Änderung an Stack oder DoseEvent."""
+    __tablename__ = "stack_changelog"
+
+    id = Column(Integer, primary_key=True, index=True)
+    changed_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Welches Objekt wurde geändert?
+    object_type = Column(String(50), nullable=False)  # "stack" | "dose_event"
+    object_id = Column(Integer, nullable=False)
+
+    # Art der Änderung
+    action = Column(String(50), nullable=False)       # "created" | "updated" | "deleted"
+
+    # Was hat sich geändert?
+    field_name = Column(String(100))                  # z.B. "dose_amount", "end_date"
+    old_value = Column(Text)
+    new_value = Column(Text)
+
+    # Menschenlesbare Zusammenfassung
+    summary = Column(String(500))                     # z.B. "Testosteron E: 250mg → 200mg"
+    reason = Column(String(500))                      # optional – Begründung vom User
 
 
 # ─── Zusatzpool: Gerätekatalog (gym80 etc.) ──────────────────────────────────

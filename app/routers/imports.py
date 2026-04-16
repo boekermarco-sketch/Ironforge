@@ -18,6 +18,8 @@ from app.services.extra_catalog_import import import_extra_catalogs
 from app.services.supabase_catalog_sync import sync_catalog_to_supabase, get_supabase_catalog_status
 from app.services.training_equipment_seed import seed_training_equipment
 import sqlite3
+import subprocess
+import datetime
 
 
 def _norm_filter_text(value: str) -> str:
@@ -58,14 +60,9 @@ FINAL_EGYM_SQL = Path.home() / "Downloads" / "egym_deutsch_final_download.sql"
 @router.get("/", include_in_schema=False)
 async def imports_overview(request: Request, msg: str = None, db: Session = Depends(get_db)):
     from app.services.api_fetch import _load_last_fetch, _load_last_withings_backfill, _is_garmin_blocked
-    from app.services.mfp_fetch import mfp_configured, _load_last_mfp_fetch
-    from app.services.mfp_csv import MFP_CSV_DIR
     from datetime import timedelta, date
     garmin_configured   = bool(os.getenv("GARMIN_EMAIL") and os.getenv("GARMIN_PASSWORD"))
     withings_configured = CREDS_FILE.exists()
-    mfp_api_ok          = mfp_configured()
-    mfp_csv_ok          = MFP_CSV_DIR.exists() and any(MFP_CSV_DIR.glob("*.csv"))
-    last_mfp_fetch      = _load_last_mfp_fetch()
     supabase_catalog_configured = bool(os.getenv("SUPABASE_URL") and os.getenv("SUPABASE_ANON_KEY"))
     supabase_catalog_status = get_supabase_catalog_status(
         (os.getenv("SUPABASE_URL") or "").strip(),
@@ -81,9 +78,6 @@ async def imports_overview(request: Request, msg: str = None, db: Session = Depe
         "msg": msg,
         "garmin_configured":    garmin_configured,
         "withings_configured":  withings_configured,
-        "mfp_api_ok":           mfp_api_ok,
-        "mfp_csv_ok":           mfp_csv_ok,
-        "last_mfp_fetch":       last_mfp_fetch,
         "withings_ok": WITHINGS_DIR.exists(),
         "garmin_ok":   GARMIN_DIR.exists(),
         "supabase_catalog_configured": supabase_catalog_configured,
@@ -247,7 +241,7 @@ async def import_garmin_single(file: UploadFile = File(...), db: Session = Depen
 @router.post("/apple-health")
 async def import_apple_health(request: Request, db: Session = Depends(get_db)):
     """
-    UPSERT eines Tagesdatensatzes aus Apple Health / MFP.
+    UPSERT eines Tagesdatensatzes aus Apple Health.
     Erwartet JSON: { date, calories, protein_g, carbs_g, fat_g,
                      body_mass_kg, body_fat_pct, steps, resting_hr, sleep_min }
     Felder die fehlen oder None sind werden übersprungen.
@@ -326,42 +320,12 @@ async def debug_withings():
     return JSONResponse({"status": data.get("status"), "types_found": types_found})
 
 
-# ─── MyFitnessPal API (python-myfitnesspal) ──────────────────────────────────
-
-@router.post("/fetch-mfp", include_in_schema=False)
-async def fetch_mfp_route(db: Session = Depends(get_db)):
-    """Holt MFP-Daten seit dem letzten Abruf (erster Aufruf: 90 Tage)."""
-    from app.services.mfp_fetch import fetch_mfp_since_last
-    try:
-        loop = asyncio.get_event_loop()
-        result = await loop.run_in_executor(None, lambda: fetch_mfp_since_last(db))
-    except Exception as exc:
-        return _redirect("/import/", f"MFP Fehler: {exc}")
-    if result.get("error"):
-        return _redirect("/import/", f"MFP Fehler: {result['error']}")
-    fetched = result.get("fetched_dates", [])
-    skipped = result.get("skipped", 0)
-    errors  = result.get("errors", [])
-    parts   = []
-    if fetched:
-        parts.append(f"MFP: {len(fetched)} Tag(e) importiert ({fetched[0]} – {fetched[-1]})")
-    if skipped:
-        parts.append(f"{skipped} ohne Einträge")
-    if errors:
-        parts.append(f"Fehler: {errors[0]}")
-    if not parts:
-        parts.append("MFP: keine neuen Daten")
-    return _redirect("/import/", " | ".join(parts))
-
-
 @router.post("/fetch-all", include_in_schema=False)
 async def fetch_all(db: Session = Depends(get_db)):
-    """Garmin + Withings + MFP in einem Schritt."""
+    """Garmin + Withings in einem Schritt."""
     from app.services.api_fetch import fetch_missing
-    from app.services.mfp_fetch import fetch_mfp_since_last, mfp_configured
     parts = []
     loop = asyncio.get_event_loop()
-
     try:
         gw = await loop.run_in_executor(None, lambda: fetch_missing(db))
         fetched = gw.get("fetched_dates", [])
@@ -371,63 +335,10 @@ async def fetch_all(db: Session = Depends(get_db)):
             parts.append("Garmin+Withings: aktuell")
         errors = gw.get("garmin_errors", []) + gw.get("withings_errors", [])
         if errors:
-            parts.append(f"G/W Fehler: {errors[0]}")
+            parts.append(f"Fehler: {errors[0]}")
     except Exception as exc:
-        parts.append(f"Garmin/Withings Fehler: {exc}")
-
-    if mfp_configured():
-        try:
-            mfp = await loop.run_in_executor(None, lambda: fetch_mfp_since_last(db))
-            if mfp.get("error"):
-                parts.append(f"MFP Fehler: {mfp['error']}")
-            else:
-                n = len(mfp.get("fetched_dates", []))
-                parts.append(f"MFP: {n} Tag(e)")
-        except Exception as exc:
-            parts.append(f"MFP Fehler: {exc}")
-
+        parts.append(f"Fehler: {exc}")
     return _redirect("/import/", " | ".join(parts) or "Kein Ergebnis")
-
-
-# ─── MyFitnessPal CSV-Import ─────────────────────────────────────────────────
-
-@router.post("/mfp-csv", include_in_schema=False)
-async def import_mfp_csv_folder(db: Session = Depends(get_db)):
-    """Importiert alle CSVs aus Imports/MyFitnessPal/."""
-    from app.services.mfp_csv import scan_mfp_folder
-    try:
-        loop = asyncio.get_event_loop()
-        result = await loop.run_in_executor(None, lambda: scan_mfp_folder(db))
-    except Exception as exc:
-        return _redirect("/import/", f"MFP CSV Fehler: {exc}")
-    if result.get("error"):
-        return _redirect("/import/", f"MFP CSV Fehler: {result['error']}")
-    nutrition_files = result["files"] - len(result.get("skipped_files", []))
-    msg = f"MFP CSV: {result['imported']} neu, {result['updated']} aktualisiert ({nutrition_files} Nutrition-Datei(en))"
-    if result.get("skipped_files"):
-        msg += f" | {len(result['skipped_files'])} übersprungen (kein Nutrition-Export)"
-    if result.get("errors"):
-        msg += f" | Fehler: {result['errors'][0]}"
-    return _redirect("/import/", msg)
-
-
-@router.post("/mfp-upload", include_in_schema=False)
-async def import_mfp_upload(file: UploadFile = File(...), db: Session = Depends(get_db)):
-    """Nimmt eine direkt hochgeladene MFP-CSV entgegen."""
-    import tempfile
-    from app.services.mfp_csv import import_mfp_csv
-    try:
-        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
-            shutil.copyfileobj(file.file, tmp)
-            tmp_path = Path(tmp.name)
-        loop = asyncio.get_event_loop()
-        result = await loop.run_in_executor(None, lambda: import_mfp_csv(tmp_path, db))
-        tmp_path.unlink(missing_ok=True)
-    except Exception as exc:
-        return _redirect("/import/", f"MFP CSV Fehler: {exc}")
-    if result.get("error"):
-        return _redirect("/import/", f"MFP CSV Fehler: {result['error']}")
-    return _redirect("/import/", f"MFP CSV: {result['imported']} neu, {result['updated']} aktualisiert ({result['dates']} Tage)")
 
 
 @router.post("/blutbilder-scan", include_in_schema=False)
@@ -648,19 +559,21 @@ async def catalog_search_api(
 
         def infer_target(text: str) -> str:
             v = (text or "").lower()
-            if any(x in v for x in ["lat", "row", "rücken", "back"]): return "Rücken"
-            if any(x in v for x in ["chest", "brust", "press"]): return "Brust"
-            if any(x in v for x in ["leg", "quad", "ham", "bein", "glute"]): return "Beine"
-            if any(x in v for x in ["shoulder", "schulter"]): return "Schulter"
-            if any(x in v for x in ["biceps", "triceps", "bizeps", "trizeps"]): return "Arme"
-            if any(x in v for x in ["core", "abdominal", "bauch"]): return "Core"
-            if any(x in v for x in ["cardio", "bike", "treadmill", "elliptical", "climb"]): return "Cardio"
-            return "Core"
+            if any(x in v for x in ["hip thrust", "glute", "gesäß", "po ", "abdukt"]): return "Glutes"
+            if any(x in v for x in ["lat", "row", "rücken", "back", "ruder"]): return "Rücken"
+            if any(x in v for x in ["chest", "brust", "fly", "flye"]): return "Brust"
+            if any(x in v for x in ["press", "bench"]) and not any(x in v for x in ["shoulder", "schulter", "lat", "leg"]): return "Brust"
+            if any(x in v for x in ["leg", "quad", "ham", "bein", "squat", "knie"]): return "Beine"
+            if any(x in v for x in ["shoulder", "schulter", "delt", "seitheb"]): return "Schulter"
+            if any(x in v for x in ["biceps", "triceps", "bizeps", "trizeps", "curl"]): return "Arme"
+            if any(x in v for x in ["core", "abdominal", "bauch", "crunch", "sit-up"]): return "Core"
+            if any(x in v for x in ["cardio", "bike", "treadmill", "elliptical", "climb", "laufband"]): return "Cardio"
+            return "Brust"
 
         def infer_stype(target_name: str) -> str:
             tt = target_name.lower()
             if tt == "rücken": return "pull"
-            if tt == "beine": return "legs"
+            if tt in ("beine", "glutes"): return "legs"
             if tt == "cardio": return "cardio"
             if tt == "core": return "free"
             return "push"
@@ -715,3 +628,55 @@ async def catalog_search_api(
         return {"total": total, "offset": offset, "limit": limit, "items": sliced}
     finally:
         conn.close()
+
+
+# ── GitHub Sync ──────────────────────────────────────────────────────────────
+
+@router.post("/import/github-sync")
+async def github_sync():
+    """git add + commit + push → GitHub. Requires GITHUB_TOKEN in .env and remote configured."""
+    repo_dir = BASE_DIR
+    token = os.environ.get("GITHUB_TOKEN", "").strip()
+    if not token:
+        return JSONResponse({"ok": False, "error": "GITHUB_TOKEN nicht gesetzt"}, status_code=400)
+
+    def run(cmd, **kwargs):
+        return subprocess.run(
+            cmd, capture_output=True, text=True, cwd=str(repo_dir), **kwargs
+        )
+
+    # Detect current remote URL and inject token
+    r = run(["git", "remote", "get-url", "origin"])
+    raw_url = r.stdout.strip()
+    if not raw_url:
+        return JSONResponse({"ok": False, "error": "Kein git remote 'origin' konfiguriert"}, status_code=400)
+
+    # Build authenticated URL
+    if "@github.com" in raw_url:
+        # Already has credentials – replace them
+        auth_url = "https://boekermarco-sketch:" + token + "@github.com/" + raw_url.split("github.com/", 1)[1]
+    else:
+        auth_url = raw_url.replace("https://", f"https://boekermarco-sketch:{token}@")
+
+    # Stage all changes
+    run(["git", "add", "-A"])
+
+    # Commit (skip if nothing staged)
+    stamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+    commit = run(["git", "commit", "-m", f"Auto-Sync {stamp}"])
+    committed = commit.returncode == 0
+
+    # Push
+    push = run(["git", "push", "--force", auth_url, "HEAD:main"])
+    if push.returncode != 0:
+        return JSONResponse({
+            "ok": False,
+            "committed": committed,
+            "error": push.stderr.strip() or push.stdout.strip(),
+        }, status_code=500)
+
+    return JSONResponse({
+        "ok": True,
+        "committed": committed,
+        "message": f"Gepusht ({'neuer Commit' if committed else 'keine Änderungen, nur Push'}) · {stamp}",
+    })

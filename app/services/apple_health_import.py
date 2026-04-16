@@ -1,6 +1,6 @@
 """
 Apple Health Import Service
-- Nimmt tägliche Apple Health / MFP-Daten als JSON entgegen
+- Nimmt tägliche Apple Health-Daten als JSON entgegen
 - UPSERT in SQLite daily_logs (nur non-NULL Felder überschreiben)
 - Optionaler Push in Supabase apple_health_daily
 """

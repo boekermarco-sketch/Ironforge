@@ -7,7 +7,7 @@
 <div class="page-top">
   <div>
     <div class="page-title">Import</div>
-    <div class="page-meta">Garmin · Withings · MyFitnessPal · PDF · API</div>
+    <div class="page-meta">Garmin · Withings · Apple Health · PDF · API</div>
   </div>
   {% if total_logs %}
   <span class="pill">{{ total_logs }} Logs in DB</span>
@@ -44,16 +44,6 @@
       <div class="m-val" style="color:{% if garmin_ok %}var(--teal){% else %}var(--soft){% endif %}">{% if garmin_ok %}OK{% else %}–{% endif %}</div>
       <div class="m-small">{% if garmin_ok %}Ordner vorhanden{% else %}DI-Connect-Wellness/{% endif %}</div>
     </div>
-    <div class="metric">
-      <div class="m-label">MFP API</div>
-      <div class="m-val" style="color:{% if mfp_api_ok %}var(--teal){% else %}var(--soft){% endif %}">{% if mfp_api_ok %}OK{% else %}–{% endif %}</div>
-      <div class="m-small">{% if mfp_api_ok %}{% if last_mfp_fetch %}Letzter Abruf {{ last_mfp_fetch.strftime("%d.%m.%Y") }}{% else %}bereit{% endif %}{% else %}MFP_USERNAME/.env fehlt{% endif %}</div>
-    </div>
-    <div class="metric">
-      <div class="m-label">MFP CSV</div>
-      <div class="m-val" style="color:{% if mfp_csv_ok %}var(--teal){% else %}var(--soft){% endif %}">{% if mfp_csv_ok %}OK{% else %}–{% endif %}</div>
-      <div class="m-small">{% if mfp_csv_ok %}Ordner vorhanden{% else %}Imports/MyFitnessPal/{% endif %}</div>
-    </div>
   </div>
 </div>
 
@@ -64,19 +54,13 @@
     <div class="sh"><div class="sh-title">API-Abruf</div></div>
     <div class="llist" style="margin-bottom:14px">
       <div class="litem">
-        <span>Garmin + Withings{% if mfp_api_ok %} + MFP{% endif %} live</span>
+        <span>Garmin + Withings live</span>
         {% if last_fetch %}<span style="font-size:11px;color:var(--soft)">Letzter: {{ last_fetch.strftime("%d.%m.%Y") }}</span>{% endif %}
       </div>
       {% if withings_configured %}
       <div class="litem">
         <span>Withings Backfill (90 Tage)</span>
         <span style="font-size:11px;color:var(--gold)">PWV, Blutdruck, Körperzus.</span>
-      </div>
-      {% endif %}
-      {% if mfp_api_ok %}
-      <div class="litem">
-        <span>MFP seit letztem Abruf</span>
-        <span style="font-size:11px;color:var(--gold)">Kalorien, Protein, Carbs, Fett</span>
       </div>
       {% endif %}
     </div>
@@ -92,16 +76,8 @@
     {% endif %}
     <div id="garmin-lock-info" style="display:none;font-size:12px;color:var(--red);background:rgba(222,113,113,.08);border:1px solid rgba(222,113,113,.2);border-radius:10px;padding:9px 12px;font-family:'JetBrains Mono',monospace"></div>
     <div style="display:flex;flex-direction:column;gap:8px">
-      {% if mfp_api_ok %}
-      <form id="form-all-three" action="/import/fetch-all" method="post" onsubmit="setGarminLock()">
-        <button id="btn-all-three" class="btn btn-primary btn-sm" style="width:100%"
-          {% if (not garmin_configured and not withings_configured) or garmin_blocked_until %}disabled {% if garmin_blocked_until %}title="Garmin gesperrt bis {{ garmin_blocked_until.strftime('%d.%m. %H:%M') }}"{% else %}title="Zuerst .env konfigurieren"{% endif %}{% endif %}>
-          Alle heute (Garmin + Withings + MFP)
-        </button>
-      </form>
-      {% endif %}
       <form id="form-garmin-both" action="/import/fetch-now" method="post" onsubmit="setGarminLock()">
-        <button id="btn-garmin-both" class="btn {% if mfp_api_ok %}btn-secondary{% else %}btn-primary{% endif %} btn-sm" style="width:100%"
+        <button id="btn-garmin-both" class="btn btn-primary btn-sm" style="width:100%"
           {% if (not garmin_configured and not withings_configured) or garmin_blocked_until %}disabled {% if garmin_blocked_until %}title="Garmin gesperrt bis {{ garmin_blocked_until.strftime('%d.%m. %H:%M') }}"{% else %}title="Zuerst .env konfigurieren"{% endif %}{% endif %}>
           Garmin + Withings heute
         </button>
@@ -118,14 +94,6 @@
           Nur Withings heute
         </button>
       </form>
-      {% if mfp_api_ok %}
-      <form action="/import/fetch-mfp" method="post">
-        <button class="btn btn-secondary btn-sm" style="width:100%">
-          MFP abrufen
-          {% if last_mfp_fetch %}<span style="display:block;font-size:10px;opacity:.6;font-weight:400">seit {{ last_mfp_fetch.strftime("%d.%m.%Y") }}</span>{% else %}<span style="display:block;font-size:10px;opacity:.6;font-weight:400">erster Abruf: 90 Tage</span>{% endif %}
-        </button>
-      </form>
-      {% endif %}
       {% if withings_configured %}
       <form action="/import/withings-backfill" method="post">
         <button class="btn btn-secondary btn-sm" style="width:100%">
@@ -148,10 +116,6 @@
         <span>Garmin JSON</span>
         <span style="font-size:11px;color:{% if garmin_ok %}var(--teal){% else %}var(--soft){% endif %}">{% if garmin_ok %}✓ Ordner gefunden{% else %}Ordner fehlt{% endif %}</span>
       </div>
-      <div class="litem">
-        <span>FatSecret CSV</span>
-        <span style="font-size:11px;color:{% if fatsecret_csv_ok %}var(--teal){% else %}var(--soft){% endif %}">{% if fatsecret_csv_ok %}✓ Ordner gefunden{% else %}Ordner fehlt{% endif %}</span>
-      </div>
     </div>
     <div style="display:flex;flex-direction:column;gap:8px">
       {% if withings_ok %}
@@ -170,54 +134,6 @@
     </div>
   </div>
 
-</div>
-
-<!-- ══ MYFITNESSPAL ═══════════════════════════════════════════════ -->
-<div class="card" style="margin-bottom:14px">
-  <div class="sh">
-    <div class="sh-title">MyFitnessPal – Ernährungsdaten</div>
-    <span class="pill" style="color:{% if mfp_api_ok %}var(--teal){% else %}var(--soft){% endif %}">
-      {% if mfp_api_ok %}API bereit{% else %}CSV-Import{% endif %}
-    </span>
-  </div>
-
-  {% if mfp_api_ok %}
-  <div style="font-size:13px;color:var(--soft);line-height:1.7;margin-bottom:14px">
-    Automatischer Abruf via <strong style="color:var(--muted)">python-myfitnesspal</strong>
-    — holt täglich alle Daten seit dem letzten Abruf.
-    {% if last_mfp_fetch %}
-    <br>Letzter Abruf: <strong style="color:var(--muted)">{{ last_mfp_fetch.strftime("%d.%m.%Y") }}</strong>
-    {% else %}
-    <br>Erster Abruf holt die letzten <strong style="color:var(--muted)">90 Tage</strong> nach.
-    {% endif %}
-  </div>
-  {% else %}
-  <div style="font-size:13px;color:var(--soft);line-height:1.7;margin-bottom:14px">
-    Für den automatischen Abruf im Browser (Chrome/Firefox) bei
-    <strong style="color:var(--muted)">myfitnesspal.com eingeloggt</strong> bleiben –
-    die App liest die Cookies automatisch aus.
-  </div>
-  {% endif %}
-
-  <div style="font-size:13px;color:var(--soft);line-height:1.7;margin-bottom:14px">
-    CSV-Export (historische Daten):
-    <strong style="color:var(--muted)">myfitnesspal.com → Einstellungen → Daten exportieren</strong>
-    → CSV per E-Mail → in
-    <code style="background:rgba(255,255,255,.06);padding:2px 6px;border-radius:6px;font-size:12px">Imports/MyFitnessPal/</code> ablegen
-    oder direkt hochladen.
-  </div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap">
-    <form action="/import/mfp-csv" method="post">
-      <button class="btn btn-primary btn-sm"
-        {% if not mfp_csv_ok %}disabled title="Imports/MyFitnessPal/ Ordner fehlt oder leer"{% endif %}>
-        Ordner importieren
-      </button>
-    </form>
-    <form action="/import/mfp-upload" method="post" enctype="multipart/form-data" style="display:flex;gap:6px;align-items:center">
-      <input type="file" name="file" accept=".csv" style="font-size:12px;color:var(--muted);background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:8px;padding:5px 8px;cursor:pointer">
-      <button type="submit" class="btn btn-secondary btn-sm">Hochladen</button>
-    </form>
-  </div>
 </div>
 
 <!-- ══ SUPABASE KATALOG SYNC ═══════════════════════════════════ -->
@@ -277,7 +193,7 @@
 </div>
 
 <!-- ══ EINRICHTUNG (nur wenn nicht konfiguriert) ════════════ -->
-{% if not garmin_configured or not withings_configured or not fatsecret_api_ok %}
+{% if not garmin_configured or not withings_configured %}
 <div class="card">
   <div class="sh"><div class="sh-title">Einrichtung</div></div>
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:18px;font-size:13px;color:var(--muted);line-height:1.6">
@@ -303,23 +219,26 @@
     </div>
     {% endif %}
 
-    {% if not fatsecret_api_ok %}
-    <div>
-      <div style="font-weight:700;color:var(--text);margin-bottom:6px">FatSecret API</div>
-      <div style="color:var(--soft)">Einmalig ausführen:</div>
-      <div style="margin-top:6px;padding:10px 12px;background:rgba(255,255,255,.04);border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold)">
-        python fatsecret_auth.py
-      </div>
-      <div style="margin-top:6px;font-size:12px;color:var(--soft)">
-        Consumer Key + Secret aus <a href="https://platform.fatsecret.com/api/" style="color:var(--gold)" target="_blank">platform.fatsecret.com</a> → My Account → App → in <code>.env</code>:<br>
-        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)">FATSECRET_CLIENT_ID=...<br>FATSECRET_CLIENT_SECRET=...</span>
-      </div>
-    </div>
-    {% endif %}
-
   </div>
 </div>
 {% endif %}
+
+<!-- ══ GITHUB SYNC ══════════════════════════════════════════════════ -->
+<div class="card" style="margin-bottom:14px">
+  <div class="sh">
+    <div class="sh-title">GitHub Sync</div>
+    <span class="pill" id="github-sync-status" style="background:rgba(255,255,255,.05);color:var(--soft)">bereit</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <button class="btn btn-primary btn-sm" id="btn-github-sync" onclick="githubSync()">
+      ↑ Zu GitHub pushen
+    </button>
+    <div style="font-size:12px;color:var(--soft)">
+      Alle lokalen Änderungen → <code>git add + commit + push</code> → GitHub
+    </div>
+  </div>
+  <div id="github-sync-log" style="display:none;margin-top:10px;padding:10px 12px;background:rgba(255,255,255,.03);border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);white-space:pre-wrap"></div>
+</div>
 
 {% endblock %}
 
@@ -339,11 +258,9 @@
     const until = parseInt(localStorage.getItem(KEY) || '0');
     if(until <= Date.now()){ return; }
 
-    const btnAll  = document.getElementById('btn-all-three');
     const btnBoth = document.getElementById('btn-garmin-both');
     const btnOnly = document.getElementById('btn-garmin-only');
     const info    = document.getElementById('garmin-lock-info');
-    if(btnAll)  btnAll.disabled  = true;
     if(btnBoth) btnBoth.disabled = true;
     if(btnOnly) btnOnly.disabled = true;
 
@@ -351,7 +268,6 @@
       const rem = parseInt(localStorage.getItem(KEY)||'0') - Date.now();
       if(rem <= 0){
         clearInterval(countdownTimer);
-        if(btnAll  && !btnAll.hasAttribute('data-server-disabled'))  btnAll.disabled  = false;
         if(btnBoth && !btnBoth.hasAttribute('data-server-disabled')) btnBoth.disabled = false;
         if(btnOnly && !btnOnly.hasAttribute('data-server-disabled')) btnOnly.disabled = false;
         if(info) info.style.display = 'none';
@@ -372,12 +288,45 @@
 
   document.addEventListener('DOMContentLoaded', function(){
     // Server-disabled Buttons markieren damit Lock-Ablauf sie nicht wieder aktiviert
-    ['btn-all-three','btn-garmin-both','btn-garmin-only'].forEach(id=>{
+    ['btn-garmin-both','btn-garmin-only'].forEach(id=>{
       const b = document.getElementById(id);
       if(b && b.disabled) b.setAttribute('data-server-disabled','1');
     });
     applyLock();
   });
 })();
+
+async function githubSync(){
+  const btn = document.getElementById('btn-github-sync');
+  const pill = document.getElementById('github-sync-status');
+  const log = document.getElementById('github-sync-log');
+  btn.disabled = true;
+  pill.textContent = '⟳ läuft…';
+  pill.style.color = 'var(--gold)';
+  log.style.display = 'none';
+  try {
+    const res = await fetch('/import/github-sync', {method:'POST'});
+    const data = await res.json();
+    if(data.ok){
+      pill.textContent = '✓ gepusht';
+      pill.style.color = 'var(--teal)';
+      log.style.display = 'block';
+      log.textContent = data.message;
+    } else {
+      pill.textContent = '✗ Fehler';
+      pill.style.color = 'var(--red)';
+      log.style.display = 'block';
+      log.textContent = data.error || 'Unbekannter Fehler';
+    }
+  } catch(e) {
+    pill.textContent = '✗ Fehler';
+    pill.style.color = 'var(--red)';
+    log.style.display = 'block';
+    log.textContent = String(e);
+  } finally {
+    btn.disabled = false;
+    setTimeout(()=>{ pill.textContent='bereit'; pill.style.color='var(--soft)'; }, 8000);
+  }
+}
 </script>
 {% endblock %}

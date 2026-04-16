@@ -7,11 +7,27 @@ from datetime import date
 from pathlib import Path
 
 from app.database import get_db
-from app.models import Stack, Substance, DoseEvent
+from app.models import Stack, Substance, DoseEvent, StackChangeLog
 
 router = APIRouter()
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
+
+
+def _log(db: Session, object_type: str, object_id: int, action: str,
+         summary: str, field_name: str = None, old_value=None,
+         new_value=None, reason: str = None):
+    """Schreibt einen Eintrag in stack_changelog."""
+    db.add(StackChangeLog(
+        object_type=object_type,
+        object_id=object_id,
+        action=action,
+        field_name=field_name,
+        old_value=str(old_value) if old_value is not None else None,
+        new_value=str(new_value) if new_value is not None else None,
+        summary=summary,
+        reason=reason or None,
+    ))
 
 
 @router.get("/", include_in_schema=False)
@@ -38,6 +54,12 @@ async def stack_overview(request: Request, db: Session = Depends(get_db)):
         active_doses = grouped
 
     substances = db.query(Substance).filter(Substance.active == True).order_by(Substance.category, Substance.name).all()
+    recent_changes = (
+        db.query(StackChangeLog)
+        .order_by(StackChangeLog.changed_at.desc())
+        .limit(30)
+        .all()
+    )
 
     # Zusätzlich nach Zeitslot gruppieren für die neue Ansicht
     SLOTS = [
@@ -87,6 +109,7 @@ async def stack_overview(request: Request, db: Session = Depends(get_db)):
         "slot_order": SLOTS,
         "substances": substances,
         "today": today,
+        "recent_changes": recent_changes,
     })
 
 
@@ -104,12 +127,29 @@ async def edit_stack(
     stack = db.query(Stack).filter(Stack.id == stack_id).first()
     if not stack:
         raise HTTPException(status_code=404, detail="Stack nicht gefunden")
+
+    changed_fields = []
+    for field, old, new in [
+        ("name", stack.name, name),
+        ("goal", stack.goal, goal or None),
+        ("status", stack.status, status),
+        ("start_date", str(stack.start_date), start_date),
+        ("end_date", str(stack.end_date) if stack.end_date else None, end_date or None),
+    ]:
+        if str(old or "") != str(new or ""):
+            changed_fields.append(field)
+            _log(db, "stack", stack_id, "updated",
+                 f"Stack '{name}': {field} geändert",
+                 field_name=field, old_value=old, new_value=new)
+
     stack.name = name
     stack.goal = goal or None
     stack.start_date = date.fromisoformat(start_date)
     stack.end_date = date.fromisoformat(end_date) if end_date else None
     stack.status = status
     stack.notes = notes or None
+    if not changed_fields:
+        _log(db, "stack", stack_id, "updated", f"Stack '{name}' gespeichert (keine Änderung erkannt)")
     db.commit()
     return RedirectResponse("/stack/", status_code=303)
 
@@ -145,7 +185,7 @@ async def add_dose_event(
     notes: str = Form(""),
     db: Session = Depends(get_db)
 ):
-    db.add(DoseEvent(
+    new_de = DoseEvent(
         substance_id=substance_id,
         stack_id=stack_id,
         dose_amount=dose_amount,
@@ -155,7 +195,15 @@ async def add_dose_event(
         start_date=date.fromisoformat(start_date),
         change_reason=change_reason or None,
         notes=notes or None,
-    ))
+    )
+    db.add(new_de)
+    db.flush()  # ID zuweisen ohne zu committen
+
+    substance = db.query(Substance).filter(Substance.id == substance_id).first()
+    sub_name = substance.name if substance else f"#{substance_id}"
+    _log(db, "dose_event", new_de.id, "created",
+         f"{sub_name}: {dose_amount}{dose_unit} hinzugefügt",
+         reason=change_reason or None)
     db.commit()
     return RedirectResponse("/stack/", status_code=303)
 
@@ -172,6 +220,24 @@ async def edit_dose_event(
 ):
     de = db.query(DoseEvent).filter(DoseEvent.id == dose_id).first()
     if de:
+        substance = db.query(Substance).filter(Substance.id == de.substance_id).first()
+        sub_name = substance.name if substance else f"#{de.substance_id}"
+
+        if de.dose_amount != dose_amount or de.dose_unit != dose_unit:
+            _log(db, "dose_event", dose_id, "updated",
+                 f"{sub_name}: {de.dose_amount}{de.dose_unit} → {dose_amount}{dose_unit}",
+                 field_name="dose_amount",
+                 old_value=f"{de.dose_amount}{de.dose_unit}",
+                 new_value=f"{dose_amount}{dose_unit}")
+        if de.frequency != frequency:
+            _log(db, "dose_event", dose_id, "updated",
+                 f"{sub_name}: Frequenz '{de.frequency}' → '{frequency}'",
+                 field_name="frequency", old_value=de.frequency, new_value=frequency)
+        if de.timing != timing:
+            _log(db, "dose_event", dose_id, "updated",
+                 f"{sub_name}: Timing geändert",
+                 field_name="timing", old_value=de.timing, new_value=timing)
+
         de.dose_amount = dose_amount
         de.dose_unit = dose_unit
         de.frequency = frequency
@@ -189,7 +255,13 @@ async def end_dose_event(
 ):
     de = db.query(DoseEvent).filter(DoseEvent.id == dose_id).first()
     if de:
-        de.end_date = date.fromisoformat(end_date) if end_date else date.today()
+        closed = date.fromisoformat(end_date) if end_date else date.today()
+        substance = db.query(Substance).filter(Substance.id == de.substance_id).first()
+        sub_name = substance.name if substance else f"#{de.substance_id}"
+        _log(db, "dose_event", dose_id, "updated",
+             f"{sub_name}: abgeschlossen ab {closed.strftime('%d.%m.%Y')}",
+             field_name="end_date", old_value=None, new_value=str(closed))
+        de.end_date = closed
         db.commit()
     return RedirectResponse("/stack/", status_code=303)
 

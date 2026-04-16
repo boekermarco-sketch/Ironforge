@@ -102,6 +102,26 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
         stack_days_done = (today - active_stack.start_date).days
         stack_progress = min(100, int((stack_days_done / stack_days_total) * 100))
 
+    # KFA-Ziel 8–10 %
+    KFA_TARGET_MIN = 8.0
+    KFA_TARGET_MAX = 10.0
+    kfa_current = last_log.body_fat if last_log else None
+    kfa_progress = None
+    kfa_start_val = None
+    if kfa_current:
+        oldest_kfa = (
+            db.query(DailyLog.body_fat)
+            .filter(DailyLog.body_fat != None)
+            .order_by(DailyLog.date.asc())
+            .first()
+        )
+        if oldest_kfa and oldest_kfa[0]:
+            kfa_start_val = round(oldest_kfa[0], 1)
+            total_to_lose = kfa_start_val - KFA_TARGET_MIN
+            if total_to_lose > 0:
+                lost_so_far = kfa_start_val - kfa_current
+                kfa_progress = max(0, min(100, round((lost_so_far / total_to_lose) * 100)))
+
     # Nächstes Blutbild aus Journal oder hartcodiert
     next_blood_date = date(2026, 5, 10)  # zweites geplantes Blutbild
 
@@ -131,6 +151,11 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
         "weight_delta_week": weight_delta_week,
         "weight_delta_month": weight_delta_month,
         "weight_delta_year": weight_delta_year,
+        "kfa_current": kfa_current,
+        "kfa_start_val": kfa_start_val,
+        "kfa_progress": kfa_progress,
+        "KFA_TARGET_MIN": KFA_TARGET_MIN,
+        "KFA_TARGET_MAX": KFA_TARGET_MAX,
     })
 
 

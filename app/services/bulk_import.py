@@ -1,5 +1,5 @@
 """
-Bulk-Importer für Withings, Garmin und MyFitnessPal.
+Bulk-Importer für Withings und Garmin.
 Verarbeitet automatisch alle relevanten Dateien aus den Export-Ordnern.
 Kein manuelles Hochladen jeder Datei nötig.
 """
