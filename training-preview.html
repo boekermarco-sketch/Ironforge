@@ -570,14 +570,14 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
 
   /* ── Glassmorphism: Bottom Nav ─────────────────────────────── */
   .mobile-bottom-nav{
-    background:rgba(9,9,13,.84) !important;
-    backdrop-filter:blur(32px) saturate(180%) !important;
-    -webkit-backdrop-filter:blur(32px) saturate(180%) !important;
-    border-top:1px solid rgba(255,255,255,.09) !important;
-    box-shadow:0 -4px 40px rgba(0,0,0,.5) !important;
+    background:rgba(18,16,26,.92) !important;
+    backdrop-filter:blur(32px) saturate(200%) !important;
+    -webkit-backdrop-filter:blur(32px) saturate(200%) !important;
+    border-top:1px solid rgba(208,163,90,.18) !important;
+    box-shadow:0 -1px 0 rgba(208,163,90,.12), 0 -8px 40px rgba(0,0,0,.6) !important;
   }
   [data-theme="light"] .mobile-bottom-nav{
-    background:rgba(238,235,228,.9) !important;
+    background:rgba(238,235,228,.92) !important;
     border-top:1px solid rgba(0,0,0,.1) !important;
     box-shadow:0 -2px 20px rgba(0,0,0,.1) !important;
   }
@@ -585,19 +585,21 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
   /* Tab press + active dot indicator */
   .m5-tab{position:relative;overflow:visible}
   .m5-tab:active{transform:scale(0.82)!important;transition:transform .07s!important}
-  .m5-tab.active{color:var(--gold)!important}
+  .m5-tab.active{color:var(--gold)!important;font-weight:900!important}
+  .m5-tab.active svg{filter:drop-shadow(0 0 4px rgba(208,163,90,.6))!important}
   .m5-tab.active::after{
     content:'';
-    position:absolute;bottom:0;left:50%;transform:translateX(-50%);
-    width:22px;height:3px;border-radius:2px;
-    background:var(--gold);
+    position:absolute;bottom:2px;left:50%;transform:translateX(-50%);
+    width:24px;height:3px;border-radius:2px;
+    background:linear-gradient(90deg,rgba(208,163,90,.4),var(--gold),rgba(208,163,90,.4));
+    box-shadow:0 0 8px rgba(208,163,90,.5);
   }
   .m5-center.active::after{display:none}
   /* Center tab: elevated gold disc */
   .m5-center svg{
-    background:linear-gradient(145deg,#e8b862,var(--gold)) !important;
+    background:linear-gradient(145deg,#f0c46a,var(--gold),#b07820) !important;
     stroke:#0a0a0a !important;
-    box-shadow:0 3px 14px rgba(208,163,90,.45) !important;
+    box-shadow:0 4px 18px rgba(208,163,90,.55) !important;
   }
   .m5-center:active{transform:scale(0.86) translateY(-4px)!important;transition:transform .07s!important}
 
@@ -1479,7 +1481,7 @@ let catalogSource = 'local';
 let autoSyncTimer = null;
 let catalogStatusText = '';
 let gym80CategoryMap = null;
-const BUILD_STAMP = '2026-04-16 21:30';
+const BUILD_STAMP = '2026-04-17 10:00';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -1515,7 +1517,7 @@ const DEVICE_CATALOG = [
   {brand:'Freihantel', name:'Seitheben Kurzhantel', type:'Hantel', target:'Schulter', cat:'Schulter', sType:'push', group:'Schulter Isolation', art:null, img:null},
   {brand:'Freihantel', name:'Schrägbank Kurzhantel', type:'Hantel', target:'Brust', cat:'Brust', sType:'push', group:'Brustpresse schräg', art:null, img:null}
 ];
-const DB_VERSION = '7';
+const DB_VERSION = '8';
 // Migration: alte Demo-Daten entfernen ODER Version updaten ohne History zu löschen
 (function(){
   const stored = localStorage.getItem('ifl_training_db');
@@ -1549,10 +1551,31 @@ const DB_VERSION = '7';
   }
 })();
 
+function _dedupeDB(arr){
+  const nameMap = new Map();
+  const out = [];
+  for(const ex of arr){
+    const key = (ex.name||'').toLowerCase().trim();
+    if(!key){ out.push(ex); continue; }
+    if(!nameMap.has(key)){
+      nameMap.set(key, out.length);
+      out.push({...ex});
+    } else {
+      // Merge history from duplicate into surviving entry
+      const dst = out[nameMap.get(key)];
+      if(ex.history) Object.assign(dst.history, ex.history);
+      if(ex.prev)    Object.assign(dst.prev,    ex.prev);
+      // Prefer lower ID (default entries 1–33 have priority)
+      if(ex.id < dst.id) dst.id = ex.id;
+    }
+  }
+  return out;
+}
+
 function loadDB(){
   const s = localStorage.getItem('ifl_training_db');
   if(s){
-    const parsed = JSON.parse(s);
+    let parsed = JSON.parse(s);
     // History-Backup zurückspielen falls vorhanden (nach Version-Migration)
     const hb = localStorage.getItem('ifl_history_backup');
     const pb = localStorage.getItem('ifl_prev_backup');
@@ -1562,17 +1585,31 @@ function loadDB(){
       const prevMap = pb ? JSON.parse(pb) : {};
       parsed.forEach(ex => {
         if(histMap[ex.name]) ex.history = histMap[ex.name];
-        if(prevMap[ex.name]) ex.prev = prevMap[ex.name];
+        if(prevMap[ex.name]) ex.prev    = prevMap[ex.name];
       });
     }
     if(cb){
       const customs = JSON.parse(cb);
-      customs.forEach(c => { if(!parsed.find(x=>x.id===c.id)) parsed.push(c); });
+      customs.forEach(c => {
+        const byId   = parsed.find(x => x.id === c.id);
+        const byName = parsed.find(x => (x.name||'').toLowerCase() === (c.name||'').toLowerCase());
+        if(!byId && !byName){
+          parsed.push(c);                        // echte neue Custom-Übung
+        } else if(!byId && byName){
+          // Gleicher Name existiert schon (z.B. Default-Eintrag) → History mergen
+          if(c.history) Object.assign(byName.history, c.history);
+          if(c.prev)    Object.assign(byName.prev,    c.prev);
+        }
+      });
       localStorage.removeItem('ifl_custom_backup');
     }
     if(hb) localStorage.removeItem('ifl_history_backup');
     if(pb) localStorage.removeItem('ifl_prev_backup');
-    return parsed;
+    // Duplikate bereinigen (passiert einmalig, dann gespeichert)
+    const clean = _dedupeDB(parsed);
+    if(clean.length < parsed.length)
+      localStorage.setItem('ifl_training_db', JSON.stringify(clean));
+    return clean;
   }
   return [
     // ── PUSH · Brust  [Contact Habenhausen] ─────────────────────────
