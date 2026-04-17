@@ -1543,7 +1543,7 @@ let catalogSource = 'local';
 let autoSyncTimer = null;
 let catalogStatusText = '';
 let gym80CategoryMap = null;
-const BUILD_STAMP = '2026-04-17 13:00';
+const BUILD_STAMP = '2026-04-17 18:00';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -1579,7 +1579,7 @@ const DEVICE_CATALOG = [
   {brand:'Freihantel', name:'Seitheben Kurzhantel', type:'Hantel', target:'Schulter', cat:'Schulter', sType:'push', group:'Schulter Isolation', art:null, img:null},
   {brand:'Freihantel', name:'Schrägbank Kurzhantel', type:'Hantel', target:'Brust', cat:'Brust', sType:'push', group:'Brustpresse schräg', art:null, img:null}
 ];
-const DB_VERSION = '8';
+const DB_VERSION = '9';
 // Migration: alte Demo-Daten entfernen ODER Version updaten ohne History zu löschen
 (function(){
   const stored = localStorage.getItem('ifl_training_db');
@@ -1599,13 +1599,22 @@ const DB_VERSION = '8';
       existing.forEach(ex => { if(ex.name && ex.history && Object.keys(ex.history).length) histMap[ex.name] = ex.history; });
       const prevMap = {};
       existing.forEach(ex => { if(ex.name && ex.prev && Object.keys(ex.prev).length) prevMap[ex.name] = ex.prev; });
-      // Benutzerdefinierte Übungen (nicht in Default-IDs 1-28) behalten
-      const customExercises = existing.filter(ex => ex.id > 100);
+      // Alle Übungen die nicht in den Default-IDs 1-28 sind bewahren (Katalog-Übungen haben IDs ab 29)
+      // Dedup läuft nach dem Restore in loadDB() — nur der erste Eintrag je Name überlebt
+      const customExercises = existing.filter(ex => ex.id > 28);
+      // Dedupe bereits hier: nur erster Eintrag je Name (History wird oben separat gerettet)
+      const seenNames = new Set();
+      const uniqueCustom = customExercises.filter(ex => {
+        const k = (ex.name||'').toLowerCase().trim();
+        if(!k || seenNames.has(k)) return false;
+        seenNames.add(k);
+        return true;
+      });
       localStorage.removeItem('ifl_training_db');
       localStorage.setItem('ifl_db_version', DB_VERSION);
       localStorage.setItem('ifl_history_backup', JSON.stringify(histMap));
       localStorage.setItem('ifl_prev_backup', JSON.stringify(prevMap));
-      localStorage.setItem('ifl_custom_backup', JSON.stringify(customExercises));
+      localStorage.setItem('ifl_custom_backup', JSON.stringify(uniqueCustom));
     } catch(e){
       localStorage.removeItem('ifl_training_db');
       localStorage.setItem('ifl_db_version', DB_VERSION);
