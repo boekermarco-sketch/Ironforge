@@ -556,6 +556,66 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
   .peptide-grid{grid-template-columns:1fr 1fr}
 }
 
+/* ══ MOBILE HEUTE VIEW ══════════════════════════════════════════ */
+#m-heute-view{display:none;position:fixed;top:54px;left:0;right:0;bottom:68px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 14px 20px;flex-direction:column;gap:12px;background:var(--bg)}
+#m-heute-view.active{display:flex}
+.m-heute-header{padding:2px 0 6px}
+.m-heute-greeting{font-size:28px;font-weight:800;letter-spacing:-.02em;line-height:1.1;color:var(--text)}
+.m-heute-date{font-size:12px;color:var(--muted);margin-top:4px;font-weight:600;letter-spacing:.04em}
+.m-heute-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.m-heute-stat{background:linear-gradient(145deg,var(--panel),var(--panel2));border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:18px 16px 14px;position:relative;cursor:pointer;transition:transform .1s;box-shadow:0 4px 20px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.07)}
+.m-heute-stat:active{transform:scale(0.95)}
+.m-heute-stat-val{font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:700;line-height:1;color:var(--gold);letter-spacing:-.02em}
+.m-heute-stat-val span{font-size:14px;font-weight:700;color:var(--muted);margin-left:2px;font-family:'Manrope',sans-serif}
+.m-heute-stat-lbl{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--soft);font-weight:800;margin-top:7px}
+.m-heute-stat-edit{position:absolute;top:12px;right:13px;font-size:13px;color:var(--soft);opacity:.45}
+.m-heute-kfa-card{background:linear-gradient(145deg,var(--panel),var(--panel2));border:1px solid rgba(255,255,255,.09);border-radius:20px;padding:15px 16px;box-shadow:0 4px 16px rgba(0,0,0,.25)}
+.m-heute-kfa-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+.m-heute-kfa-label{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--soft);font-weight:800}
+.m-heute-kfa-pct{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;letter-spacing:.02em}
+.m-heute-kfa-bar{height:8px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden;margin-bottom:8px}
+.m-heute-kfa-fill{height:100%;border-radius:99px;transition:width .5s ease}
+.m-heute-kfa-sub{font-size:11px;color:var(--soft)}
+.m-heute-action-card{display:flex;align-items:center;gap:14px;background:linear-gradient(145deg,rgba(208,163,90,.14),rgba(208,163,90,.06));border:1px solid rgba(208,163,90,.3);border-radius:22px;padding:18px 16px;cursor:pointer;transition:transform .1s;box-shadow:0 4px 20px rgba(208,163,90,.1)}
+.m-heute-action-card:active{transform:scale(0.97)}
+.m-heute-action-icon{flex-shrink:0;width:46px;height:46px;border-radius:15px;background:rgba(208,163,90,.16);display:flex;align-items:center;justify-content:center}
+.m-heute-action-body{flex:1;min-width:0}
+.m-heute-action-title{font-size:15px;font-weight:800;color:var(--gold);letter-spacing:-.01em}
+.m-heute-action-sub{font-size:11px;color:var(--muted);margin-top:3px}
+.m-heute-action-chevron{font-size:24px;color:rgba(208,163,90,.5);flex-shrink:0;font-weight:300;line-height:1}
+.m-heute-log-card{background:linear-gradient(145deg,var(--panel),var(--panel2));border:1px solid rgba(255,255,255,.09);border-radius:20px;padding:14px 16px;box-shadow:0 4px 16px rgba(0,0,0,.22)}
+.m-heute-log-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.m-heute-log-title{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:800}
+.m-heute-log-date{font-size:10px;color:var(--soft)}
+.m-heute-log-tag{font-size:12px;color:var(--gold);font-weight:800;margin-bottom:10px;letter-spacing:.04em}
+.m-heute-log-row{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.m-heute-log-row:last-child{border-bottom:none}
+.m-heute-log-name{font-size:13px;font-weight:700}
+.m-heute-log-sets{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)}
+.m-heute-studio-row{display:flex;align-items:center;gap:10px;padding:2px 0 4px}
+.m-heute-studio-lbl{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--soft);font-weight:800;white-space:nowrap}
+
+/* ══ MOBILE ÜBUNGEN VIEW ════════════════════════════════════════ */
+#m-uebungen-view{display:none;position:fixed;top:54px;left:0;right:0;bottom:68px;overflow-y:auto;-webkit-overflow-scrolling:touch;flex-direction:column;background:var(--bg)}
+#m-uebungen-view.active{display:flex;flex-direction:column}
+.m-ueb-sticky{position:sticky;top:0;z-index:10;background:var(--bg);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);padding:14px 16px 8px;border-bottom:1px solid rgba(255,255,255,.06)}
+.m-ueb-title{font-size:26px;font-weight:800;letter-spacing:-.02em;margin-bottom:10px;color:var(--text)}
+.m-ueb-segment{display:flex;gap:0;background:rgba(255,255,255,.07);border-radius:12px;overflow:hidden;padding:3px}
+.m-seg-btn{flex:1;padding:7px 4px;border:none;border-radius:9px;background:transparent;color:var(--muted);font-family:'Manrope',sans-serif;font-size:12px;font-weight:800;cursor:pointer;transition:.15s;letter-spacing:.04em}
+.m-seg-btn.active{background:var(--panel);color:var(--text);box-shadow:0 1px 6px rgba(0,0,0,.4)}
+.m-seg-btn:active{transform:scale(0.94)}
+.m-ueb-list{flex:1}
+.m-ueb-section-hdr{font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);padding:14px 16px 5px;background:var(--bg)}
+.m-ueb-row{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;transition:background .1s;-webkit-tap-highlight-color:transparent}
+.m-ueb-row:active{background:rgba(208,163,90,.06)}
+.m-ueb-thumb{width:50px;height:50px;border-radius:13px;overflow:hidden;flex-shrink:0;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center}
+.m-ueb-thumb img{width:100%;height:100%;object-fit:cover}
+.m-ueb-no-img{font-size:18px;font-weight:800;color:var(--soft)}
+.m-ueb-info{flex:1;min-width:0}
+.m-ueb-name{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+.m-ueb-meta{font-size:11px;color:var(--soft);margin-top:1px}
+.m-ueb-chevron{font-size:22px;color:rgba(255,255,255,.18);flex-shrink:0;font-weight:300;line-height:1}
+
 /* ══ ITEM 7: iOS APP FEEL ════════════════════════════════════════ */
 
 /* Press-scale feedback — universal */
@@ -1238,27 +1298,23 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
 
 </main>
 </div>
-<!-- MOBILE BOTTOM NAV (5 Tabs) -->
+<!-- MOBILE BOTTOM NAV (4 Tabs) -->
 <nav class="mobile-bottom-nav" id="mobile-bottom-nav">
-  <button class="m5-tab" id="m5-studio" onclick="switchMobileView('studio')">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-    <span>Studio</span>
+  <button class="m5-tab active" id="m5-heute" onclick="switchMobileView('heute')">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>Heute</span>
   </button>
-  <button class="m5-tab" id="m5-plan" onclick="switchMobileView('plan')">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-    <span>Plan</span>
-  </button>
-  <button class="m5-tab m5-center" id="m5-session" onclick="switchMobileView('session')">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 17.5 17.5M6.5 17.5 17.5 6.5"/><circle cx="12" cy="12" r="9"/></svg>
+  <button class="m5-tab" id="m5-session" onclick="switchMobileView('session')">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 5v14M18 5v14"/><path d="M6 8h4M14 8h4M6 16h4M14 16h4"/><rect x="10" y="5" width="4" height="14" rx="1"/></svg>
     <span>Training</span>
   </button>
-  <button class="m5-tab" id="m5-stats" onclick="switchMobileView('stats')">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-    <span>Analyse</span>
+  <button class="m5-tab" id="m5-uebungen" onclick="switchMobileView('uebungen')">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    <span>Übungen</span>
   </button>
-  <button class="m5-tab" id="m5-mehr" onclick="switchMobileView('mehr')">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
-    <span>Mehr</span>
+  <button class="m5-tab" id="m5-analyse" onclick="switchMobileView('analyse')">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    <span>Analyse</span>
   </button>
 </nav>
 <button id="edit-done-fab" class="edit-done-fab" onclick="exitEditMode()">Fertig</button>
@@ -1325,6 +1381,12 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
   <div class="cat-filters" id="m-pool-cat-filters"></div>
   <div id="m-pool-sheet-list" style="overflow-y:auto;max-height:55dvh;padding-bottom:8px"></div>
 </div>
+
+<!-- ══ MOBILE HEUTE / DASHBOARD ══════════════════════════════ -->
+<div id="m-heute-view"><!-- rendered by renderMobileHeute() --></div>
+
+<!-- ══ MOBILE ÜBUNGEN LIST ═══════════════════════════════════ -->
+<div id="m-uebungen-view"><!-- rendered by renderMobileUebungen() --></div>
 
 <!-- ══ MOBILE STUDIO OVERLAY ═════════════════════════════════ -->
 <div id="m-studio-overlay">
@@ -1481,7 +1543,7 @@ let catalogSource = 'local';
 let autoSyncTimer = null;
 let catalogStatusText = '';
 let gym80CategoryMap = null;
-const BUILD_STAMP = '2026-04-17 10:00';
+const BUILD_STAMP = '2026-04-17 13:00';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -3181,14 +3243,10 @@ function addCatalogExerciseByIndex(idx, target){
   if(!name) return;
   const toSession = target === true;
   const scope = target === 'studio' ? 'studio' : 'global';
-  const exists = db.some(ex=>
-    ex.name.toLowerCase()===name.toLowerCase() &&
-    (ex.brand||'') === (item.brand||'') &&
-    (ex.poolScope||'global')===scope &&
-    (scope==='global' || ex.gym===currentStudio)
-  );
+  // Globale Namens-Prüfung — verhindert Duplikate quer über alle Studios/Scopes
+  const exists = db.some(ex => ex.name.toLowerCase() === name.toLowerCase());
   if(exists){
-    showToast('Bereits im Pool vorhanden', 'warn');
+    showToast('Bereits vorhanden: ' + name, 'warn');
     return;
   }
   const newEx = {
@@ -3994,11 +4052,10 @@ let mobileView  = 'session'; // studio | plan | session | stats | mehr
 let mobileExIdx = 0;         // current exercise index in session navigator
 
 const M_HEADER_TITLES = {
-  studio: 'Iron Forge',
-  plan:   'Planung',
-  session:'Training',
-  stats:  'Analyse',
-  mehr:   'Übungen',
+  heute:    'Iron Forge',
+  session:  'Training',
+  uebungen: 'Übungen',
+  analyse:  'Analyse',
 };
 
 function isMobile(){ return window.matchMedia('(max-width:640px)').matches; }
@@ -4008,37 +4065,35 @@ function switchMobileView(view){
   mobileView = view;
 
   // Bottom nav active state
-  ['studio','plan','session','stats','mehr'].forEach(v=>{
+  ['heute','session','uebungen','analyse'].forEach(v=>{
     document.getElementById('m5-'+v)?.classList.toggle('active', v===view);
   });
 
-  // Update header
+  // Update header title
   const titleEl = document.getElementById('m-header-title');
   if(titleEl) titleEl.textContent = M_HEADER_TITLES[view] || 'Iron Forge';
 
-  // Show/hide overlays
+  // Show/hide all mobile overlays
   document.getElementById('m-session-overlay')?.classList.toggle('active', view==='session');
-  document.getElementById('m-studio-overlay')?.classList.toggle('active',  view==='studio');
+  document.getElementById('m-heute-view')?.classList.toggle('active', view==='heute');
+  document.getElementById('m-uebungen-view')?.classList.toggle('active', view==='uebungen');
 
-  // Back button: show only in session/studio
+  // Back button: only in session
   const backBtn = document.getElementById('m-header-back');
-  if(backBtn) backBtn.style.display = (view==='session'||view==='studio') ? '' : 'none';
+  if(backBtn) backBtn.style.display = view==='session' ? '' : 'none';
 
-  // Route desktop tab-system
-  if(view==='plan'){
-    if(!TRAIN_TABS.includes(currentTab)) changeTab('push');
-    else { render(); }
-  } else if(view==='session'){
+  // Route
+  if(view==='session'){
     if(!TRAIN_TABS.includes(currentTab)) changeTab('push');
     mobileExIdx = 0;
     renderMobileSession();
     syncMobileRestTimer();
-  } else if(view==='stats'){
+  } else if(view==='heute'){
+    renderMobileHeute();
+  } else if(view==='uebungen'){
+    renderMobileUebungen();
+  } else if(view==='analyse'){
     changeTab('analyse');
-  } else if(view==='mehr'){
-    changeTab('uebungen');
-  } else if(view==='studio'){
-    _syncMStudioOverlay();
   }
 }
 
@@ -4294,22 +4349,228 @@ function _updateMobileHeader(){
 
 function initMobile(){
   if(!isMobile()) return;
-  // Header always visible on mobile
   document.getElementById('m-app-header').style.display = 'flex';
   _updateMobileHeader();
-  switchMobileView('session');
+  switchMobileView('heute');
 }
 
-// Override: after every render() on mobile, refresh session view + header
+// Override: after every render() on mobile, refresh active mobile view
 const _origRender = render;
 render = function(){
   _origRender();
   if(isMobile()){
     _updateMobileHeader();
-    if(mobileView==='session') renderMobileSession();
-    if(mobileView==='studio')  _syncMStudioOverlay();
+    if(mobileView==='session')  renderMobileSession();
+    if(mobileView==='heute')    renderMobileHeute();
+    if(mobileView==='uebungen') renderMobileUebungen();
   }
 };
+
+// ════════════════════════════════════════════════════════════
+// MOBILE HEUTE / DASHBOARD
+// ════════════════════════════════════════════════════════════
+
+function renderMobileHeute(){
+  const el = document.getElementById('m-heute-view');
+  if(!el) return;
+
+  const qw = parseFloat(localStorage.getItem('ifl_quick_weight')) || null;
+  const qk = parseFloat(localStorage.getItem('ifl_quick_kfa'))    || null;
+  const kfaStart = parseFloat(localStorage.getItem('ifl_kfa_start')) || qk;
+
+  let kfaProgress = null;
+  if(qk !== null && kfaStart && kfaStart > 10){
+    const totalLose = kfaStart - 8;
+    const lost = kfaStart - qk;
+    kfaProgress = Math.max(0, Math.min(100, Math.round(lost / totalLose * 100)));
+  }
+
+  const log  = loadSessionLog();
+  const last = log.slice(-1)[0] || null;
+
+  const now  = new Date();
+  const h    = now.getHours();
+  const greet = h < 11 ? 'Guten Morgen' : h < 17 ? 'Guten Tag' : 'Guten Abend';
+  const dateStr = now.toLocaleDateString('de-DE', {weekday:'long', day:'numeric', month:'long'});
+
+  const TAB_LABELS = {push:'Push',pull_a:'Pull A',pull_b:'Pull B',legs:'Beine',free:'Frei',cardio:'Cardio'};
+  const tabLabel   = TAB_LABELS[currentTab] || currentTab;
+  const activeCount = db.filter(x => x.status==='active' && x.sType===currentTab).length;
+
+  const kfaColor = qk <= 10 ? 'var(--teal)' : qk <= 12 ? 'var(--gold)' : 'var(--muted)';
+  const barColor = qk <= 10 ? 'var(--teal)' : qk <= 12 ? 'var(--gold)' : 'var(--soft)';
+
+  el.innerHTML = `
+    <div class="m-heute-header">
+      <div class="m-heute-greeting">${greet}, Marco</div>
+      <div class="m-heute-date">${dateStr}</div>
+    </div>
+
+    <div class="m-heute-stats">
+      <div class="m-heute-stat" onclick="mEditStat('weight')">
+        <div class="m-heute-stat-edit">✎</div>
+        <div class="m-heute-stat-val">${qw !== null ? qw + '<span> kg</span>' : '<span style="font-size:16px;opacity:.5">–</span>'}</div>
+        <div class="m-heute-stat-lbl">Gewicht</div>
+      </div>
+      <div class="m-heute-stat" onclick="mEditStat('kfa')">
+        <div class="m-heute-stat-edit">✎</div>
+        <div class="m-heute-stat-val" style="color:${qk!==null?kfaColor:'var(--gold)'}">${qk !== null ? qk + '<span> %</span>' : '<span style="font-size:16px;opacity:.5">–</span>'}</div>
+        <div class="m-heute-stat-lbl">KFA</div>
+      </div>
+    </div>
+
+    ${qk !== null ? `
+    <div class="m-heute-kfa-card">
+      <div class="m-heute-kfa-row">
+        <span class="m-heute-kfa-label">KFA-Ziel 8–10 %</span>
+        <span class="m-heute-kfa-pct" style="color:${kfaColor}">${kfaProgress !== null ? kfaProgress + ' %' : '–'}</span>
+      </div>
+      <div class="m-heute-kfa-bar">
+        <div class="m-heute-kfa-fill" style="width:${kfaProgress||0}%;background:${barColor}"></div>
+      </div>
+      ${qk > 10
+        ? `<div class="m-heute-kfa-sub">Noch ${(qk - 10).toFixed(1)} % bis Ziel · aktuell ${qk} %</div>`
+        : `<div class="m-heute-kfa-sub" style="color:var(--teal)">Ziel erreicht ✓</div>`}
+    </div>` : ''}
+
+    <div class="m-heute-action-card" onclick="switchMobileView('session')">
+      <div class="m-heute-action-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 5v14M18 5v14"/><path d="M6 8h4M14 8h4M6 16h4M14 16h4"/><rect x="10" y="5" width="4" height="14" rx="1"/></svg>
+      </div>
+      <div class="m-heute-action-body">
+        <div class="m-heute-action-title">${tabLabel} · starten</div>
+        <div class="m-heute-action-sub">${activeCount} Übungen · ${currentStudio || 'kein Studio'}</div>
+      </div>
+      <div class="m-heute-action-chevron">›</div>
+    </div>
+
+    <div class="m-heute-log-card">
+      <div class="m-heute-log-header">
+        <span class="m-heute-log-title">Letzter Log</span>
+        <span class="m-heute-log-date">${last ? (last.date || '') : ''}</span>
+      </div>
+      ${last ? `
+        <div class="m-heute-log-tag">${(TAB_LABELS[last.tab]||last.tab||'')} · ${(last.exercises||[]).length} Übungen</div>
+        ${(last.exercises||[]).slice(0,3).map(e=>`
+          <div class="m-heute-log-row">
+            <span class="m-heute-log-name">${e.name}</span>
+            <span class="m-heute-log-sets">${(e.sets||[]).map(s=>s.weight+'×'+s.reps).join('  ')}</span>
+          </div>`).join('')}
+      ` : `<div style="font-size:12px;color:var(--soft);margin-top:6px">Noch keine Sessions — starte jetzt!</div>`}
+    </div>
+
+    <div class="m-heute-studio-row">
+      <span class="m-heute-studio-lbl">Studio</span>
+      <select id="m-heute-studio-sel" class="studio-select" style="flex:1;max-width:220px" onchange="mHeuteStudioChange()"></select>
+    </div>
+  `;
+
+  const sel = el.querySelector('#m-heute-studio-sel');
+  if(sel) studios.forEach(s => {
+    const o = document.createElement('option');
+    o.value = s; o.textContent = s;
+    if(s === currentStudio) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+
+function mEditStat(type){
+  const key   = type === 'weight' ? 'ifl_quick_weight' : 'ifl_quick_kfa';
+  const label = type === 'weight' ? 'Gewicht in kg' : 'KFA in %';
+  const cur   = localStorage.getItem(key) || '';
+  const val   = prompt(label + ':', cur);
+  if(val === null) return;
+  const v = parseFloat(val.replace(',','.'));
+  if(isNaN(v)) return;
+  localStorage.setItem(key, v);
+  if(type === 'kfa' && !localStorage.getItem('ifl_kfa_start'))
+    localStorage.setItem('ifl_kfa_start', v);
+  renderMobileHeute();
+}
+
+function mHeuteStudioChange(){
+  const sel = document.getElementById('m-heute-studio-sel');
+  if(sel){ currentStudio = sel.value; localStorage.setItem('ifl_studio', currentStudio); render(); }
+}
+
+// ════════════════════════════════════════════════════════════
+// MOBILE ÜBUNGEN VIEW
+// ════════════════════════════════════════════════════════════
+
+function renderMobileUebungen(){
+  const el = document.getElementById('m-uebungen-view');
+  if(!el) return;
+
+  const filter = localStorage.getItem('ifl_ueb_filter') || 'alle';
+  let exercises = db.slice();
+  if(filter === 'kraft')  exercises = exercises.filter(x => x.sType !== 'cardio');
+  if(filter === 'cardio') exercises = exercises.filter(x => x.sType === 'cardio');
+
+  // Dedupe by name for display
+  const seen = new Set();
+  exercises = exercises.filter(ex => {
+    const k = (ex.name||'').toLowerCase().trim();
+    if(seen.has(k)) return false;
+    seen.add(k); return true;
+  });
+
+  // Group by category (defined order)
+  const CAT_ORDER = ['Brust','Rücken','Schulter','Arme','Beine','Glutes','Core','Cardio','Sonstige'];
+  const grouped = {};
+  exercises.forEach(ex => {
+    const c = ex.cat || 'Sonstige';
+    if(!grouped[c]) grouped[c] = [];
+    grouped[c].push(ex);
+  });
+
+  const sections = CAT_ORDER.filter(c => grouped[c]?.length).map(cat => `
+    <div class="m-ueb-section-hdr">${cat}</div>
+    ${grouped[cat].map(ex => `
+      <div class="m-ueb-row" onclick="openLoggerForExercise(${ex.id})">
+        <div class="m-ueb-thumb">
+          ${ex.img
+            ? `<img src="${ex.img}" alt="" loading="lazy" onerror="this.parentNode.innerHTML='<div class=m-ueb-no-img>${(ex.cat||'?')[0]}</div>'">`
+            : `<div class="m-ueb-no-img">${(ex.cat||'?')[0]}</div>`}
+        </div>
+        <div class="m-ueb-info">
+          <div class="m-ueb-name">${ex.name}</div>
+          <div class="m-ueb-meta">${[ex.brand, ex.gym].filter(Boolean).join(' · ') || ex.group || ''}</div>
+        </div>
+        <div class="m-ueb-chevron">›</div>
+      </div>`).join('')}
+  `).join('');
+
+  el.innerHTML = `
+    <div class="m-ueb-sticky">
+      <div class="m-ueb-title">Alle Übungen</div>
+      <div class="m-ueb-segment">
+        <button class="m-seg-btn${filter==='alle'?' active':''}" onclick="mUebFilter('alle')">Alles</button>
+        <button class="m-seg-btn${filter==='kraft'?' active':''}" onclick="mUebFilter('kraft')">Kraft</button>
+        <button class="m-seg-btn${filter==='cardio'?' active':''}" onclick="mUebFilter('cardio')">Cardio</button>
+      </div>
+    </div>
+    <div class="m-ueb-list">${sections || '<div style="padding:20px 16px;color:var(--soft);font-size:13px">Keine Übungen gefunden</div>'}</div>
+  `;
+}
+
+function mUebFilter(filter){
+  localStorage.setItem('ifl_ueb_filter', filter);
+  renderMobileUebungen();
+}
+
+function openLoggerForExercise(id){
+  const ex = db.find(x => x.id === id);
+  if(!ex) return;
+  // Ensure it's active in current tab so logger can find it
+  if(ex.status !== 'active'){
+    ex.status = 'active';
+    ex.sType  = currentTab;
+    const maxO = Math.max(...db.filter(x=>x.status==='active'&&x.sType===currentTab).map(x=>x.order||0), 0);
+    ex.order = maxO + 1;
+    saveDB();
+  }
+  openLogger(id);
+}
 
 // ════════════════════════════════════════════════════════════
 // FORGE ANALYTICS – Compound Plotter + Peptid-Rechner
