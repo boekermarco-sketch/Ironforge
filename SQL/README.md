@@ -2,6 +2,16 @@
 
 Stand Doku: 2026-04-18 MEZ (Durchgang + gym80-Fix).
 
+## Was wir mit lokalen SQL + passenden Bildern machen
+
+| Ort | Rolle |
+|-----|--------|
+| **`static/img/catalog/`** (eGym, Matrix) und **`static/assets/gym80/`** (gym80) | **Kanonisch** für die laufende App und für Pfade wie `/static/...` bzw. `assets/gym80/...` in Dumps. Diese Dateien gehören ins Git (sind schon im Projekt). |
+| **`SQL/**/*.sql` + dieses README** | **Archiv / Referenz**: SQLite-Dumps zum erneuten Import in eine lokale `.db`, Recherche, Diff. Werden versioniert. |
+| **`SQL/gym80/*.webp`**, **`SQL/Matrix/images/*`**, **`SQL/egym_dump/*.jpeg`** | **Keine zweite Wahrheit im Repo**: identisch bzw. redundant zu `static/` (gym80) oder Arbeitskopie. Per **`.gitignore`** von Git ausgeschlossen, damit das Repo nicht mit hunderten Duplikat-Binärdateien wächst. **Lokal** kannst du sie behalten oder löschen — die App nutzt sie nicht direkt aus `SQL/`. |
+
+Wenn du die `SQL/`-Bilder **doch** sichern willst: externes Backup, ZIP außerhalb des Repos, oder Git LFS (nur wenn du das bewusst einrichtest).
+
 ## Kurzfassung
 
 - **Keine Bilder als Blob/BYTEA** in den `.sql`-Dateien: `image_url` bzw. `img` sind immer **Text** (HTTPS-URLs oder Pfade wie `assets/gym80/….webp`).

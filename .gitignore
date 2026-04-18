@@ -44,5 +44,11 @@ data_MAR_*/
 # Externe Katalog-Downloads
 Downloads/
 
+# SQL-Arbeitsordner: nur *.sql + README versionieren. Bilder liegen kanonisch unter static/
+SQL/**/*.webp
+SQL/**/*.jpg
+SQL/**/*.jpeg
+SQL/**/*.png
+
 # Falsch erstellte Dateien
 \!DOCTYPE.html
