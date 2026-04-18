@@ -1,0 +1,23 @@
+---
+description: Nach Änderungen Git/Remote und Supabase-Bezug prüfen; Release-Checkliste
+alwaysApply: true
+---
+
+# Sync, Push und Supabase nach Änderungen
+
+Am **Ende jeder inhaltlichen Änderung** (wenn der Nutzer nicht ausdrücklich nur lesen/analysieren will):
+
+1. **Git**
+   - `git status -sb` ausführen.
+   - Sicherstellen, dass alle **gewollten** Projektdateien committed sind (keine vergessenen Änderungen an App, `training-preview.html`, `supabase/**`, `docs/supabase_migrations/**`, `requirements.txt`, Templates usw.).
+   - **Nicht** committen: Secrets (`.env`, `supabase-auth-header.txt`), `supabase/.temp/`, lokale DB-Dateien, private Imports/Bilder, `.claude/settings.local.json` sofern nur lokal.
+   - Wenn Commits lokal sind: `git log origin/main..HEAD --oneline` prüfen; bei Vorliegen: **`git push origin main`** (oder den genutzten Standard-Branch).
+
+2. **Supabase (zwei Ebenen)**
+   - **Repo:** `supabase/config.toml`, `supabase/functions/**/*.ts`, `docs/supabase_migrations/*.sql` gehören bei Schema-/Edge-Änderungen **mit ins Git** und mit **gepusht**.
+   - **Cloud-Projekt:** Schema und Daten in Supabase werden **nicht** durch `git push` aktualisiert. Wenn neue SQL-Migrationen oder Functions live sein sollen: Nutzer an **SQL Editor / `supabase db push` / Function deploy** erinnern oder im Task ausführen, falls im Setup vorgesehen.
+
+3. **Kurzbericht an den Nutzer**
+   - Ob `main` (o. Ä.) mit `origin` übereinstimmt.
+   - Welche relevanten Dateien neu committed/gepusht wurden.
+   - Ob noch **uncommittete** oder **absichtlich ignorierte** Dateien liegen (kurz benennen).
