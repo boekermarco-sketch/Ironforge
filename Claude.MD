@@ -621,3 +621,17 @@ Prioritaet fuer User ohne Server-Erfahrung:
   - Neuer Session-Reiter `Cardio` hinzugefuegt (Desktop + Mobile).
   - MyFitnessPal/IFTTT-Block aus Analyse entfernt.
 
+---
+
+## Git: Online (GitHub / Pages) aktuell halten
+
+Nach **jeder inhaltlichen Session**, in der sich produktionsrelevante Dateien ändern (Code, `training-preview.html`, Templates, `docs/`, Supabase-Functions, Deploy-Config):
+
+1. `git status` prüfen.
+2. **Alles committen**, was zum Projekt gehört und **nicht** in `.gitignore` steht (Deploy-Skripte, HTML, Python, Doku, Shortcuts ohne Secrets).
+3. `git pull --rebase origin main` (bei Konflikten lösen), dann **`git push origin main`**.
+
+**Niemals** committen oder pushen: `.env`, Tokens in URLs, `supabase-auth-header.txt`, persönliche Gesundheits-Exporte (`Imports/*.zip` etc.), lokale `fitness.db*`, nur private Bildordner — stehen in `.gitignore` bzw. bleiben lokal.
+
+Ziel: **GitHub-Stand = öffentlich nutzbare Quelle** (z. B. GitHub Pages für `training-preview.html`); persönliche Rohdaten bleiben offline.
+

@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Health Auto Export – Einrichtung Supabase</title>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --panel: #141414;
+    --panel2: #1c1c1c;
+    --line: #2a2a2a;
+    --text: #f0f0f0;
+    --muted: #888;
+    --orange: #f97316;
+    --blue: #3b82f6;
+    --green: #22c55e;
+    --yellow: #eab308;
+    --red: #ef4444;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    padding: 24px 16px 80px;
+    max-width: 780px;
+    margin: 0 auto;
+  }
+
+  h1 { font-size: 1.8rem; color: var(--orange); margin-bottom: 6px; font-weight: 800; }
+  .subtitle { color: var(--muted); font-size: 0.9rem; margin-bottom: 40px; }
+
+  .section-header {
+    display: flex; align-items: center; gap: 12px;
+    margin: 40px 0 20px;
+  }
+  .section-num {
+    background: var(--orange); color: #000; font-weight: 900;
+    font-size: 1.1rem; width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .section-title { font-size: 1.2rem; font-weight: 700; }
+
+  .step {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 16px; margin-bottom: 16px; overflow: hidden;
+  }
+  .step-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px; background: var(--panel2);
+    border-bottom: 1px solid var(--line);
+  }
+  .step-num {
+    background: var(--blue); color: #fff; font-weight: 800;
+    font-size: 0.85rem; width: 26px; height: 26px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .step-title { font-weight: 700; font-size: 1rem; }
+  .step-body { padding: 18px; }
+  .step-body p { margin-bottom: 10px; }
+  .step-body p:last-child { margin-bottom: 0; }
+
+  /* Copy block */
+  .copy-block {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    margin: 12px 0;
+    overflow: hidden;
+  }
+  .copy-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 14px;
+    background: #161b22;
+    border-bottom: 1px solid #30363d;
+    font-size: 0.75rem; color: var(--muted);
+  }
+  .copy-btn {
+    background: var(--blue); color: #fff; border: none;
+    border-radius: 6px; padding: 4px 12px;
+    font-size: 0.75rem; font-weight: 700; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .copy-btn:hover { background: #2563eb; }
+  .copy-btn.ok { background: var(--green); }
+  .copy-content {
+    padding: 14px;
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-size: 0.78rem;
+    color: #e6edf3;
+    white-space: pre-wrap;
+    word-break: break-all;
+    line-height: 1.6;
+  }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.88rem; }
+  th { background: var(--panel2); padding: 9px 12px; text-align: left; color: var(--muted); font-weight: 600; font-size: 0.8rem; }
+  td { padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  td:first-child { white-space: nowrap; color: var(--orange); font-family: monospace; }
+  tr:last-child td { border-bottom: none; }
+
+  /* Hint / Warn */
+  .hint {
+    background: #1a2a1a; border-left: 3px solid var(--green);
+    border-radius: 0 8px 8px 0; padding: 12px 14px; margin: 12px 0;
+    font-size: 0.88rem; color: #ccc;
+  }
+  .warn {
+    background: #2a1a0a; border-left: 3px solid var(--orange);
+    border-radius: 0 8px 8px 0; padding: 12px 14px; margin: 12px 0;
+    font-size: 0.88rem; color: #ccc;
+  }
+
+  /* iPhone mockup */
+  .iphone {
+    background: #1a1a1a; border: 2px solid #333; border-radius: 40px;
+    width: 260px; margin: 16px auto; padding: 20px 10px;
+    position: relative; box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  }
+  .iphone::before {
+    content: ''; position: absolute; top: 10px; left: 50%;
+    transform: translateX(-50%);
+    width: 80px; height: 6px; background: #333; border-radius: 4px;
+  }
+  .iphone-screen { background: #000; border-radius: 28px; padding: 12px 8px; min-height: 120px; }
+  .ios-nav-bar {
+    background: #1c1c1e; padding: 10px 14px; display: flex;
+    align-items: center; justify-content: space-between; font-size: 0.75rem;
+  }
+  .ios-nav-back { color: var(--blue); font-size: 0.8rem; }
+  .ios-nav-title { font-weight: 700; font-size: 0.85rem; }
+  .ios-nav-action { color: var(--blue); font-size: 0.8rem; }
+  .ios-row {
+    background: #1c1c1e; border-radius: 10px; margin: 3px 6px;
+    padding: 9px 12px; font-size: 0.72rem;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .ios-row-label { color: #fff; }
+  .ios-row-value { color: var(--muted); font-size: 0.68rem; }
+  .ios-row-value.active { color: var(--green); }
+  .ios-row-value.warn { color: var(--orange); }
+  .ios-section-title {
+    font-size: 0.65rem; color: var(--muted); text-transform: uppercase;
+    padding: 8px 14px 4px; letter-spacing: 0.05em;
+  }
+  .ios-toggle-on {
+    width: 36px; height: 20px; background: var(--green);
+    border-radius: 10px; position: relative; flex-shrink: 0;
+  }
+  .ios-toggle-on::after {
+    content: ''; position: absolute; top: 2px; right: 2px;
+    width: 16px; height: 16px; background: #fff; border-radius: 50%;
+  }
+  .ios-toggle-off {
+    width: 36px; height: 20px; background: #555;
+    border-radius: 10px; position: relative; flex-shrink: 0;
+  }
+  .ios-toggle-off::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 16px; height: 16px; background: #fff; border-radius: 50%;
+  }
+
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 12px;
+    font-size: 0.72rem; font-weight: 700;
+  }
+  .badge-green { background: #14532d; color: var(--green); }
+  .badge-blue  { background: #1e3a5f; color: var(--blue); }
+  .badge-orange { background: #431407; color: var(--orange); }
+
+  footer {
+    margin-top: 60px; text-align: center;
+    font-size: 0.78rem; color: #444;
+  }
+</style>
+</head>
+<body>
+
+<h1>Health Auto Export → Supabase</h1>
+<p class="subtitle">Einrichtungsanleitung – Apple Health täglich automatisch synchronisieren · Stand 17.04.2026</p>
+
+<!-- ============================================================ -->
+<div class="section-header">
+  <div class="section-num">1</div>
+  <div class="section-title">Supabase – Tabelle anlegen</div>
+</div>
+
+<div class="step">
+  <div class="step-header"><div class="step-num">1</div><div class="step-title">SQL Editor öffnen</div></div>
+  <div class="step-body">
+    <p>Supabase Dashboard → linke Navigation → <strong>SQL Editor</strong> → <strong>New query</strong></p>
+    <p>Folgenden Code einfügen und auf <strong>Run</strong> klicken:</p>
+    <div class="copy-block">
+      <div class="copy-bar"><span>SQL</span><button class="copy-btn" onclick="copyBlock(this)">Kopieren</button></div>
+      <div class="copy-content">CREATE TABLE IF NOT EXISTS apple_health_daily (
+  date         DATE PRIMARY KEY,
+  calories     NUMERIC,
+  protein_g    NUMERIC,
+  carbs_g      NUMERIC,
+  fat_g        NUMERIC,
+  body_mass_kg NUMERIC,
+  resting_hr   NUMERIC,
+  steps        NUMERIC
+);</div>
+    </div>
+    <div class="hint"><strong>Bereits vorhanden?</strong> Kein Problem – <code>IF NOT EXISTS</code> sorgt dafür dass nichts überschrieben wird.</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<div class="section-header">
+  <div class="section-num">2</div>
+  <div class="section-title">Supabase – Edge Function prüfen</div>
+</div>
+
+<div class="step">
+  <div class="step-header"><div class="step-num">1</div><div class="step-title">Edge Function "clever-handler" öffnen</div></div>
+  <div class="step-body">
+    <p>Supabase Dashboard → <strong>Edge Functions</strong> → <strong>clever-handler</strong> anklicken.</p>
+    <p>Falls die Function noch nicht existiert: <strong>New Function</strong> → Name: <code>clever-handler</code></p>
+    <p>Folgenden Code einfügen und deployen:</p>
+    <div class="copy-block">
+      <div class="copy-bar"><span>TypeScript – clever-handler/index.ts</span><button class="copy-btn" onclick="copyBlock(this)">Kopieren</button></div>
+      <div class="copy-content">import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+const supabase = createClient(
+  Deno.env.get('SUPABASE_URL')!,
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+)
+
+const NAME_MAP: Record&lt;string, string&gt; = {
+  dietary_energy:        'calories',
+  dietary_protein:       'protein_g',
+  dietary_carbohydrates: 'carbs_g',
+  dietary_fat_total:     'fat_g',
+  body_mass:             'body_mass_kg',
+  resting_heart_rate:    'resting_hr',
+  step_count:            'steps',
+}
+
+Deno.serve(async (req) =&gt; {
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 })
+
+  const body = await req.json()
+  const metrics = body?.data?.metrics ?? []
+  const byDate: Record&lt;string, Record&lt;string, number&gt;&gt; = {}
+
+  for (const metric of metrics) {
+    const col = NAME_MAP[metric.name]
+    if (!col) continue
+    for (const entry of metric.data ?? []) {
+      const date = String(entry.date).slice(0, 10)
+      if (!byDate[date]) byDate[date] = {}
+      byDate[date][col] = entry.qty ?? entry.value ?? 0
+    }
+  }
+
+  const rows = Object.entries(byDate).map(([date, vals]) =&gt; ({ date, ...vals }))
+  if (rows.length === 0) return new Response(JSON.stringify({ inserted: 0 }), { status: 200 })
+
+  const { error } = await supabase
+    .from('apple_health_daily')
+    .upsert(rows, { onConflict: 'date' })
+
+  if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500 })
+  return new Response(JSON.stringify({ inserted: rows.length }), { status: 200 })
+})</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<div class="section-header">
+  <div class="section-num">3</div>
+  <div class="section-title">Health Auto Export App – Automatisierung einrichten</div>
+</div>
+
+<div class="step">
+  <div class="step-header"><div class="step-num">1</div><div class="step-title">URL eintragen</div></div>
+  <div class="step-body">
+    <p>In der App bei <strong>Neue Automatisierung → URL-Feld</strong> diesen Wert eintragen:</p>
+    <div class="copy-block">
+      <div class="copy-bar"><span>Endpoint URL</span><button class="copy-btn" onclick="copyBlock(this)">Kopieren</button></div>
+      <div class="copy-content">https://dbamakgjtrgqplufwlca.supabase.co/functions/v1/clever-handler</div>
+    </div>
+
+    <div class="iphone">
+      <div class="iphone-screen">
+        <div class="ios-nav-bar">
+          <span class="ios-nav-back">‹ Zurück</span>
+          <span class="ios-nav-title">Neue Auto...</span>
+          <span class="ios-nav-action">Aktualisieren</span>
+        </div>
+        <div class="ios-section-title">Automatisierungstyp</div>
+        <div class="ios-row"><span class="ios-row-label">REST-API</span><span>⌃</span></div>
+        <div style="margin: 6px 6px 2px; background:#1c3a5a; border-radius:10px; padding:9px 12px; font-size:0.68rem; color:#90c8ff; word-break:break-all;">
+          https://dbamakgjtrgqplufwlca.supabase.co/functions/v1/clever-handler
+        </div>
+        <div class="ios-row" style="margin-top:4px;">
+          <span class="ios-row-label">Timeout-Intervall</span>
+          <span class="ios-row-value">60 ⌃</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-header"><div class="step-num">2</div><div class="step-title">Headers (Überschriften) hinzufügen</div></div>
+  <div class="step-body">
+    <p>Tippe auf <strong>„+ Überschriften hinzufügen"</strong> und lege diese zwei Einträge an:</p>
+
+    <table>
+      <thead><tr><th>Schlüssel</th><th>Wert</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Authorization</td>
+          <td>
+            <div class="copy-block" style="margin:4px 0;">
+              <div class="copy-bar"><span>Wert</span><button class="copy-btn" onclick="copyBlock(this)">Kopieren</button></div>
+              <div class="copy-content">Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRiYW1ha2dqdHJncXBsdWZ3bGNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwODY0MzMsImV4cCI6MjA5MTY2MjQzM30.nXRtfxvgqg0Ccgo2FRtFYGrBjx-voNfQOpDCAzK_EME</div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>Content-Type</td>
+          <td>
+            <div class="copy-block" style="margin:4px 0;">
+              <div class="copy-bar"><span>Wert</span><button class="copy-btn" onclick="copyBlock(this)">Kopieren</button></div>
+              <div class="copy-content">application/json</div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="iphone">
+      <div class="iphone-screen">
+        <div class="ios-nav-bar">
+          <span class="ios-nav-back">‹ Zurück</span>
+          <span class="ios-nav-title">Neue Auto...</span>
+          <span class="ios-nav-action">Aktualisieren</span>
+        </div>
+        <div class="ios-section-title">Schlüssel · Wert</div>
+        <div class="ios-row"><span class="ios-row-label" style="font-size:0.65rem;">Authorization</span><span class="ios-row-value" style="font-size:0.6rem; color:#90c8ff;">Bearer eyJ…</span></div>
+        <div class="ios-row"><span class="ios-row-label" style="font-size:0.65rem;">Content-Type</span><span class="ios-row-value">application/json</span></div>
+        <div style="padding:8px 6px;">
+          <div style="background:#1c1c1e; border-radius:10px; padding:9px 12px; font-size:0.72rem; color:var(--blue); display:flex; align-items:center; gap:6px;">
+            <span style="font-size:1rem;">＋</span> Überschriften hinzufügen
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-header"><div class="step-num">3</div><div class="step-title">Aktiviert einschalten</div></div>
+  <div class="step-body">
+    <p>Den Schalter <strong>„Aktiviert"</strong> auf <strong>AN</strong> stellen.</p>
+
+    <div class="iphone">
+      <div class="iphone-screen">
+        <div class="ios-nav-bar">
+          <span class="ios-nav-back">‹ Zurück</span>
+          <span class="ios-nav-title">Neue Auto...</span>
+          <span class="ios-nav-action">Aktualisieren</span>
+        </div>
+        <div class="ios-row" style="margin-top:8px;">
+          <span class="ios-row-label">Aktiviert</span>
+          <div class="ios-toggle-on"></div>
+        </div>
+        <div class="ios-row">
+          <span class="ios-row-label">Benachrichtigen bei Cache-Update</span>
+          <div class="ios-toggle-on"></div>
+        </div>
+        <div class="ios-row">
+          <span class="ios-row-label">Benachrichtigen beim Laufen</span>
+          <div class="ios-toggle-on"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<div class="section-header">
+  <div class="section-num">4</div>
+  <div class="section-title">Datenart-Einstellungen</div>
+</div>
+
+<div class="step">
+  <div class="step-header"><div class="step-num">1</div><div class="step-title">Metriken und Export konfigurieren</div></div>
+  <div class="step-body">
+    <table>
+      <thead><tr><th>Einstellung</th><th>Wert</th></tr></thead>
+      <tbody>
+        <tr><td>Datentyp</td><td>Gesundheitsmetriken</td></tr>
+        <tr><td>Gesundheitsmetriken auswählen</td><td>Kalorien, Protein, Kohlenhydrate, Fett (Gesamt), Körpermasse, Ruhepuls, Schritte</td></tr>
+        <tr><td>Exportformat</td><td>JSON</td></tr>
+        <tr><td>Exportversion</td><td>v2</td></tr>
+        <tr><td>Datumsbereich</td><td>Standard</td></tr>
+        <tr><td>Daten zusammenfassen</td><td><span class="badge badge-green">AN ✓</span></td></tr>
+        <tr><td>Zeitgruppierung</td><td><strong>Täglich</strong></td></tr>
+        <tr><td>Batchanfragen</td><td><span class="badge badge-orange">AUS</span></td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <strong>Zeitgruppierung auf „Täglich" setzen</strong> – damit bekommst du einen Wert pro Tag, nicht viele Einzelmessungen.
+    </div>
+
+    <div class="iphone">
+      <div class="iphone-screen">
+        <div class="ios-nav-bar">
+          <span class="ios-nav-back">‹ Zurück</span>
+          <span class="ios-nav-title">Neue Auto...</span>
+          <span class="ios-nav-action">Aktualisieren</span>
+        </div>
+        <div class="ios-section-title">Exporteinstellungen</div>
+        <div class="ios-row"><span class="ios-row-label">Exportformat</span><span class="ios-row-value">JSON ⌃</span></div>
+        <div class="ios-row"><span class="ios-row-label">Exportversion</span><span class="ios-row-value">v2 ⌃</span></div>
+        <div class="ios-row"><span class="ios-row-label">Datumsbereich</span><span class="ios-row-value">Standard ⌃</span></div>
+        <div class="ios-row">
+          <span class="ios-row-label">Daten zusammenfassen</span>
+          <div class="ios-toggle-on"></div>
+        </div>
+        <div class="ios-row"><span class="ios-row-label">Zeitgruppierung</span><span class="ios-row-value active">Täglich ⌃</span></div>
+        <div class="ios-row">
+          <span class="ios-row-label">Batchanfragen</span>
+          <div class="ios-toggle-off"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<div class="section-header">
+  <div class="section-num">5</div>
+  <div class="section-title">Test – Funktioniert es?</div>
+</div>
+
+<div class="step">
+  <div class="step-header"><div class="step-num">1</div><div class="step-title">Manuell ausführen</div></div>
+  <div class="step-body">
+    <p>In der App auf <strong>„Aktualisieren"</strong> (oben rechts) tippen → die Automatisierung wird einmal sofort ausgeführt.</p>
+    <p>Danach in Supabase nachschauen:</p>
+    <div class="copy-block">
+      <div class="copy-bar"><span>SQL – Ergebnis prüfen</span><button class="copy-btn" onclick="copyBlock(this)">Kopieren</button></div>
+      <div class="copy-content">SELECT * FROM apple_health_daily ORDER BY date DESC LIMIT 5;</div>
+    </div>
+    <div class="hint">
+      <strong>Daten sichtbar?</strong> Dann läuft alles. Die App synchronisiert ab jetzt automatisch täglich im Hintergrund.
+    </div>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-header"><div class="step-num">2</div><div class="step-title">Fehlerbehebung</div></div>
+  <div class="step-body">
+    <table>
+      <thead><tr><th>Problem</th><th>Lösung</th></tr></thead>
+      <tbody>
+        <tr><td>Tabelle leer</td><td>Edge Function Logs prüfen: Supabase → Edge Functions → clever-handler → Logs</td></tr>
+        <tr><td>401 Fehler</td><td>Authorization-Header prüfen – muss exakt „Bearer " + Key sein</td></tr>
+        <tr><td>Felder NULL</td><td>Zeitgruppierung auf „Täglich" prüfen + „Daten zusammenfassen" AN</td></tr>
+        <tr><td>Keine Reaktion</td><td>Batchanfragen muss AUS sein</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<footer>Ironforge Fitness System · Health Auto Export Einrichtung · Stand 17.04.2026</footer>
+
+<script>
+function copyBlock(btn) {
+  const content = btn.closest('.copy-block').querySelector('.copy-content');
+  // decode HTML entities for copy
+  const tmp = document.createElement('textarea');
+  tmp.value = content.innerText;
+  document.body.appendChild(tmp);
+  tmp.select();
+  document.execCommand('copy');
+  document.body.removeChild(tmp);
+  btn.textContent = 'Kopiert!';
+  btn.classList.add('ok');
+  setTimeout(() => { btn.textContent = 'Kopieren'; btn.classList.remove('ok'); }, 2000);
+}
+</script>
+</body>
+</html>

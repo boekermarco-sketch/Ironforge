@@ -6,6 +6,12 @@
 # Lokale Datenbank (bleibt lokal, Daten in Supabase)
 fitness.db
 *.db
+fitness.db-shm
+fitness.db-wal
+
+# Supabase CLI / lokale Secrets
+supabase/.temp/
+supabase-auth-header.txt
 
 # State-Dateien (Garmin Lock, Fetch-Timestamps)
 .garmin_blocked.json
