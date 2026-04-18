@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Letzte inhaltliche Änderung: 2026-04-18 20:45 MEZ (Öffentliche Supabase-Defaults für Katalog-Snapshot) -->
+<!-- Letzte inhaltliche Änderung: 2026-04-18 21:08 MEZ (Pool/Schnellsuche: SQL-Gerätekatalog bei Suchtext) -->
 <html lang="de" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -576,6 +576,8 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
   .m-pool-item-name{font-size:13px;font-weight:700;color:var(--text)}
   .m-pool-item-meta{font-size:10px;color:var(--soft);margin-top:2px}
   .m-pool-add-btn{background:rgba(208,163,90,.12);color:var(--gold);border:1px solid rgba(208,163,90,.3);border-radius:9px;padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap}
+  .m-pool-item--catalog{grid-template-columns:44px 1fr auto !important;align-items:center}
+  .m-pool-item--catalog .m-pool-add-btn{align-self:center}
 
   /* ── STUDIO OVERLAY ────────────────────────────────── */
   #m-studio-overlay{
@@ -911,6 +913,7 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
     transition:background .12s,transform .08s !important;
   }
   .m-pool-item:active{background:rgba(208,163,90,.07)!important;transform:scale(0.98)!important}
+  .m-pool-item--catalog{grid-template-columns:48px 1fr auto !important}
   .m-pool-add-btn{
     border-radius:12px !important;
     padding:8px 14px !important;
@@ -1757,8 +1760,8 @@ let editMode = false;
 let reorderSourceId = null;
 let catalogOffset = 0;
 let catalogMatches = [];
-/** Zeilen aus Supabase ifl_device_catalog (mit img) — Quelle für fehlende Übung.img */
-let deviceCatalogImageRows = [];
+/** Vollständiger Snapshot ifl_device_catalog (Supabase) — Suche/Matrix/gym80; img optional */
+let deviceCatalogSnapRows = [];
 let deviceCatalogImageLoading = false;
 const CATALOG_PAGE_SIZE = 8;
 let mobilePhase = localStorage.getItem('ifl_mobile_phase') || 'plan';
@@ -1798,7 +1801,7 @@ function togglePoolFavOnly(checked){
   localStorage.setItem('ifl_pool_fav_only', checked ? '1' : '0');
   renderMobilePoolSheet();
 }
-const BUILD_STAMP = '2026-04-18 20:45 MEZ';
+const BUILD_STAMP = '2026-04-18 21:08 MEZ';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -2085,35 +2088,68 @@ function slugLetters(s){
   return normImgKey(String(s || '')).replace(/[^a-z0-9äöü]+/g, '');
 }
 
+function catalogSnapFromApi(r){
+  if(!r || !r.name) return null;
+  return {
+    brand: r.brand || null,
+    name: r.name,
+    art: r.art || null,
+    img: r.img ? String(r.img).trim() : null,
+    cat: r.cat || null,
+    sType: r.s_type || r.sType || null,
+    group: r.movement_group || r.group || null,
+    type: r.type || null,
+    target: r.target || null
+  };
+}
+
 function mergeDeviceCatalogSnapshotRows(rows){
   if(!Array.isArray(rows) || !rows.length) return;
   const map = new Map();
-  deviceCatalogImageRows.forEach(r=>{
-    if(r && r.img) map.set(`${normImgKey(r.brand || '')}|${normImgKey(r.name || '')}|${String(r.art || '')}`, r);
+  deviceCatalogSnapRows.forEach(r=>{
+    if(!r || !r.name) return;
+    map.set(`${normImgKey(r.brand || '')}|${normImgKey(r.name || '')}|${String(r.art || '')}`, r);
   });
   rows.forEach(r=>{
-    if(!r || !r.img || !String(r.img).trim()) return;
-    const row = { brand: r.brand, name: r.name, art: r.art, img: String(r.img).trim() };
+    const row = catalogSnapFromApi(r);
+    if(!row) return;
     map.set(`${normImgKey(row.brand || '')}|${normImgKey(row.name || '')}|${String(row.art || '')}`, row);
   });
-  deviceCatalogImageRows = [...map.values()];
+  deviceCatalogSnapRows = [...map.values()];
+}
+
+function deviceCatalogSearchBlob(r){
+  return [r.name, r.brand, r.cat, r.target, r.group, r.type, r.art].map(x => String(x || '').toLowerCase()).join(' ');
+}
+
+/** Treffer im SQL-Katalog (gleiche Token-Logik wie Pool-Suche auf Übungen). */
+function deviceCatalogMatchesQuery(qRaw, limit){
+  const q = (qRaw || '').trim().toLowerCase();
+  if(!q || !deviceCatalogSnapRows.length) return [];
+  const tokens = q.split(/\s+/).filter(Boolean);
+  const out = deviceCatalogSnapRows.filter(r => {
+    const blob = deviceCatalogSearchBlob(r);
+    return tokens.every(t => blob.includes(t));
+  });
+  const lim = limit || 200;
+  return out.length > lim ? out.slice(0, lim) : out;
 }
 
 /** Bild-URL aus geladenem Gerätekatalog (Supabase ifl_device_catalog), nicht aus Übung.img. */
 function matchRemoteDeviceCatalogImage(ex){
-  if(!deviceCatalogImageRows.length) return '';
+  if(!deviceCatalogSnapRows.length) return '';
   const ea = String(ex.art || '').trim();
   if(ea){
-    for(const r of deviceCatalogImageRows){
+    for(const r of deviceCatalogSnapRows){
       const ra = String(r.art || '').trim();
-      if(ra && ra === ea) return r.img;
+      if(ra && ra === ea && r.img) return r.img;
     }
   }
   const en = normImgKey(ex.name);
   const els = slugLetters(ex.name);
   const eb = normImgKey(ex.brand || '');
-  let best = '', bestScore = 0;
-  for(const r of deviceCatalogImageRows){
+  let bestImg = '', bestScore = 0;
+  for(const r of deviceCatalogSnapRows){
     const rn = normImgKey(r.name || '');
     const rls = slugLetters(r.name);
     const rb = normImgKey(r.brand || '');
@@ -2128,13 +2164,16 @@ function matchRemoteDeviceCatalogImage(ex){
       if(eb.includes(rb) || rb.includes(eb)) sc += 12;
       else if(eb.slice(0, 4) === rb.slice(0, 4)) sc += 5;
     }
-    if(sc > bestScore){ bestScore = sc; best = r.img; }
+    if(sc > bestScore){
+      bestScore = sc;
+      if(r.img) bestImg = r.img;
+    }
   }
-  return best;
+  return bestImg;
 }
 
 function hydrateLocalDbImagesFromDeviceCatalog(){
-  if(!deviceCatalogImageRows.length) return;
+  if(!deviceCatalogSnapRows.length) return;
   let changed = false;
   for(const ex of db){
     if(ex.img && String(ex.img).trim()) continue;
@@ -2154,14 +2193,15 @@ async function refreshDeviceCatalogImageCache(){
   if(deviceCatalogImageLoading) return;
   deviceCatalogImageLoading = true;
   try{
-    const res = await fetch(`${cfg.supabaseUrl}/rest/v1/ifl_device_catalog?select=brand,name,art,img&order=name.asc&limit=5000`, {
+    const sel = 'brand,name,art,img,cat,s_type,movement_group,type,target';
+    const res = await fetch(`${cfg.supabaseUrl}/rest/v1/ifl_device_catalog?select=${sel}&order=name.asc&limit=5000`, {
       headers: { apikey: cfg.anonKey, Authorization: `Bearer ${cfg.anonKey}` }
     });
     if(!res.ok) return;
     const rows = await res.json();
-    deviceCatalogImageRows = (Array.isArray(rows) ? rows : [])
-      .filter(r => r && r.img && String(r.img).trim())
-      .map(r => ({ brand: r.brand, name: r.name, art: r.art, img: String(r.img).trim() }));
+    deviceCatalogSnapRows = (Array.isArray(rows) ? rows : [])
+      .map(catalogSnapFromApi)
+      .filter(Boolean);
     hydrateLocalDbImagesFromDeviceCatalog();
   }catch(_e){}
   finally{
@@ -3774,6 +3814,81 @@ function addCatalogExerciseByIndex(idx, target){
   render();
 }
 
+/** Wie addCatalogExerciseByIndex, aber mit Zeile aus deviceCatalogSnapRows (Pool/Schnellsuche). */
+function addCatalogExerciseFromDeviceRow(row, target){
+  if(!row) return;
+  const name = String(row.name || '').trim();
+  if(!name) return;
+  const item = {
+    name,
+    art: row.art || null,
+    brand: row.brand || null,
+    img: row.img || null,
+    cat: row.cat || inferCatFromTarget(row.target || ''),
+    sType: row.sType || inferSTypeFromCat(row.cat || row.target || ''),
+    group: row.group || null
+  };
+  const toSession = target === true;
+  const scope = target === 'studio' ? 'studio' : 'global';
+  const exists = db.some(ex => ex.name.toLowerCase() === name.toLowerCase());
+  if(exists){
+    showToast('Bereits vorhanden: ' + name, 'warn');
+    return;
+  }
+  const newEx = {
+    id: nextId++,
+    name: item.name,
+    art: item.art,
+    brand: item.brand,
+    cat: item.cat || 'Brust',
+    sType: item.sType || 'push',
+    group: item.group,
+    gym: scope === 'studio' ? currentStudio : null,
+    poolScope: scope,
+    status: 'pool',
+    order: nextId,
+    img: item.img || null,
+    history: {},
+    prev: {}
+  };
+  if(toSession){
+    newEx.status = 'active';
+    newEx.sType = currentTab;
+    const maxOrder = Math.max(
+      ...db.filter(x=>x.status==='active' && x.sType===currentTab).map(x=>x.order||0),
+      0
+    );
+    newEx.order = maxOrder + 1;
+    showToast(`✓ ${name} → Session`, 'ok');
+  } else {
+    const label = scope === 'studio' ? 'Studio-Pool' : 'Standard-Pool';
+    showToast(`✓ ${name} → ${label}`, 'ok');
+  }
+  db.push(newEx);
+  saveDB();
+  render();
+  if(document.getElementById('m-pool-sheet')?.classList.contains('open')) renderMobilePoolSheet();
+  if(document.getElementById('m-quick-sheet')?.classList.contains('open')) renderMobileQuickSearchResults();
+}
+
+function mAddPoolCatalogIdx(i){
+  const row = (window.__iflPoolCatHits || [])[i];
+  if(row) addCatalogExerciseFromDeviceRow(row, 'global');
+}
+
+function mAddSessionCatalogIdx(i){
+  const row = (window.__iflQuickCatHits || [])[i];
+  if(!row) return;
+  addCatalogExerciseFromDeviceRow(row, true);
+  closeMobileQuickSearch();
+  renderMobileSession();
+}
+
+function mAddPoolCatalogFromQuickIdx(i){
+  const row = (window.__iflQuickCatHits || [])[i];
+  if(row) addCatalogExerciseFromDeviceRow(row, 'global');
+}
+
 function resetDB(){
   if(!confirm('Alle Trainingseinträge löschen und auf die gym80-Geräteliste zurücksetzen?')) return;
   localStorage.removeItem('ifl_training_db');
@@ -4883,7 +4998,35 @@ function renderMobilePoolSheet(){
 
   const rest = items.filter(ex => !freqIds.has(ex.id));
 
-  list.innerHTML = searchHint + toolbar + freqBlock + (items.length
+  let catalogPoolHtml = '';
+  if(qPool){
+    const rawCat = deviceCatalogMatchesQuery(qPoolRaw, 250);
+    const usedNames = new Set(db.map(x => (x.name || '').toLowerCase().trim()).filter(Boolean));
+    const catHits = rawCat.filter(r => {
+      const nn = (r.name || '').toLowerCase().trim();
+      return nn && !usedNames.has(nn);
+    });
+    window.__iflPoolCatHits = catHits;
+    if(catHits.length){
+      catalogPoolHtml = `<div class="m-tools-h" style="margin:14px 0 8px">Gerätekatalog (Supabase, noch nicht als Übung)</div>` +
+        catHits.map((row, i)=>{
+          const meta = [row.brand, row.cat, row.group].filter(Boolean).join(' · ') || '–';
+          const ph = { name: row.name, brand: row.brand, art: row.art, img: row.img, cat: row.cat || 'Brust' };
+          return `<div class="m-pool-item m-pool-item--catalog">
+            ${mPoolThumbHTML(ph)}
+            <div class="m-pool-item-text">
+              <div class="m-pool-item-name">${mEsc(row.name)}</div>
+              <div class="m-pool-item-meta">${mEsc(meta)}</div>
+            </div>
+            <button type="button" class="m-pool-add-btn" onclick="mAddPoolCatalogIdx(${i})">+ Pool</button>
+          </div>`;
+        }).join('');
+    } else if(!deviceCatalogSnapRows.length){
+      catalogPoolHtml = `<div class="m-tools-muted" style="padding:8px 0 4px">Gerätekatalog: noch nicht geladen (kurz warten oder Netz prüfen).</div>`;
+    }
+  }
+
+  const localBlock = items.length
     ? rest.map(ex=>{
         const hist = ex.history[currentStudio]||[];
         const rm   = maxRM(hist);
@@ -4899,7 +5042,12 @@ function renderMobilePoolSheet(){
           <button class="m-pool-add-btn" onclick="mAddToSession(${ex.id})">+ Session</button>
         </div>`;
       }).join('')
-    : '<div style="padding:20px;text-align:center;color:var(--soft);font-size:13px">Kein Pool für diesen Tab</div>');
+    : (qPool ? '' : '<div style="padding:20px;text-align:center;color:var(--soft);font-size:13px">Kein Pool für diesen Tab</div>');
+
+  list.innerHTML = searchHint + toolbar + freqBlock + localBlock + catalogPoolHtml +
+    (!items.length && !catalogPoolHtml && qPool
+      ? '<div style="padding:16px;text-align:center;color:var(--soft);font-size:13px">Keine lokalen Pool-Treffer</div>'
+      : '');
 }
 
 function mAddToSession(id){
@@ -5324,8 +5472,11 @@ function renderMobileQuickSearchResults(){
         const n = (ex.name || '').toLowerCase();
         const g = (ex.group || '').toLowerCase();
         const c = (ex.cat || '').toLowerCase();
+        const br = (ex.brand || '').toLowerCase();
+        const ar = String(ex.art || '').toLowerCase();
         let score = 0;
         if(n.includes(q)) score = 10 + (n.startsWith(q) ? 4 : 0);
+        else if(br.includes(q) || ar.includes(q)) score = 5;
         else if(g.includes(q) || c.includes(q)) score = 3;
         return { ex, score };
       })
@@ -5339,8 +5490,37 @@ function renderMobileQuickSearchResults(){
       .filter(r => (r.n || 0) >= 3)
       .map(r => r.id)
   );
-  list.innerHTML = scored.length
-    ? scored.map(({ ex }) => _mQuickRowHtml(ex, hotIdSet)).join('')
+  let catHtml = '';
+  if(q){
+    const rawCat = deviceCatalogMatchesQuery(inp.value, 200);
+    const used = new Set(db.map(x => (x.name || '').toLowerCase().trim()).filter(Boolean));
+    const catHits = rawCat.filter(r => !used.has((r.name || '').toLowerCase().trim()));
+    window.__iflQuickCatHits = catHits;
+    if(catHits.length){
+      catHtml = `<div class="m-tools-h" style="margin:10px 0 6px;padding-top:10px;border-top:1px solid var(--line)">Gerätekatalog (Supabase)</div>` +
+        catHits.slice(0, 80).map((row, i)=>{
+          const meta = [row.brand, row.cat, row.group].filter(Boolean).join(' · ') || '–';
+          const ph = { name: row.name, brand: row.brand, art: row.art, img: row.img, cat: row.cat || 'Brust' };
+          const qs = resolveExerciseImageUrl(ph);
+          const qf = exerciseImagePlaceholderUrl(ph);
+          return `<div class="m-quick-row" style="border-left:3px solid rgba(208,163,90,.5)">
+            <div class="m-quick-row-inner" style="flex:1;min-width:0">
+              <img class="m-quick-thumb" src="${attrUrl(qs)}" alt="" loading="lazy" onerror="this.onerror=null;this.src='${attrUrl(qf)}'">
+              <div style="min-width:0"><div class="m-quick-name">${mEsc(row.name)}</div><div class="m-quick-meta">${mEsc(meta)}</div></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+              <button type="button" class="btn btn-teal btn-sm" style="padding:5px 8px;font-size:9px" onclick="event.stopPropagation();mAddSessionCatalogIdx(${i})">Session</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="padding:5px 8px;font-size:9px" onclick="event.stopPropagation();mAddPoolCatalogFromQuickIdx(${i})">Pool</button>
+            </div>
+          </div>`;
+        }).join('');
+    } else if(!deviceCatalogSnapRows.length){
+      catHtml = `<div class="m-tools-muted" style="padding:12px 0 0;border-top:1px solid var(--line)">Gerätekatalog noch nicht geladen (Seite kurz offen lassen).</div>`;
+    }
+  }
+  const top = scored.length ? scored.map(({ ex }) => _mQuickRowHtml(ex, hotIdSet)).join('') : '';
+  list.innerHTML = (top || catHtml)
+    ? top + catHtml
     : `<div class="m-tools-muted" style="padding:16px;text-align:center">Keine Treffer</div>`;
 }
 
