@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Letzte inhaltliche Änderung: 2026-04-18 23:12 MEZ (eGym/Katalog: Supabase-img vor lokalem /static/) -->
+<!-- Letzte inhaltliche Änderung: 2026-04-18 23:40 MEZ (Bild: immer Katalog-ifl_device_catalog wenn möglich) -->
 <html lang="de" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -1776,7 +1776,7 @@ function togglePoolFavOnly(checked){
   localStorage.setItem('ifl_pool_fav_only', checked ? '1' : '0');
   renderMobilePoolSheet();
 }
-const BUILD_STAMP = '2026-04-18 23:12 MEZ';
+const BUILD_STAMP = '2026-04-18 23:40 MEZ';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -2034,14 +2034,6 @@ function normImgKey(s){
   return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
-/** Relatives App-/static-Pfad- oder dateiloses img → Katalog-https (Supabase Storage) soll gewinnen. */
-function exerciseImgIsLikelyLocalOrRelative(s){
-  const t = String(s || '').trim();
-  if(!t) return true;
-  if(/^https?:\/\//i.test(t) || t.startsWith('data:')) return false;
-  return true;
-}
-
 function exerciseImagePlaceholderUrl(ex){
   const fill = CAT_HEX_PREVIEW[ex.cat] || '#898174';
   const raw = ((ex && ex.name) || '?').trim() || '?';
@@ -2162,9 +2154,9 @@ function matchRemoteDeviceCatalogImage(ex){
       if(ra && ra === ea && r.img) return String(r.img).trim();
     }
   }
-  const en = normImgKey(ex.name);
-  const els = slugLetters(ex.name);
-  const eb = normImgKey(ex.brand || '');
+  const en = normImgKey(String(ex.name || '').trim());
+  const els = slugLetters(String(ex.name || '').trim());
+  const eb = normImgKey(String(ex.brand || '').trim());
   const cands = [];
   for(const r of deviceCatalogSnapRows){
     const rn = normImgKey(r.name || '');
@@ -2186,7 +2178,12 @@ function matchRemoteDeviceCatalogImage(ex){
       cands.push({ sc, img: im });
     }
   }
-  cands.sort((a, b) => b.sc - a.sc);
+  if(!cands.length) return '';
+  const maxSc = Math.max(...cands.map(c => c.sc));
+  const tier = cands.filter(c => c.sc === maxSc);
+  const withImg = tier.find(c => c.img);
+  if(withImg) return withImg.img;
+  cands.sort((a, b) => b.sc - a.sc || (b.img ? 1 : 0) - (a.img ? 1 : 0));
   for(const c of cands){
     if(c.img) return c.img;
   }
@@ -2197,11 +2194,10 @@ function hydrateLocalDbImagesFromDeviceCatalog(){
   if(!deviceCatalogSnapRows.length) return;
   let changed = false;
   for(const ex of db){
-    const cur = (ex.img && String(ex.img).trim()) || '';
     const u = matchRemoteDeviceCatalogImage(ex);
     if(!u) continue;
-    const prefer = !cur || (/^https?:\/\//i.test(u) && exerciseImgIsLikelyLocalOrRelative(cur));
-    if(prefer && cur !== u){
+    const cur = (ex.img && String(ex.img).trim()) || '';
+    if(cur !== u){
       ex.img = u;
       changed = true;
     }
@@ -2259,16 +2255,15 @@ async function refreshDeviceCatalogImageCache(){
   }
 }
 
-/** Für Kacheln, Pool, Logger, Mobile: immer eine URL (echtes Bild, Katalog-Heuristik oder SVG-Platzhalter). */
+/** Für Kacheln, Pool, Logger, Mobile: zuerst Katalog-Bild (ifl_device_catalog), sonst Übung.img / Heuristik / Platzhalter. */
 function resolveExerciseImageUrl(ex){
   if(!ex) return exerciseImagePlaceholderUrl({ cat: 'Core', name: '?' });
-  const direct = (ex.img && String(ex.img).trim()) ? String(ex.img).trim() : '';
   const fromRemote = matchRemoteDeviceCatalogImage(ex);
-  if(fromRemote && /^https?:\/\//i.test(fromRemote) && (!direct || exerciseImgIsLikelyLocalOrRelative(direct))){
-    return fromRemote;
-  }
-  if(direct) return direct;
   if(fromRemote) return fromRemote;
+
+  const direct = (ex.img && String(ex.img).trim()) ? String(ex.img).trim() : '';
+  if(direct) return direct;
+
   const artRaw = ex.art != null && String(ex.art).trim();
   if(artRaw) return SB_IMG + artRaw + '.webp';
   const b = normImgKey(ex.brand);
