@@ -211,6 +211,16 @@ class DailyLog(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class AppKVStore(Base):
+    """Generischer Key/Value-Store für App-Metadaten (z. B. letzter Apple-Health-Import)."""
+
+    __tablename__ = "app_kv_store"
+
+    key = Column(String(120), primary_key=True)
+    value_json = Column(Text, nullable=False, default="{}")
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 # ─── Medizinische Ereignisse ──────────────────────────────────────────────────
 
 class MedicalEvent(Base):

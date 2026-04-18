@@ -1,6 +1,8 @@
 # Vorhaben & Roadmap — Ironforge Fitness System
 Stand: 16.04.2026
 
+**Lebendokumentation (Stand + Ideen + Changelog):** siehe [`docs/PROJEKT-STAND-UND-IDEEN.md`](docs/PROJEKT-STAND-UND-IDEEN.md) — bei größeren Änderungen kurz dort nachtragen.
+
 ---
 
 ## 1. Gerätekatalog (Matrix + eGym)

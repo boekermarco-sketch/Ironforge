@@ -14,6 +14,7 @@ import requests
 from sqlalchemy.orm import Session
 
 from app.models import DailyLog
+from app.services.apple_sync_meta import record_local_apple_import
 
 
 # Mapping Apple Health JSON-Feld → DailyLog-Attribut
@@ -67,6 +68,7 @@ def upsert_apple_health_day(payload: dict[str, Any], db: Session) -> dict:
         setattr(log, model_attr, val)
         updated_fields.append(model_attr)
 
+    record_local_apple_import(db, entry_date, updated_fields)
     db.commit()
     db.refresh(log)
 

@@ -3,6 +3,8 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
+from app.services.catalog_overrides import ensure_device_target_overrides_table
+
 
 def import_gym80_sql(db_path: Path, sql_path: Path) -> dict:
     """Importiert gym80 SQL-Katalog in SQLite und dedupliziert Einträge."""
@@ -47,6 +49,7 @@ def import_gym80_sql(db_path: Path, sql_path: Path) -> dict:
             )
             """
         )
+        ensure_device_target_overrides_table(conn)
         conn.commit()
 
         after = conn.execute("SELECT COUNT(*) FROM gym80_devices").fetchone()[0]

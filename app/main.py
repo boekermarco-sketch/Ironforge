@@ -4,6 +4,7 @@ from fastapi.templating import Jinja2Templates
 from pathlib import Path
 
 from app.database import engine, Base
+from app.models import AppKVStore  # noqa: F401 — Tabelle app_kv_store für Base.metadata.create_all
 from app.routers import dashboard, stack, blood, daily_log, events, journal, imports, checkin
 
 # Alle Tabellen anlegen (beim ersten Start)

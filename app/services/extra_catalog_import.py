@@ -3,6 +3,8 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
+from app.services.catalog_overrides import ensure_device_target_overrides_table
+
 
 def _exec_sql_file(conn: sqlite3.Connection, sql_path: Path) -> None:
     sql_text = sql_path.read_text(encoding="utf-8", errors="ignore")
@@ -85,6 +87,7 @@ def import_extra_catalogs(
             )
             """
         )
+        ensure_device_target_overrides_table(conn)
         conn.commit()
 
         after = {}

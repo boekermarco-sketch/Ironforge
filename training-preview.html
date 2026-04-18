@@ -2,7 +2,11 @@
 <html lang="de" data-theme="dark">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#050608">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
 <title>Training – Iron Forge Lab</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,6 +31,8 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-size:15px;scroll-behavior:smooth}
 body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;font-size:.875rem;line-height:1.6;overflow-x:hidden}
+#m-app-header{display:none}
+#app-shell-btn{display:none}
 
 /* TOAST */
 #toast-container{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
@@ -103,6 +109,8 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
 .rest-timer-label{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);font-weight:800;margin-bottom:2px}
 .rest-timer-val{font-family:'Cormorant Garamond',serif;font-size:44px;line-height:1;color:var(--gold);letter-spacing:-.03em}
 .rest-timer-val.over{color:var(--red)}
+.rest-timer-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.rest-timer-cancel{flex-shrink:0;margin-top:2px;white-space:nowrap}
 
 /* STUDIO */
 .studio-select{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:11px;color:var(--text);padding:9px 13px;font-family:'Manrope',sans-serif;font-size:12px;font-weight:700;outline:none;cursor:pointer;width:100%}
@@ -173,6 +181,37 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
 
 /* ANALYSE GRID */
 .analyse-grid{display:grid;gap:16px}
+/* Forge-Block: standard eingeklappt (weniger Ablenkung) */
+.analyse-forge-fold > summary{
+  list-style:none;
+  cursor:pointer;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  padding-bottom:0;
+  margin:0;
+}
+.analyse-forge-fold > summary::-webkit-details-marker{display:none}
+.analyse-forge-fold[open] > summary{
+  padding-bottom:14px;
+  margin-bottom:2px;
+  border-bottom:1px solid var(--line);
+}
+.analyse-forge-chevron{
+  font-size:10px;
+  color:var(--soft);
+  font-weight:800;
+  letter-spacing:.12em;
+  transition:transform .15s ease;
+  flex-shrink:0;
+}
+.analyse-forge-fold[open] .analyse-forge-chevron{transform:rotate(180deg)}
+/* Forge-Inhalt auf schmalen Viewports zuverlässig verbergen, wenn zugeklappt (iOS/Safari) */
+@media(max-width:640px){
+  #analyse-forge-fold:not([open]) > *:not(summary){display:none !important}
+}
 
 /* BTABLE */
 .btable{width:100%;border-collapse:collapse;font-size:13px}
@@ -300,10 +339,14 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
   .session-tab{font-size:9px;padding:9px 4px;letter-spacing:.08em}
   .card{padding:13px;border-radius:17px}
   .training-grid{grid-template-columns:1fr}
-  .session-tabs{display:none}
   .main-content{padding-bottom:130px}
-  /* Rest-Timer: floating fest über Bottom-Nav */
+  #app-shell-btn{display:block !important;width:100%}
+  .m-web-pool-tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  body.ifl-mobile-app .m-web-pool-tools{display:none !important}
+  /* Rest-Timer: mit App-Shell über Bottom-Nav; sonst näher am unteren Rand */
   .rest-timer-wrap{position:fixed !important;bottom:112px;left:12px;right:12px;margin:0;z-index:85;box-shadow:0 6px 28px rgba(0,0,0,.55);animation:timer-pop .18s cubic-bezier(.4,0,.2,1) both}
+  body:not(.ifl-mobile-app) .rest-timer-wrap{bottom:calc(22px + env(safe-area-inset-bottom,0px)) !important}
+  body:not(.ifl-mobile-app) .edit-done-fab{bottom:calc(22px + env(safe-area-inset-bottom,0px))}
   /* Logger-Modal fullscreen auf Mobile */
   #logger-modal.open{align-items:flex-end;padding:0}
   #logger-modal .modal-box{border-radius:22px 22px 0 0;max-height:92dvh;max-width:100%;width:100%;overflow-y:auto;padding:20px 16px 28px}
@@ -312,6 +355,7 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
   .view-entering{opacity:0;transform:translateY(8px)}
 }
 @keyframes timer-pop{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.m-web-pool-tools{display:none}
 /* Session Focus Bar (nur auf Mobile) */
 .session-focus-bar{display:none;background:var(--goldSoft);border:1px solid rgba(208,163,90,.25);border-radius:14px;padding:12px 14px;margin-bottom:12px}
 .focus-bar-label{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:800;margin-bottom:4px}
@@ -331,24 +375,28 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
 [data-theme="light"] .mobile-main-tab{background:rgba(0,0,0,.04)}
 [data-theme="light"] .mobile-train-tab{background:rgba(0,0,0,.03)}
 @media(max-width:640px){
-  /* ── APP SHELL ─────────────────────────────────────── */
-  html,body{overflow:hidden;height:100dvh}
-  .shell{display:block !important}
-  .side{display:none !important}
-  .main-content{
-    padding:0 0 68px 0 !important;
-    height:calc(100dvh - 116px);
-    overflow-y:auto;
-    -webkit-overflow-scrolling:touch;
-    margin-top:54px;
+  /* Web-Standard: volle Seite scrollen. App-Chrome nur mit body.ifl-mobile-app (localStorage ifl_app_shell=1). */
+  .ifl-shell-root{display:none;}
+  body.ifl-mobile-app .ifl-shell-root{display:contents;}
+
+  body.ifl-mobile-app{
+    overflow:hidden;
+    height:100dvh;
+    touch-action:manipulation;
   }
-  /* Hide desktop-only elements */
-  .session-tabs{display:none !important}
-  .tab-state{display:none !important}
-  .phase-switch{display:none !important}
-  #phase-note{display:none !important}
-  /* Page top: compress */
-  .main-content > div:first-child{display:none}
+  html:has(body.ifl-mobile-app){
+    overflow:hidden;
+    height:100dvh;
+  }
+  body.ifl-mobile-app .shell{display:block !important;}
+  body.ifl-mobile-app .side{display:none !important;}
+  body.ifl-mobile-app .main-content{display:none !important;}
+
+  body.ifl-mobile-app .session-tabs{display:none !important}
+  body.ifl-mobile-app .tab-state{display:none !important}
+  body.ifl-mobile-app .phase-switch{display:none !important}
+  body.ifl-mobile-app #phase-note{display:none !important}
+  body.ifl-mobile-app .main-content > div:first-child{display:none}
   /* Training grid: single column */
   .training-grid{grid-template-columns:1fr !important;gap:10px}
   /* Catalogue: single column */
@@ -378,21 +426,22 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
 
   /* ── BOTTOM NAV ────────────────────────────────────── */
   .mobile-bottom-nav{
-    display:flex !important;
+    display:grid !important;
+    grid-template-columns:1fr 1fr;
     position:fixed;bottom:0;left:0;right:0;
     height:68px;z-index:100;
     background:var(--panel);
     border-top:1px solid var(--line);
-    padding:0 4px env(safe-area-inset-bottom);
+    padding:0 10px env(safe-area-inset-bottom);
     align-items:center;
-    justify-content:space-around;
+    gap:10px;
   }
   .m5-tab{
-    display:flex;flex-direction:column;align-items:center;gap:2px;
-    padding:6px 8px;border-radius:12px;border:none;
-    background:transparent;color:var(--soft);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+    padding:8px 10px;border-radius:12px;border:1px solid var(--line);
+    background:rgba(255,255,255,.04);color:var(--soft);
     font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
-    cursor:pointer;transition:.18s;min-width:52px;flex:1;
+    cursor:pointer;transition:.18s;
   }
   .m5-tab svg{stroke:currentColor;transition:.18s}
   .m5-tab.active{color:var(--gold)}
@@ -409,13 +458,19 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
     top:54px;left:0;right:0;bottom:68px;
     background:var(--bg);
     z-index:60;
-    overflow-y:auto;
-    -webkit-overflow-scrolling:touch;
-    padding:10px 14px 16px;
+    overflow:hidden;
+    padding:10px 14px 12px;
     flex-direction:column;
-    gap:10px;
+    gap:8px;
   }
   #m-session-overlay.active{display:flex}
+  #m-session-overlay .m-ex-scroll{
+    flex:1;
+    min-height:0;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    padding-bottom:4px;
+  }
 
   /* Sub-tab bar */
   .m-subtab-bar{display:flex;gap:4px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;flex-shrink:0;scrollbar-width:none}
@@ -427,7 +482,21 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
   .m-rest-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:14px;background:var(--goldSoft);border:1px solid rgba(208,163,90,.2);flex-shrink:0}
   .m-rest-label{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:800;flex:1}
   .m-rest-val{font-family:'Cormorant Garamond',serif;font-size:32px;line-height:1;color:var(--gold);font-weight:600}
-  .m-rest-stop{background:transparent;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:4px}
+  .m-rest-stop{
+    flex-shrink:0;
+    background:rgba(255,255,255,.08);
+    border:1px solid var(--line);
+    color:var(--text);
+    font-family:'Manrope',sans-serif;
+    font-size:10px;
+    font-weight:800;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    cursor:pointer;
+    padding:10px 14px;
+    border-radius:10px;
+    min-height:44px;
+  }
 
   /* Exercise card */
   .m-ex-card{
@@ -488,7 +557,11 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
   }
   #m-pool-sheet.open{transform:translateY(0)}
   .m-sheet-handle{width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,.12);margin:0 auto 12px}
-  .m-pool-item{display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);margin-bottom:6px}
+  .m-pool-item{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:6px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);margin-bottom:6px}
+  .m-pool-star{background:transparent;border:none;color:var(--gold);font-size:17px;line-height:1;cursor:pointer;padding:4px 6px;flex-shrink:0;opacity:.85}
+  .m-pool-star:active{opacity:1;transform:scale(0.92)}
+  .m-pool-search{width:100%;box-sizing:border-box;margin:0 0 10px;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.22);color:var(--text);font-size:15px;font-family:'Manrope',sans-serif}
+  [data-theme="light"] .m-pool-search{background:rgba(255,255,255,.85)}
   .m-pool-item-name{font-size:13px;font-weight:700;color:var(--text)}
   .m-pool-item-meta{font-size:10px;color:var(--soft);margin-top:2px}
   .m-pool-add-btn{background:rgba(208,163,90,.12);color:var(--gold);border:1px solid rgba(208,163,90,.3);border-radius:9px;padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap}
@@ -513,8 +586,8 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
   .m-stat-lbl{font-size:9px;color:var(--soft);font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-top:4px}
   .m-sync-row{display:flex;gap:8px}
 
-  /* ── REST TIMER: hide sticky banner on mobile (use inline bar) */
-  .rest-timer-wrap{display:none !important}
+  /* ── REST TIMER: in App-Ansicht nur Inline-Leiste (#m-rest-bar), sonst schwebender Banner */
+  body.ifl-mobile-app .rest-timer-wrap{display:none !important}
 
   /* ── PLAN VIEW: show pool + active stacked ─────────── */
   #pool-card{display:block}
@@ -594,6 +667,57 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
 .m-heute-log-sets{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)}
 .m-heute-studio-row{display:flex;align-items:center;gap:10px;padding:2px 0 4px}
 .m-heute-studio-lbl{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--soft);font-weight:800;white-space:nowrap}
+.m-heute-snap{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:4px;scrollbar-width:none;margin:2px 0 4px}
+.m-heute-snap::-webkit-scrollbar{display:none}
+.m-heute-snap-card{flex:0 0 78%;max-width:280px;scroll-snap-align:start;background:linear-gradient(145deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:18px;padding:14px 16px;box-shadow:0 4px 18px rgba(0,0,0,.22)}
+.m-heute-snap-val{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:700;color:var(--gold);line-height:1}
+.m-heute-snap-lbl{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--soft);font-weight:800;margin-top:6px}
+.m-heute-equip{background:linear-gradient(145deg,var(--panel),var(--panel2));border:1px solid rgba(255,255,255,.09);border-radius:18px;padding:12px 14px}
+.m-heute-equip-h{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:800;margin-bottom:8px}
+.m-heute-equip textarea{width:100%;min-height:72px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text);font-family:'Manrope',sans-serif;font-size:12px;padding:10px;resize:vertical}
+.m-heute-equip-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center}
+.m-swipe-hint{font-size:9px;color:var(--soft);text-align:center;letter-spacing:.06em;opacity:.75;padding:0 8px 4px}
+
+/* ══ MOBILE TOOLS (kompakt, kein „Homepage“-Look) ═════════════════ */
+#m-tools-view{display:none;position:fixed;top:54px;left:0;right:0;bottom:68px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 12px 16px;flex-direction:column;gap:8px;background:var(--bg)}
+#m-tools-view.active{display:flex}
+.m-tools-panel{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.m-tools-h{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--soft);font-weight:800;margin:0 0 8px}
+.m-tools-table{width:100%;border-collapse:collapse;font-size:11px}
+.m-tools-table th,.m-tools-table td{padding:6px 4px;border-bottom:1px solid rgba(255,255,255,.06);text-align:left;vertical-align:middle}
+.m-tools-table th{font-size:8px;letter-spacing:.06em;text-transform:uppercase;color:var(--soft);font-weight:800;white-space:nowrap;max-width:56px;overflow:hidden;text-overflow:ellipsis}
+.m-tools-table td.mono{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)}
+.m-tools-table tr:last-child td{border-bottom:none}
+.m-tools-grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:end;margin-bottom:8px}
+.m-tools-grid2 label{font-size:9px;color:var(--soft);font-weight:700;display:block;margin-bottom:3px}
+.m-tools-grid2 input{background:rgba(0,0,0,.2);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:8px;font-size:13px;width:100%}
+.m-tools-out{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--gold);padding:6px 0}
+.m-tools-muted{font-size:10px;color:var(--soft);line-height:1.4;margin-top:4px}
+.m-tools-fold{border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.03);margin-bottom:8px}
+.m-tools-fold > summary{list-style:none;cursor:pointer;padding:10px 12px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--soft);font-weight:800;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.m-tools-fold > summary::-webkit-details-marker{display:none}
+.m-tools-fold[open] > summary{border-bottom:1px solid var(--line);color:var(--muted)}
+.m-tools-fold .m-tools-inset{padding:4px 8px 12px}
+#m-quick-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:88;backdrop-filter:blur(2px)}
+#m-quick-backdrop.open{display:block}
+#m-quick-sheet{position:fixed;left:0;right:0;bottom:0;z-index:90;background:var(--panel);border-radius:18px 18px 0 0;border-top:1px solid var(--line);padding:10px 14px 88px;transform:translateY(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);max-height:78dvh}
+#m-quick-sheet.open{transform:translateY(0)}
+#m-quick-input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.2);color:var(--text);font-size:15px;margin-bottom:10px}
+.m-quick-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 8px;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer}
+.m-quick-row:active{background:rgba(208,163,90,.06)}
+.m-quick-name{font-size:13px;font-weight:700}
+.m-quick-meta{font-size:10px;color:var(--soft)}
+.m-quick-badge{font-size:9px;font-weight:800;padding:2px 8px;border-radius:6px;background:rgba(255,255,255,.06);color:var(--muted)}
+.m-session-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px;flex-shrink:0}
+
+/* ══ MOBILE FORTSCHRITT (Analyse-Tab) ═══════════════════════════ */
+#m-analyse-view{display:none;position:fixed;top:54px;left:0;right:0;bottom:68px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px 20px;flex-direction:column;gap:12px;background:var(--bg)}
+#m-analyse-view.active{display:flex}
+.m-pro-chart-wrap{height:180px;position:relative;margin-top:4px}
+.m-pro-kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.m-pro-kpi > div{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:12px 8px;text-align:center}
+.m-pro-kpi .v{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--gold)}
+.m-pro-kpi .l{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--soft);font-weight:800;margin-top:4px}
 
 /* ══ MOBILE ÜBUNGEN VIEW ════════════════════════════════════════ */
 #m-uebungen-view{display:none;position:fixed;top:54px;left:0;right:0;bottom:68px;overflow-y:auto;-webkit-overflow-scrolling:touch;flex-direction:column;background:var(--bg)}
@@ -736,6 +860,14 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
     50%{box-shadow:0 0 22px 3px rgba(208,163,90,.22)}
   }
   .m-rest-val{font-size:38px !important;letter-spacing:-.04em !important}
+  body.ifl-mobile-app #m-rest-bar{
+    position:fixed !important;
+    left:10px !important;
+    right:10px !important;
+    bottom:calc(68px + env(safe-area-inset-bottom, 0px) + 8px) !important;
+    z-index:95 !important;
+    box-shadow:0 6px 24px rgba(0,0,0,.45) !important;
+  }
 
   /* ── Pool Sheet: frosted glass ────────────────────────────── */
   #m-pool-sheet{
@@ -758,6 +890,7 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
 
   /* Pool list items */
   .m-pool-item{
+    grid-template-columns:1fr auto auto !important;
     border-radius:16px !important;
     background:rgba(255,255,255,.04) !important;
     border:1px solid rgba(255,255,255,.09) !important;
@@ -887,6 +1020,7 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
     <a href="#" class="nav-btn">Import</a>
   </nav>
   <button id="theme-btn" class="nav-btn" onclick="toggleTheme()" style="color:var(--soft);border-color:var(--line)"></button>
+  <button type="button" id="app-shell-btn" class="nav-btn" onclick="toggleMobileAppShellPref()" style="color:var(--soft);border-color:var(--line)" title="Kompakte Vollbild-Ansicht (Training/Rechner) für schmale Screens">App-Ansicht</button>
   <div class="blast-widget">
     <div class="blast-label">Aktuelle Phase</div>
     <div class="blast-num">W7<span> / 16</span></div>
@@ -959,14 +1093,23 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
       <button class="pill" id="phase-check-btn" onclick="setMobilePhase('checkin')">Check-In</button>
     </div>
     <div id="phase-note" style="font-size:11px;color:var(--soft);margin-bottom:8px"></div>
+    <div id="m-web-pool-tools" class="m-web-pool-tools" aria-label="Pool und Schnellsuche (Mobile-Web)">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="openMobileQuickSearch()">Schnellsuche</button>
+      <button type="button" class="btn btn-primary btn-sm" onclick="openMobilePool()">Pool · Suche</button>
+    </div>
     <div id="edit-mode-banner" class="edit-mode-banner">
       <div style="font-size:11px;color:var(--muted);font-weight:700">Sortiermodus aktiv (Long-Press)</div>
       <button onclick="exitEditMode()" class="btn btn-secondary btn-sm">Fertig</button>
     </div>
 
     <div id="active-rest-timer" class="rest-timer-wrap">
-      <div class="rest-timer-label">Pause läuft</div>
-      <div id="rest-val" class="rest-timer-val">0:00</div>
+      <div class="rest-timer-head">
+        <div>
+          <div class="rest-timer-label">Pause läuft</div>
+          <div id="rest-val" class="rest-timer-val">0:00</div>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm rest-timer-cancel" onclick="stopTimer()">Abbrechen</button>
+      </div>
     </div>
 
     <div class="training-grid">
@@ -1103,12 +1246,15 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
         </div>
       </div>
 
-      <!-- ═══ FORGE ANALYTICS ══════════════════════════════════ -->
-      <div class="card">
-        <div class="sh">
-          <div class="forge-card-title">Forge Analytics</div>
-          <span class="pill pill-gold">Compound Plotter · Peptid-Rechner</span>
-        </div>
+      <!-- ═══ FORGE ANALYTICS (optional, standard eingeklappt) ═══ -->
+      <details class="card analyse-forge-fold" id="analyse-forge-fold">
+        <summary class="analyse-forge-fold-sum">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0">
+            <span class="forge-card-title" style="margin:0">Forge Analytics</span>
+            <span class="pill pill-gold">Compound · Peptide</span>
+          </div>
+          <span class="analyse-forge-chevron" aria-hidden="true">▼</span>
+        </summary>
 
         <div class="forge-tabs">
           <button class="forge-tab active" id="ftab-plotter" onclick="switchForgeTab('plotter')">Compound Plotter</button>
@@ -1162,7 +1308,7 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
             </div>
           </div>
         </div>
-      </div>
+      </details>
 
     </div>
   </div>
@@ -1298,26 +1444,19 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
 
 </main>
 </div>
-<!-- MOBILE BOTTOM NAV (4 Tabs) -->
+<!-- Optionale Mobile-App-Shell (nur ≤640px + localStorage ifl_app_shell=1) -->
+<div id="ifl-shell-root" class="ifl-shell-root" aria-hidden="true">
+<!-- MOBILE BOTTOM NAV: Training + kompakte Tools (Rest = Desktop) -->
 <nav class="mobile-bottom-nav" id="mobile-bottom-nav">
-  <button class="m5-tab active" id="m5-heute" onclick="switchMobileView('heute')">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-    <span>Heute</span>
-  </button>
-  <button class="m5-tab" id="m5-session" onclick="switchMobileView('session')">
+  <button class="m5-tab active" id="m5-session" onclick="switchMobileView('session')">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 5v14M18 5v14"/><path d="M6 8h4M14 8h4M6 16h4M14 16h4"/><rect x="10" y="5" width="4" height="14" rx="1"/></svg>
     <span>Training</span>
   </button>
-  <button class="m5-tab" id="m5-uebungen" onclick="switchMobileView('uebungen')">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-    <span>Übungen</span>
-  </button>
-  <button class="m5-tab" id="m5-analyse" onclick="switchMobileView('analyse')">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-    <span>Analyse</span>
+  <button class="m5-tab" id="m5-tools" onclick="switchMobileView('tools')">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></svg>
+    <span>Rechner</span>
   </button>
 </nav>
-<button id="edit-done-fab" class="edit-done-fab" onclick="exitEditMode()">Fertig</button>
 
 <!-- ══ MOBILE APP HEADER ════════════════════════════════════ -->
 <div id="m-app-header">
@@ -1328,6 +1467,13 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
   <div id="m-header-right" class="m-header-right">
     <span id="m-header-studio" class="m-header-studio"></span>
   </div>
+</div>
+
+<!-- Mobile: Pause-Leiste global (sichtbar auch auf „Rechner“, damit Abbrechen immer erreichbar) -->
+<div id="m-rest-bar" class="m-rest-bar" style="display:none" role="status" aria-live="polite">
+  <span class="m-rest-label">Pause</span>
+  <span id="m-rest-val" class="m-rest-val">0:00</span>
+  <button type="button" onclick="stopRestTimer()" class="m-rest-stop" aria-label="Pause abbrechen">Abbrechen</button>
 </div>
 
 <!-- ══ MOBILE SESSION FOCUS OVERLAY ═════════════════════════ -->
@@ -1341,17 +1487,17 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
     <button class="m-subtab"        id="mst-free"   onclick="mChangeTab('free')">Frei</button>
     <button class="m-subtab"        id="mst-cardio" onclick="mChangeTab('cardio')">Cardio</button>
   </div>
-
-  <!-- Rest timer (inline when running) -->
-  <div id="m-rest-bar" class="m-rest-bar" style="display:none">
-    <span class="m-rest-label">Pause</span>
-    <span id="m-rest-val" class="m-rest-val">0:00</span>
-    <button onclick="stopRestTimer()" class="m-rest-stop">✕</button>
+  <div class="m-session-actions">
+    <button type="button" class="btn btn-primary btn-sm" style="padding:10px" onclick="openMobileQuickSearch()">Schnellsuche</button>
+    <button type="button" class="btn btn-secondary btn-sm" style="padding:10px" onclick="openMobilePool()">Pool</button>
   </div>
+  <div class="m-tools-muted" style="text-align:center;margin:-2px 0 4px">Rand wischen: Training ↔ Rechner · Subtabs: Session-Typ</div>
 
-  <!-- Exercise focus card -->
-  <div class="m-ex-card" id="m-ex-card">
-    <!-- Injected by renderMobileSession() -->
+  <!-- Exercise focus card (only this block scrolls) -->
+  <div class="m-ex-scroll">
+    <div class="m-ex-card" id="m-ex-card">
+      <!-- Injected by renderMobileSession() -->
+    </div>
   </div>
 
   <!-- Log + Nav -->
@@ -1361,32 +1507,14 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
     <button onclick="mNavEx(1)"  class="m-nav-btn" id="m-nav-next">→</button>
   </div>
 
-  <!-- Pool FAB -->
-  <button onclick="openMobilePool()" class="m-pool-fab">+ Pool</button>
-
   <!-- Finish session -->
   <div style="text-align:center;padding:6px 0 2px">
     <button onclick="finishSession()" class="btn btn-secondary btn-sm" style="font-size:11px">Session beenden ✓</button>
   </div>
 </div>
 
-<!-- ══ MOBILE POOL SHEET ═════════════════════════════════════ -->
-<div id="m-pool-backdrop" onclick="closeMobilePool()"></div>
-<div id="m-pool-sheet">
-  <div class="m-sheet-handle"></div>
-  <div class="sh" style="margin-bottom:10px">
-    <div class="sh-title">Pool · <span id="m-pool-sheet-tab"></span></div>
-    <button onclick="closeMobilePool()" class="btn btn-secondary btn-sm" style="padding:3px 10px">✕</button>
-  </div>
-  <div class="cat-filters" id="m-pool-cat-filters"></div>
-  <div id="m-pool-sheet-list" style="overflow-y:auto;max-height:55dvh;padding-bottom:8px"></div>
-</div>
-
-<!-- ══ MOBILE HEUTE / DASHBOARD ══════════════════════════════ -->
-<div id="m-heute-view"><!-- rendered by renderMobileHeute() --></div>
-
-<!-- ══ MOBILE ÜBUNGEN LIST ═══════════════════════════════════ -->
-<div id="m-uebungen-view"><!-- rendered by renderMobileUebungen() --></div>
+<!-- ══ MOBILE TOOLS (Studio · 1RM · Rechner) ═════════════════ -->
+<div id="m-tools-view"></div>
 
 <!-- ══ MOBILE STUDIO OVERLAY ═════════════════════════════════ -->
 <div id="m-studio-overlay">
@@ -1407,6 +1535,33 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
   </div>
   <div id="m-sync-status" class="sync-status" style="margin-top:8px;text-align:center"></div>
 </div>
+</div><!-- /ifl-shell-root -->
+
+<!-- Pool + Schnellsuche außerhalb der App-Shell → funktioniert auch im Mobile-Web (scrollbare Seite) -->
+<div id="m-pool-backdrop" onclick="closeMobilePool()"></div>
+<div id="m-pool-sheet">
+  <div class="m-sheet-handle"></div>
+  <div class="sh" style="margin-bottom:10px">
+    <div class="sh-title">Pool · <span id="m-pool-sheet-tab"></span></div>
+    <button onclick="closeMobilePool()" class="btn btn-secondary btn-sm" style="padding:3px 10px">✕</button>
+  </div>
+  <input type="search" id="m-pool-search" class="m-pool-search" placeholder="Pool durchsuchen (Name, Gruppe, Kategorie)…" autocomplete="off" oninput="renderMobilePoolSheet()">
+  <div class="cat-filters" id="m-pool-cat-filters"></div>
+  <div id="m-pool-sheet-list" style="overflow-y:auto;max-height:55dvh;padding-bottom:8px"></div>
+</div>
+
+<div id="m-quick-backdrop" onclick="closeMobileQuickSearch()"></div>
+<div id="m-quick-sheet">
+  <div class="m-sheet-handle"></div>
+  <div class="sh" style="margin-bottom:8px">
+    <div class="sh-title">Übung suchen</div>
+    <button type="button" class="btn btn-secondary btn-sm" onclick="closeMobileQuickSearch()">✕</button>
+  </div>
+  <input type="search" id="m-quick-input" placeholder="Name tippen…" autocomplete="off" oninput="renderMobileQuickSearchResults()">
+  <div id="m-quick-list" style="max-height:52dvh;overflow-y:auto;-webkit-overflow-scrolling:touch"></div>
+</div>
+
+<button id="edit-done-fab" class="edit-done-fab" onclick="exitEditMode()">Fertig</button>
 <div id="setup-overlay" class="setup-overlay">
   <div class="setup-box">
     <div class="sh">
@@ -1517,10 +1672,62 @@ function syncThemeBtn(){
   if(b) b.textContent = document.documentElement.getAttribute('data-theme')==='dark' ? '☀ Light Mode' : '🌙 Dark Mode';
 }
 
+const IFL_APP_SHELL_KEY = 'ifl_app_shell';
+function wantsMobileAppShell(){
+  try{ return localStorage.getItem(IFL_APP_SHELL_KEY) === '1'; }
+  catch{ return false; }
+}
+function syncAppShellBtn(){
+  const b = document.getElementById('app-shell-btn');
+  if(!b) return;
+  b.textContent = wantsMobileAppShell() ? '↩ Web-Ansicht' : 'App-Ansicht (Vollbild)';
+}
+function toggleMobileAppShellPref(){
+  try{
+    if(wantsMobileAppShell()) localStorage.removeItem(IFL_APP_SHELL_KEY);
+    else localStorage.setItem(IFL_APP_SHELL_KEY, '1');
+  }catch{}
+  syncMobileLayout();
+  render();
+}
+
 // ═══ DATA ════════════════════════════════════════════════════
 const DEFAULT_STUDIOS = ['Contact Habenhausen','FitnessPark Aumund','FitnessPark Burg','FitnessPark Delmenhorst'];
 let studios  = JSON.parse(localStorage.getItem('ifl_studios') || JSON.stringify(DEFAULT_STUDIOS));
 let currentStudio = localStorage.getItem('ifl_studio') || studios[0];
+function loadStudioEquipment(){
+  try{ return JSON.parse(localStorage.getItem('ifl_studio_equipment') || '{}'); }
+  catch{ return {}; }
+}
+function saveStudioEquipment(map){
+  localStorage.setItem('ifl_studio_equipment', JSON.stringify(map));
+}
+function getStudioEquipmentList(studio){
+  const m = loadStudioEquipment();
+  const arr = m[studio];
+  return Array.isArray(arr) ? arr.filter(Boolean) : [];
+}
+function setStudioEquipmentLines(studio, text){
+  const m = loadStudioEquipment();
+  m[studio] = text.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+  saveStudioEquipment(m);
+}
+function mSaveStudioEquip(){
+  const ta = document.getElementById('m-tools-equip-ta');
+  if(!ta) return;
+  setStudioEquipmentLines(currentStudio, ta.value);
+  showToast('Studio-Geräte gespeichert', 'ok');
+  scheduleAutoSync();
+  if(isMobile() && document.body.classList.contains('ifl-mobile-app') && mobileView === 'tools') renderMobileTools();
+}
+function exerciseMatchesStudioList(ex, lines){
+  if(!lines.length) return true;
+  const n = (ex.name || '').toLowerCase().trim();
+  return lines.some(line => {
+    const t = line.toLowerCase().trim();
+    return t && (n.includes(t) || t.includes(n));
+  });
+}
 let currentTab = 'push';
 let activePoolCat = 'Brust';
 let poolMode = localStorage.getItem('ifl_pool_mode') || 'global';
@@ -1543,7 +1750,38 @@ let catalogSource = 'local';
 let autoSyncTimer = null;
 let catalogStatusText = '';
 let gym80CategoryMap = null;
-const BUILD_STAMP = '2026-04-17 18:00';
+/** Häufig zur Session hinzugefügte Übungen (Gerät/Name) — Pool & Schnellsuche */
+const IFL_FREQ_EX = 'ifl_frequent_exercises_v1';
+const IFL_FREQ_EX_MAX = 24;
+const IFL_POOL_FAV = 'ifl_pool_favorites_v1';
+
+function loadPoolFavoriteSet(){
+  try{
+    const a = JSON.parse(localStorage.getItem(IFL_POOL_FAV) || '[]');
+    return new Set(Array.isArray(a) ? a.map(String) : []);
+  }catch{ return new Set(); }
+}
+function savePoolFavoriteSet(set){
+  localStorage.setItem(IFL_POOL_FAV, JSON.stringify([...set].slice(0, 200)));
+}
+function isPoolFavorite(exId){
+  return loadPoolFavoriteSet().has(String(exId));
+}
+function togglePoolFavorite(exId, ev){
+  if(ev) ev.stopPropagation();
+  const set = loadPoolFavoriteSet();
+  const k = String(exId);
+  const nowFav = !set.has(k);
+  if(nowFav) set.add(k); else set.delete(k);
+  savePoolFavoriteSet(set);
+  renderMobilePoolSheet();
+  showToast(nowFav ? 'Als Favorit markiert' : 'Favorit entfernt', 'ok');
+}
+function togglePoolFavOnly(checked){
+  localStorage.setItem('ifl_pool_fav_only', checked ? '1' : '0');
+  renderMobilePoolSheet();
+}
+const BUILD_STAMP = '2026-04-18 22:15';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -1773,6 +2011,12 @@ let editingSession  = null; // für Session-Edit-Modal
 
 // ═══ 1RM ═════════════════════════════════════════════════════
 function calc1RM(w, r){ return (w>0 && r>0) ? +(w*(1+r/30)).toFixed(1) : 0; }
+/** Aus Ziel-1RM und Wiederholungen: Trainingsgewicht (Epley umgestellt). */
+function weightFrom1RM(rm, reps){
+  const m = +rm, r = +reps;
+  if(!(m > 0) || !(r > 0)) return 0;
+  return +(m / (1 + r / 30)).toFixed(2);
+}
 function maxRM(sets){ return sets.length ? Math.max(...sets.map(s=>calc1RM(s.w,s.r))) : 0; }
 
 // Best 1RM for a group in a studio (across all exercises in group)
@@ -1822,6 +2066,7 @@ function render(){
   const tplBtn = document.getElementById('btn-load-tpl');
   if(tplBtn) tplBtn.style.display = SESSION_TEMPLATES[currentTab] ? '' : 'none';
   syncThemeBtn();
+  syncAppShellBtn();
 }
 
 function setMobilePhase(phase){
@@ -2022,6 +2267,15 @@ function tileHTML(ex, inActive){
 function addToCurrentSession(id){
   const ex = db.find(x=>x.id===id);
   if(!ex) return;
+  if(ex.status === 'active' && ex.sType === currentTab){
+    const items = getMobileSessionItems();
+    const ix = items.findIndex(x => x.id === id);
+    if(ix >= 0) mobileExIdx = ix;
+    closeMobileQuickSearch();
+    renderMobileSession();
+    showToast(`${ex.name} — bereits in Session`, 'warn');
+    return;
+  }
   ex.status = 'active';
   ex.sType = currentTab;
   const maxOrder = Math.max(
@@ -2029,7 +2283,9 @@ function addToCurrentSession(id){
     0
   );
   ex.order = maxOrder + 1;
+  bumpFrequentExercise(ex);
   saveDB();
+  closeMobileQuickSearch();
   render();
   showToast(`✓ ${ex.name} → Session`, 'ok');
 }
@@ -2188,7 +2444,15 @@ function attachTileEvents(zone, zoneType){
     if(dropTargetId){ dropTargetId=null; draggedId=null; return; } // handled by tile
     if(!draggedId) return;
     const ex=db.find(x=>x.id===draggedId);
-    if(ex){ ex.status=zoneType==='active'?'active':'pool'; if(ex.status==='active') ex.sType=currentTab; saveDB(); render(); }
+    if(ex){
+      ex.status = zoneType === 'active' ? 'active' : 'pool';
+      if(ex.status === 'active'){
+        ex.sType = currentTab;
+        bumpFrequentExercise(ex);
+      }
+      saveDB();
+      render();
+    }
     draggedId=null;
   });
 }
@@ -3414,17 +3678,20 @@ function startTimer(){
   wrap.style.display='block';
   timerRunning = true;
   syncModalTimer();
+  syncMobileRestTimer();
   timerInterval=setInterval(()=>{
     timerSec++;
     const m=Math.floor(timerSec/60), s=timerSec%60;
     val.textContent=`${m}:${s.toString().padStart(2,'0')}`;
     val.className='rest-timer-val'+(timerSec>=120?' over':'');
     syncModalTimer();
+    syncMobileRestTimer();
     if(timerSec>=300){
       clearInterval(timerInterval);
       timerRunning = false;
       wrap.style.display='none';
       syncModalTimer();
+      syncMobileRestTimer();
     }
   },1000);
 }
@@ -3439,6 +3706,7 @@ function stopTimer(){
   if(wrap) wrap.style.display='none';
   if(val) val.textContent='0:00';
   syncModalTimer();
+  syncMobileRestTimer();
 }
 
 function formatTimer(sec){
@@ -3505,6 +3773,10 @@ function changeTab(tab){
   else { _showMobileTrainTabs(false); }
 
   if(isTrain) render();
+  if(tab === 'analyse'){
+    render();
+    closeAnalyseForgeFoldForMobile();
+  }
   if(tab==='kalender') renderKalender();
 }
 
@@ -3605,6 +3877,7 @@ function exportBackup(){
       currentStudio,
       db,
       sessionLog,
+      studioEquipment: loadStudioEquipment(),
       sessionCount: parseInt(localStorage.getItem('ifl_session_count') || '0'),
       theme: localStorage.getItem('ifl-theme') || 'dark'
     }
@@ -3645,6 +3918,7 @@ function handleBackupFile(event){
       studios = data.studios.length ? data.studios : [...DEFAULT_STUDIOS];
       currentStudio = data.currentStudio && studios.includes(data.currentStudio) ? data.currentStudio : studios[0];
       sessionLog = Array.isArray(data.sessionLog) ? data.sessionLog : [];
+      if(data.studioEquipment && typeof data.studioEquipment === 'object') saveStudioEquipment(data.studioEquipment);
       nextId = db.length ? Math.max(...db.map(x=>x.id||0)) + 1 : 1;
       localStorage.setItem('ifl_training_db', JSON.stringify(db));
       localStorage.setItem('ifl_studios', JSON.stringify(studios));
@@ -3753,6 +4027,7 @@ function buildAppState(){
   return {
     studios, currentStudio, db, sessionLog, factorMap,
     iftttEvents,
+    studioEquipment: loadStudioEquipment(),
     sessionCount: parseInt(localStorage.getItem('ifl_session_count') || '0'),
     theme: localStorage.getItem('ifl-theme') || 'dark',
     updatedAt: new Date().toISOString()
@@ -3830,6 +4105,7 @@ async function buildStructuredSyncRows(cfg){
     { profile, key: 'session_count', payload: { value: parseInt(localStorage.getItem('ifl_session_count') || '0') } },
     { profile, key: 'factor_map', payload: factorMap || {} },
     { profile, key: 'theme', payload: { value: localStorage.getItem('ifl-theme') || 'dark' } },
+    { profile, key: 'studio_equipment', payload: loadStudioEquipment() },
     { profile, key: 'secure_blob', payload: secureBlob }
   ];
   return { studiosRows, exerciseRows, sessionRows, setRows, metaRows };
@@ -3909,6 +4185,8 @@ async function syncFromCloudStructured(cfg){
   const meta = {};
   metaRows.forEach(m=>{ meta[m.key] = m.payload; });
   const secureData = await parseSecureBlob(meta.secure_blob || null, cfg);
+  const equipFromMeta = meta.studio_equipment && typeof meta.studio_equipment === 'object' ? meta.studio_equipment : null;
+  const equipFromVault = secureData.studioEquipment && typeof secureData.studioEquipment === 'object' ? secureData.studioEquipment : null;
   return {
     studios: restoredStudios.length ? restoredStudios : studios,
     currentStudio: meta.current_studio?.value || currentStudio,
@@ -3916,6 +4194,7 @@ async function syncFromCloudStructured(cfg){
     sessionLog: restoredSessions,
     factorMap: meta.factor_map || factorMap,
     iftttEvents: Array.isArray(secureData.iftttEvents) ? secureData.iftttEvents : iftttEvents,
+    studioEquipment: equipFromMeta || equipFromVault || {},
     sessionCount: meta.session_count?.value || parseInt(localStorage.getItem('ifl_session_count') || '0'),
     theme: meta.theme?.value || (localStorage.getItem('ifl-theme') || 'dark')
   };
@@ -3928,6 +4207,9 @@ function applyAppState(data){
   sessionLog = Array.isArray(data.sessionLog) ? data.sessionLog : sessionLog;
   factorMap = data.factorMap && typeof data.factorMap === 'object' ? data.factorMap : factorMap;
   iftttEvents = Array.isArray(data.iftttEvents) ? data.iftttEvents : iftttEvents;
+  if(data.studioEquipment && typeof data.studioEquipment === 'object'){
+    saveStudioEquipment(data.studioEquipment);
+  }
   localStorage.setItem('ifl_training_db', JSON.stringify(db));
   localStorage.setItem('ifl_studios', JSON.stringify(studios));
   localStorage.setItem('ifl_studio', currentStudio);
@@ -3968,7 +4250,7 @@ async function syncToCloud(options = {}){
 }
 
 async function createSecureBlob(cfg){
-  const payload = { iftttEvents };
+  const payload = { iftttEvents, studioEquipment: loadStudioEquipment() };
   if(!cfg.vaultPass){
     return { mode: 'plain', payload };
   }
@@ -4061,53 +4343,43 @@ let mobileView  = 'session'; // studio | plan | session | stats | mehr
 let mobileExIdx = 0;         // current exercise index in session navigator
 
 const M_HEADER_TITLES = {
-  heute:    'Iron Forge',
-  session:  'Training',
-  uebungen: 'Übungen',
-  analyse:  'Analyse',
+  session: 'Training',
+  tools:   'Rechner',
 };
+const MOBILE_NAV_ORDER = ['session', 'tools'];
+let _swipeSX = 0, _swipeSY = 0, _swipeTrack = false, _swipeEdge = false;
 
 function isMobile(){ return window.matchMedia('(max-width:640px)').matches; }
 
 function switchMobileView(view){
-  if(!isMobile()) return;
+  if(!isMobile() || !document.body.classList.contains('ifl-mobile-app')) return;
   mobileView = view;
 
-  // Bottom nav active state
-  ['heute','session','uebungen','analyse'].forEach(v=>{
-    document.getElementById('m5-'+v)?.classList.toggle('active', v===view);
+  ['session', 'tools'].forEach(v=>{
+    document.getElementById('m5-'+v)?.classList.toggle('active', v === view);
   });
 
-  // Update header title
   const titleEl = document.getElementById('m-header-title');
   if(titleEl) titleEl.textContent = M_HEADER_TITLES[view] || 'Iron Forge';
 
-  // Show/hide all mobile overlays
-  document.getElementById('m-session-overlay')?.classList.toggle('active', view==='session');
-  document.getElementById('m-heute-view')?.classList.toggle('active', view==='heute');
-  document.getElementById('m-uebungen-view')?.classList.toggle('active', view==='uebungen');
+  document.getElementById('m-session-overlay')?.classList.toggle('active', view === 'session');
+  document.getElementById('m-tools-view')?.classList.toggle('active', view === 'tools');
 
-  // Back button: only in session
   const backBtn = document.getElementById('m-header-back');
-  if(backBtn) backBtn.style.display = view==='session' ? '' : 'none';
+  if(backBtn) backBtn.style.display = 'none';
 
-  // Route
-  if(view==='session'){
+  if(view === 'session'){
     if(!TRAIN_TABS.includes(currentTab)) changeTab('push');
     mobileExIdx = 0;
     renderMobileSession();
     syncMobileRestTimer();
-  } else if(view==='heute'){
-    renderMobileHeute();
-  } else if(view==='uebungen'){
-    renderMobileUebungen();
-  } else if(view==='analyse'){
-    changeTab('analyse');
+  } else if(view === 'tools'){
+    renderMobileTools();
   }
 }
 
 function mHeaderBack(){
-  switchMobileView('plan');
+  switchMobileView('session');
 }
 
 function mChangeTab(tab){
@@ -4128,7 +4400,7 @@ function getMobileSessionItems(){
 }
 
 function renderMobileSession(){
-  if(!isMobile()) return;
+  if(!isMobile() || !document.body.classList.contains('ifl-mobile-app')) return;
   const items = getMobileSessionItems();
   const card  = document.getElementById('m-ex-card');
   if(!card) return;
@@ -4143,8 +4415,8 @@ function renderMobileSession(){
       <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:30px 0">
         <div style="font-size:36px">💪</div>
         <div style="font-size:14px;color:var(--muted);font-weight:700;text-align:center">Keine Übungen in dieser Session</div>
-        <div style="font-size:12px;color:var(--soft);text-align:center">Wechsle zu Plan und füge Übungen aus dem Pool hinzu.</div>
-        <button onclick="switchMobileView('plan')" class="btn btn-primary btn-sm" style="margin-top:6px">Zur Planung →</button>
+        <div style="font-size:12px;color:var(--soft);text-align:center">Schnellsuche oder Pool nutzen.</div>
+        <button type="button" onclick="openMobileQuickSearch()" class="btn btn-primary btn-sm" style="margin-top:6px">Schnellsuche</button>
       </div>`;
     document.getElementById('m-log-btn').style.opacity = '.3';
     document.getElementById('m-log-btn').disabled = true;
@@ -4179,7 +4451,7 @@ function renderMobileSession(){
   let todaySets = [];
   todayLog.forEach(sess=>{
     (sess.exercises||[]).forEach(e=>{
-      if(e.exId===ex.id) todaySets.push(...(e.sets||[]));
+      if((e.id === ex.id) || (e.exId === ex.id)) todaySets.push(...(e.sets||[]));
     });
   });
   const todayHTML = todaySets.length
@@ -4192,7 +4464,7 @@ function renderMobileSession(){
 
   // Dots
   const dotsHTML = items.map((_,i)=>{
-    const isDone = todayLog.some(sess=>(sess.exercises||[]).some(e=>e.exId===items[i].id&&(e.sets||[]).length));
+    const isDone = todayLog.some(sess=>(sess.exercises||[]).some(e=>((e.id===items[i].id)||(e.exId===items[i].id))&&(e.sets||[]).length));
     const cls = i===mobileExIdx ? 'current' : isDone ? 'done' : '';
     return `<span class="m-ex-dot ${cls}"></span>`;
   }).join('');
@@ -4247,6 +4519,8 @@ function openMobilePool(){
   if(tabLabel) tabLabel.textContent = (currentTab||'Push').toUpperCase();
   renderMobilePoolCatFilters();
   renderMobilePoolSheet();
+  const inp = document.getElementById('m-pool-search');
+  if(inp) setTimeout(()=>{ try{ inp.focus(); inp.select(); }catch(_){} }, 140);
 }
 
 function closeMobilePool(){
@@ -4257,9 +4531,8 @@ function closeMobilePool(){
 function renderMobilePoolCatFilters(){
   const wrap = document.getElementById('m-pool-cat-filters');
   if(!wrap) return;
-  wrap.innerHTML = CATS.map(c=>
-    `<button class="pill${c===mobilePoolCat?' active':''}" onclick="mFilterPoolCat('${c}')">${c}</button>`
-  ).join('');
+  wrap.innerHTML = `<button class="pill${mobilePoolCat==='Alle'?' active':''}" onclick="mFilterPoolCat('Alle')">Alle</button>` +
+    CATS.map(c=>`<button class="pill${c===mobilePoolCat?' active':''}" onclick="mFilterPoolCat('${c}')">${c}</button>`).join('');
 }
 
 function mFilterPoolCat(cat){
@@ -4271,25 +4544,77 @@ function mFilterPoolCat(cat){
 function renderMobilePoolSheet(){
   const list = document.getElementById('m-pool-sheet-list');
   if(!list) return;
-  const items = db
-    .filter(x=>x.status==='pool' && x.cat===mobilePoolCat)
+  const studioLines = getStudioEquipmentList(currentStudio);
+  const studioOnly = localStorage.getItem('ifl_pool_studio_only') === '1';
+  const favOnly = localStorage.getItem('ifl_pool_fav_only') === '1';
+  const favSet = loadPoolFavoriteSet();
+  let items = db
+    .filter(x=>x.status==='pool' && (mobilePoolCat==='Alle' || x.cat===mobilePoolCat))
     .filter(x=>poolMode==='global' ? (x.poolScope||'global')==='global' : (x.poolScope||'global')==='studio' && x.gym===currentStudio)
     .sort((a,b)=>a.order-b.order);
+  if(studioOnly && studioLines.length){
+    items = items.filter(ex => exerciseMatchesStudioList(ex, studioLines));
+  }
+  if(favOnly){
+    items = items.filter(ex => favSet.has(String(ex.id)));
+  }
+  const qPool = (document.getElementById('m-pool-search')?.value || '').trim().toLowerCase();
+  if(qPool){
+    items = items.filter(ex=>{
+      const blob = [ex.name, ex.group, ex.cat, ex.art, ex.brand].map(x => String(x || '').toLowerCase()).join(' ');
+      return blob.includes(qPool);
+    });
+  }
 
-  list.innerHTML = items.length
+  const toolbar = `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+    <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600">
+      <input type="checkbox" ${studioOnly ? 'checked' : ''} onchange="togglePoolStudioOnly(this.checked)">
+      Nur Studio-Liste (${studioLines.length})
+    </label>
+    <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600">
+      <input type="checkbox" ${favOnly ? 'checked' : ''} onchange="togglePoolFavOnly(this.checked)">
+      Nur Favoriten (${favSet.size})
+    </label>
+  </div>`;
+
+  const idInList = new Set(items.map(x => x.id));
+  const freqRows = [];
+  for(const rec of getFrequentExerciseRecords(16)){
+    const ex = db.find(x => x.id === rec.id);
+    if(!ex || ex.status !== 'pool' || !idInList.has(ex.id)) continue;
+    const hist = ex.history[currentStudio] || [];
+    const rm = maxRM(hist);
+    const lastSet = hist.length ? `${hist[hist.length - 1].w}×${hist[hist.length - 1].r}` : '–';
+    const starH = isPoolFavorite(ex.id) ? '★' : '☆';
+    freqRows.push(`<div class="m-pool-item" style="border-color:rgba(208,163,90,.35);background:rgba(208,163,90,.06)">
+      <div>
+        <div class="m-pool-item-name">${mEsc(ex.name)} <span class="pill pill-gold" style="font-size:8px;padding:1px 6px">oft</span></div>
+        <div class="m-pool-item-meta">${mEsc(ex.group || ex.cat || '')} · Letztes Mal: ${lastSet}${rm > 0 ? ' · 1RM ~' + rm + 'kg' : ''}</div>
+      </div>
+      <button type="button" class="m-pool-star" onclick="togglePoolFavorite(${ex.id},event)" aria-label="Favorit">${starH}</button>
+      <button class="m-pool-add-btn" onclick="mAddToSession(${ex.id})">+ Session</button>
+    </div>`);
+  }
+  const freqBlock = freqRows.length
+    ? `<div class="m-tools-h" style="margin-bottom:6px">Häufig genutzt</div>${freqRows.join('')}`
+    : '';
+
+  list.innerHTML = toolbar + freqBlock + (items.length
     ? items.map(ex=>{
         const hist = ex.history[currentStudio]||[];
         const rm   = maxRM(hist);
         const lastSet = hist.length ? `${hist[hist.length-1].w}×${hist[hist.length-1].r}` : '–';
+        const star = isPoolFavorite(ex.id) ? '★' : '☆';
         return `<div class="m-pool-item">
           <div>
-            <div class="m-pool-item-name">${ex.name}</div>
-            <div class="m-pool-item-meta">${ex.group||ex.cat||''} · Letztes Mal: ${lastSet}${rm>0?' · 1RM ~'+rm+'kg':''}</div>
+            <div class="m-pool-item-name">${mEsc(ex.name)}</div>
+            <div class="m-pool-item-meta">${mEsc(ex.group||ex.cat||'')} · Letztes Mal: ${lastSet}${rm>0?' · 1RM ~'+rm+'kg':''}</div>
           </div>
+          <button type="button" class="m-pool-star" onclick="togglePoolFavorite(${ex.id},event)" aria-label="Favorit">${star}</button>
           <button class="m-pool-add-btn" onclick="mAddToSession(${ex.id})">+ Session</button>
         </div>`;
       }).join('')
-    : '<div style="padding:20px;text-align:center;color:var(--soft);font-size:13px">Kein Pool für diesen Tab</div>';
+    : '<div style="padding:20px;text-align:center;color:var(--soft);font-size:13px">Kein Pool für diesen Tab</div>');
 }
 
 function mAddToSession(id){
@@ -4328,10 +4653,13 @@ function mStudioChange(){
 // ── Rest Timer: sync to mobile inline bar ─────────────────
 
 function syncMobileRestTimer(){
-  if(!isMobile()) return;
   const bar = document.getElementById('m-rest-bar');
   const val = document.getElementById('m-rest-val');
   if(!bar || !val) return;
+  if(!isMobile() || !document.body.classList.contains('ifl-mobile-app')){
+    bar.style.display = 'none';
+    return;
+  }
   bar.style.display = timerRunning ? 'flex' : 'none';
   if(timerRunning){
     const m = Math.floor(timerSec/60), s = timerSec % 60;
@@ -4340,10 +4668,7 @@ function syncMobileRestTimer(){
 }
 
 function stopRestTimer(){
-  // Stop the main timer (find stop button in main timer)
-  const mainStop = document.querySelector('#active-rest-timer button');
-  if(mainStop) mainStop.click();
-  document.getElementById('m-rest-bar').style.display = 'none';
+  stopTimer();
 }
 
 // ── Mobile header studio chip ─────────────────────────────
@@ -4354,133 +4679,287 @@ function _updateMobileHeader(){
   if(chip) chip.textContent = currentStudio || '';
 }
 
-// ── Init mobile state ─────────────────────────────────────
+// ── Init mobile state (Web-Standard; App-Shell nur bei localStorage ifl_app_shell=1) ──
+
+function cleanupMobileApp(){
+  document.body.classList.remove('ifl-mobile-app');
+  const sr = document.getElementById('ifl-shell-root');
+  if(sr) sr.setAttribute('aria-hidden', 'true');
+  const mh = document.getElementById('m-app-header');
+  if(mh) mh.style.display = '';
+  document.getElementById('m-tools-view')?.classList.remove('active');
+  document.getElementById('m-session-overlay')?.classList.remove('active');
+  document.getElementById('m-studio-overlay')?.classList.remove('active');
+  closeMobilePool();
+  closeMobileQuickSearch();
+  syncMobileRestTimer();
+}
+
+function applyMobileAppShell(){
+  if(!isMobile()) return;
+  const had = document.body.classList.contains('ifl-mobile-app');
+  document.body.classList.add('ifl-mobile-app');
+  const sr = document.getElementById('ifl-shell-root');
+  if(sr) sr.removeAttribute('aria-hidden');
+  const mh = document.getElementById('m-app-header');
+  if(mh) mh.style.display = 'flex';
+  _updateMobileHeader();
+  attachMobileEdgeSwipe();
+  attachMobileSubtabSwipe();
+  if(!had) switchMobileView('session');
+  else {
+    if(mobileView === 'session') renderMobileSession();
+    else if(mobileView === 'tools') renderMobileTools();
+    syncMobileRestTimer();
+  }
+}
+
+function syncMobileLayout(){
+  if(!isMobile()){
+    cleanupMobileApp();
+    syncAppShellBtn();
+    return;
+  }
+  if(wantsMobileAppShell()) applyMobileAppShell();
+  else cleanupMobileApp();
+  syncAppShellBtn();
+}
 
 function initMobile(){
-  if(!isMobile()) return;
-  document.getElementById('m-app-header').style.display = 'flex';
-  _updateMobileHeader();
-  switchMobileView('heute');
+  syncMobileLayout();
+}
+
+function attachMobileEdgeSwipe(){
+  if(window._iflEdgeSwipe) return;
+  window._iflEdgeSwipe = true;
+  document.addEventListener('touchstart', e=>{
+    if(!isMobile() || !document.body.classList.contains('ifl-mobile-app')) return;
+    const t = e.target;
+    if(t.closest('#logger-modal') || t.closest('#setup-overlay') || t.closest('#ses-edit-modal') || t.closest('#device-detail-overlay')) return;
+    if(t.closest('#m-pool-sheet') || t.closest('input') || t.closest('textarea') || t.closest('select')) return;
+    const x0 = e.changedTouches[0].clientX;
+    const edge = x0 < 40 || x0 > window.innerWidth - 40;
+    _swipeTrack = edge;
+    if(!_swipeTrack) return;
+    _swipeSX = x0;
+    _swipeSY = e.changedTouches[0].clientY;
+  }, {passive:true});
+  document.addEventListener('touchend', e=>{
+    if(!_swipeTrack || !isMobile() || !document.body.classList.contains('ifl-mobile-app')){ _swipeTrack = false; return; }
+    _swipeTrack = false;
+    const x = e.changedTouches[0].clientX, y = e.changedTouches[0].clientY;
+    const dx = x - _swipeSX, dy = y - _swipeSY;
+    if(Math.abs(dx) < 55 || Math.abs(dy) > 75) return;
+    const i = MOBILE_NAV_ORDER.indexOf(mobileView);
+    if(dx < 0 && i >= 0 && i < MOBILE_NAV_ORDER.length - 1) switchMobileView(MOBILE_NAV_ORDER[i + 1]);
+    if(dx > 0 && i > 0) switchMobileView(MOBILE_NAV_ORDER[i - 1]);
+  }, {passive:true});
+}
+
+function attachMobileSubtabSwipe(){
+  if(window._iflSubtabSwipe) return;
+  window._iflSubtabSwipe = true;
+  const bar = document.getElementById('m-subtab-bar');
+  if(!bar) return;
+  let sx = 0, sy = 0, tr = false;
+  bar.addEventListener('touchstart', e=>{
+    if(!isMobile() || !document.body.classList.contains('ifl-mobile-app')) return;
+    sx = e.changedTouches[0].clientX;
+    sy = e.changedTouches[0].clientY;
+    tr = true;
+  }, {passive:true});
+  bar.addEventListener('touchend', e=>{
+    if(!tr || !isMobile() || !document.body.classList.contains('ifl-mobile-app')){ tr = false; return; }
+    tr = false;
+    const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+    if(Math.abs(dx) < 50 || Math.abs(dy) > 65) return;
+    const idx = TRAIN_TABS.indexOf(currentTab);
+    if(dx < 0 && idx >= 0 && idx < TRAIN_TABS.length - 1) mChangeTab(TRAIN_TABS[idx + 1]);
+    if(dx > 0 && idx > 0) mChangeTab(TRAIN_TABS[idx - 1]);
+  }, {passive:true});
 }
 
 // Override: after every render() on mobile, refresh active mobile view
 const _origRender = render;
 render = function(){
   _origRender();
-  if(isMobile()){
+  if(isMobile() && document.body.classList.contains('ifl-mobile-app')){
     _updateMobileHeader();
-    if(mobileView==='session')  renderMobileSession();
-    if(mobileView==='heute')    renderMobileHeute();
-    if(mobileView==='uebungen') renderMobileUebungen();
+    if(mobileView==='session') renderMobileSession();
+    if(mobileView==='tools')  renderMobileTools();
   }
 };
 
 // ════════════════════════════════════════════════════════════
-// MOBILE HEUTE / DASHBOARD
+// MOBILE TOOLS + SCHNELLSUCHE (kompakt, kein Homepage-Layout)
 // ════════════════════════════════════════════════════════════
 
-function renderMobileHeute(){
-  const el = document.getElementById('m-heute-view');
+function mEsc(s){
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+}
+
+function closeAnalyseForgeFoldForMobile(){
+  if(!isMobile()) return;
+  const d = document.getElementById('analyse-forge-fold');
+  if(d) d.open = false;
+}
+
+function bumpFrequentExercise(ex){
+  if(!ex || ex.id == null) return;
+  let arr;
+  try{ arr = JSON.parse(localStorage.getItem(IFL_FREQ_EX) || '[]'); }
+  catch{ arr = []; }
+  if(!Array.isArray(arr)) arr = [];
+  const id = ex.id;
+  const ix = arr.findIndex(x => x.id === id);
+  const row = { id, n: 1, name: (ex.name || '').trim(), art: (ex.art || '').trim(), brand: (ex.brand || '').trim() };
+  if(ix >= 0){
+    arr[ix].n = (arr[ix].n || 0) + 1;
+    if(row.name) arr[ix].name = row.name;
+    if(row.art) arr[ix].art = row.art;
+    if(row.brand) arr[ix].brand = row.brand;
+  } else {
+    arr.unshift(row);
+  }
+  arr.sort((a, b) => (b.n || 0) - (a.n || 0));
+  localStorage.setItem(IFL_FREQ_EX, JSON.stringify(arr.slice(0, IFL_FREQ_EX_MAX)));
+}
+
+function getFrequentExerciseRecords(limit){
+  try{
+    const arr = JSON.parse(localStorage.getItem(IFL_FREQ_EX) || '[]');
+    return Array.isArray(arr) ? arr.slice(0, limit) : [];
+  } catch{ return []; }
+}
+function mStudioShort(name){
+  const n = (name || '').trim();
+  return n.length > 11 ? `${n.slice(0, 10)}…` : n;
+}
+
+function renderMobileTools(){
+  if(!isMobile() || !document.body.classList.contains('ifl-mobile-app')) return;
+  const el = document.getElementById('m-tools-view');
   if(!el) return;
 
+  const groups = getGroups();
   const qw = parseFloat(localStorage.getItem('ifl_quick_weight')) || null;
-  const qk = parseFloat(localStorage.getItem('ifl_quick_kfa'))    || null;
-  const kfaStart = parseFloat(localStorage.getItem('ifl_kfa_start')) || qk;
+  const qk = parseFloat(localStorage.getItem('ifl_quick_kfa')) || null;
 
-  let kfaProgress = null;
-  if(qk !== null && kfaStart && kfaStart > 10){
-    const totalLose = kfaStart - 8;
-    const lost = kfaStart - qk;
-    kfaProgress = Math.max(0, Math.min(100, Math.round(lost / totalLose * 100)));
+  let tableRows = '';
+  if(groups.length){
+    tableRows = groups.map(g => {
+      const rms = studios.map(s => groupBestRM(g, s));
+      const valid = rms.filter(r => r !== null && r > 0);
+      const best = valid.length ? Math.max(...valid) : null;
+      const cells = rms.map((rm, i) => {
+        const isBest = rm === best && valid.length > 1;
+        return `<td class="mono" style="${isBest ? 'color:var(--teal);font-weight:700' : ''}">${rm ? `${rm}` : '–'}</td>`;
+      }).join('');
+      return `<tr><td style="font-weight:600;font-size:11px">${mEsc(g)}</td>${cells}</tr>`;
+    }).join('');
+  } else {
+    tableRows = `<tr><td colspan="${studios.length + 1}" class="m-tools-muted" style="padding:12px">Keine Bewegungsgruppen — am Desktop Gruppen zuweisen.</td></tr>`;
   }
 
-  const log  = loadSessionLog();
-  const last = log.slice(-1)[0] || null;
-
-  const now  = new Date();
-  const h    = now.getHours();
-  const greet = h < 11 ? 'Guten Morgen' : h < 17 ? 'Guten Tag' : 'Guten Abend';
-  const dateStr = now.toLocaleDateString('de-DE', {weekday:'long', day:'numeric', month:'long'});
-
-  const TAB_LABELS = {push:'Push',pull_a:'Pull A',pull_b:'Pull B',legs:'Beine',free:'Frei',cardio:'Cardio'};
-  const tabLabel   = TAB_LABELS[currentTab] || currentTab;
-  const activeCount = db.filter(x => x.status==='active' && x.sType===currentTab).length;
-
-  const kfaColor = qk <= 10 ? 'var(--teal)' : qk <= 12 ? 'var(--gold)' : 'var(--muted)';
-  const barColor = qk <= 10 ? 'var(--teal)' : qk <= 12 ? 'var(--gold)' : 'var(--soft)';
-
   el.innerHTML = `
-    <div class="m-heute-header">
-      <div class="m-heute-greeting">${greet}, Marco</div>
-      <div class="m-heute-date">${dateStr}</div>
-    </div>
+    <div class="m-tools-muted" style="margin-bottom:4px">${new Date().toLocaleDateString('de-DE', {weekday:'short', day:'2-digit', month:'2-digit'})} · Session-Editor &amp; Charts: <strong>Desktop</strong></div>
 
-    <div class="m-heute-stats">
-      <div class="m-heute-stat" onclick="mEditStat('weight')">
-        <div class="m-heute-stat-edit">✎</div>
-        <div class="m-heute-stat-val">${qw !== null ? qw + '<span> kg</span>' : '<span style="font-size:16px;opacity:.5">–</span>'}</div>
-        <div class="m-heute-stat-lbl">Gewicht</div>
-      </div>
-      <div class="m-heute-stat" onclick="mEditStat('kfa')">
-        <div class="m-heute-stat-edit">✎</div>
-        <div class="m-heute-stat-val" style="color:${qk!==null?kfaColor:'var(--gold)'}">${qk !== null ? qk + '<span> %</span>' : '<span style="font-size:16px;opacity:.5">–</span>'}</div>
-        <div class="m-heute-stat-lbl">KFA</div>
+    <div class="m-tools-panel">
+      <div class="m-tools-h">Aktuelles Studio</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <select id="m-tools-studio-sel" class="studio-select" style="flex:1;min-width:0" onchange="mToolsStudioChange()"></select>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="addStudio()">+</button>
       </div>
     </div>
 
-    ${qk !== null ? `
-    <div class="m-heute-kfa-card">
-      <div class="m-heute-kfa-row">
-        <span class="m-heute-kfa-label">KFA-Ziel 8–10 %</span>
-        <span class="m-heute-kfa-pct" style="color:${kfaColor}">${kfaProgress !== null ? kfaProgress + ' %' : '–'}</span>
+    <div class="m-tools-panel">
+      <div class="m-tools-h">Körperwerte (tippen zum Bearbeiten)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button type="button" class="btn btn-secondary btn-sm" style="padding:10px" onclick="mEditStat('weight')">Gewicht: ${qw != null ? `${qw} kg` : '–'}</button>
+        <button type="button" class="btn btn-secondary btn-sm" style="padding:10px" onclick="mEditStat('kfa')">KFA: ${qk != null ? `${qk} %` : '–'}</button>
       </div>
-      <div class="m-heute-kfa-bar">
-        <div class="m-heute-kfa-fill" style="width:${kfaProgress||0}%;background:${barColor}"></div>
-      </div>
-      ${qk > 10
-        ? `<div class="m-heute-kfa-sub">Noch ${(qk - 10).toFixed(1)} % bis Ziel · aktuell ${qk} %</div>`
-        : `<div class="m-heute-kfa-sub" style="color:var(--teal)">Ziel erreicht ✓</div>`}
-    </div>` : ''}
-
-    <div class="m-heute-action-card" onclick="switchMobileView('session')">
-      <div class="m-heute-action-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 5v14M18 5v14"/><path d="M6 8h4M14 8h4M6 16h4M14 16h4"/><rect x="10" y="5" width="4" height="14" rx="1"/></svg>
-      </div>
-      <div class="m-heute-action-body">
-        <div class="m-heute-action-title">${tabLabel} · starten</div>
-        <div class="m-heute-action-sub">${activeCount} Übungen · ${currentStudio || 'kein Studio'}</div>
-      </div>
-      <div class="m-heute-action-chevron">›</div>
     </div>
 
-    <div class="m-heute-log-card">
-      <div class="m-heute-log-header">
-        <span class="m-heute-log-title">Letzter Log</span>
-        <span class="m-heute-log-date">${last ? (last.date || '') : ''}</span>
+    <details class="m-tools-fold" id="m-tools-fold-1rm">
+      <summary>1RM &amp; Zielgewicht <span aria-hidden="true" style="font-size:9px;opacity:.6">▼</span></summary>
+      <div class="m-tools-inset">
+        <div class="m-tools-h" style="margin-top:2px">1RM je Gruppe · ${mEsc(mStudioShort(currentStudio))} u.a.</div>
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+          <table class="m-tools-table">
+            <thead><tr><th>Gruppe</th>${studios.map(s => `<th title="${mEsc(s)}">${mEsc(mStudioShort(s))}</th>`).join('')}</tr></thead>
+            <tbody>${tableRows}</tbody>
+          </table>
+        </div>
+        <div class="m-tools-h" style="margin-top:12px">Zielgewicht (Epley)</div>
+        <div class="m-tools-grid2">
+          <div><label>1RM (kg)</label><input id="m-calc-rm" type="number" inputmode="decimal" step="0.5" oninput="mToolsCalc()"></div>
+          <div><label>Wiederholungen</label><input id="m-calc-reps" type="number" inputmode="numeric" step="1" oninput="mToolsCalc()"></div>
+        </div>
+        <div class="m-tools-out" id="m-calc-w-out">Arbeitsgewicht: –</div>
+        <div class="m-tools-h" style="margin-top:10px">1RM aus Satz</div>
+        <div class="m-tools-grid2">
+          <div><label>Gewicht (kg)</label><input id="m-calc-w2" type="number" inputmode="decimal" step="0.5" oninput="mToolsCalc()"></div>
+          <div><label>Wdh</label><input id="m-calc-r2" type="number" inputmode="numeric" step="1" oninput="mToolsCalc()"></div>
+        </div>
+        <div class="m-tools-out" id="m-calc-irm-out">Geschätztes 1RM: –</div>
       </div>
-      ${last ? `
-        <div class="m-heute-log-tag">${(TAB_LABELS[last.tab]||last.tab||'')} · ${(last.exercises||[]).length} Übungen</div>
-        ${(last.exercises||[]).slice(0,3).map(e=>`
-          <div class="m-heute-log-row">
-            <span class="m-heute-log-name">${e.name}</span>
-            <span class="m-heute-log-sets">${(e.sets||[]).map(s=>s.weight+'×'+s.reps).join('  ')}</span>
-          </div>`).join('')}
-      ` : `<div style="font-size:12px;color:var(--soft);margin-top:6px">Noch keine Sessions — starte jetzt!</div>`}
-    </div>
+    </details>
 
-    <div class="m-heute-studio-row">
-      <span class="m-heute-studio-lbl">Studio</span>
-      <select id="m-heute-studio-sel" class="studio-select" style="flex:1;max-width:220px" onchange="mHeuteStudioChange()"></select>
-    </div>
+    <details class="m-tools-fold" id="m-tools-fold-equip">
+      <summary>Studio-Geräte <span aria-hidden="true" style="font-size:9px;opacity:.6">▼</span></summary>
+      <div class="m-tools-inset">
+        <div class="m-tools-muted" style="margin-bottom:6px">Eine Zeile pro Gerät · für Pool-Filter „Nur Studio-Liste“</div>
+        <textarea id="m-tools-equip-ta" class="m-tools-muted" style="width:100%;min-height:64px;border-radius:8px;border:1px solid var(--line);background:rgba(0,0,0,.2);color:var(--text);font-size:12px;padding:8px;font-family:Manrope,sans-serif" placeholder="z.B. Brustpresse Matrix"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+          <button type="button" class="btn btn-primary btn-sm" onclick="mSaveStudioEquip()">Speichern</button>
+          <span class="m-tools-muted">${getStudioEquipmentList(currentStudio).length} Zeilen</span>
+        </div>
+      </div>
+    </details>
   `;
 
-  const sel = el.querySelector('#m-heute-studio-sel');
-  if(sel) studios.forEach(s => {
-    const o = document.createElement('option');
-    o.value = s; o.textContent = s;
-    if(s === currentStudio) o.selected = true;
-    sel.appendChild(o);
-  });
+  const sel = el.querySelector('#m-tools-studio-sel');
+  if(sel){
+    sel.innerHTML = '';
+    studios.forEach(s => {
+      const o = document.createElement('option');
+      o.value = s;
+      o.textContent = s;
+      if(s === currentStudio) o.selected = true;
+      sel.appendChild(o);
+    });
+  }
+  const ta = el.querySelector('#m-tools-equip-ta');
+  if(ta) ta.value = getStudioEquipmentList(currentStudio).join('\n');
+  mToolsCalc();
+}
+
+function mToolsStudioChange(){
+  const sel = document.getElementById('m-tools-studio-sel');
+  if(sel){
+    currentStudio = sel.value;
+    localStorage.setItem('ifl_studio', currentStudio);
+    const mainSel = document.getElementById('studio-select');
+    if(mainSel) mainSel.value = currentStudio;
+    render();
+  }
+}
+
+function mToolsCalc(){
+  const rmEl = document.getElementById('m-calc-rm');
+  const repEl = document.getElementById('m-calc-reps');
+  const wOut = document.getElementById('m-calc-w-out');
+  const w2 = document.getElementById('m-calc-w2');
+  const r2 = document.getElementById('m-calc-r2');
+  const irOut = document.getElementById('m-calc-irm-out');
+  if(wOut && rmEl && repEl){
+    const w = weightFrom1RM(rmEl.value, repEl.value);
+    wOut.textContent = w > 0 ? `Arbeitsgewicht: ${w} kg` : 'Arbeitsgewicht: –';
+  }
+  if(irOut && w2 && r2){
+    const ir = calc1RM(+w2.value, +r2.value);
+    irOut.textContent = ir > 0 ? `Geschätztes 1RM: ${ir} kg` : 'Geschätztes 1RM: –';
+  }
 }
 
 function mEditStat(type){
@@ -4489,82 +4968,108 @@ function mEditStat(type){
   const cur   = localStorage.getItem(key) || '';
   const val   = prompt(label + ':', cur);
   if(val === null) return;
-  const v = parseFloat(val.replace(',','.'));
+  const v = parseFloat(val.replace(',', '.'));
   if(isNaN(v)) return;
   localStorage.setItem(key, v);
-  if(type === 'kfa' && !localStorage.getItem('ifl_kfa_start'))
-    localStorage.setItem('ifl_kfa_start', v);
-  renderMobileHeute();
+  if(type === 'kfa' && !localStorage.getItem('ifl_kfa_start')) localStorage.setItem('ifl_kfa_start', v);
+  if(isMobile() && document.body.classList.contains('ifl-mobile-app') && mobileView === 'tools') renderMobileTools();
 }
 
-function mHeuteStudioChange(){
-  const sel = document.getElementById('m-heute-studio-sel');
-  if(sel){ currentStudio = sel.value; localStorage.setItem('ifl_studio', currentStudio); render(); }
+function openMobileQuickSearch(){
+  const b = document.getElementById('m-quick-backdrop');
+  const s = document.getElementById('m-quick-sheet');
+  const inp = document.getElementById('m-quick-input');
+  if(b) b.classList.add('open');
+  if(s) s.classList.add('open');
+  if(inp){ inp.value = ''; renderMobileQuickSearchResults(); setTimeout(()=>inp.focus(), 120); }
 }
 
-// ════════════════════════════════════════════════════════════
-// MOBILE ÜBUNGEN VIEW
-// ════════════════════════════════════════════════════════════
-
-function renderMobileUebungen(){
-  const el = document.getElementById('m-uebungen-view');
-  if(!el) return;
-
-  const filter = localStorage.getItem('ifl_ueb_filter') || 'alle';
-  let exercises = db.slice();
-  if(filter === 'kraft')  exercises = exercises.filter(x => x.sType !== 'cardio');
-  if(filter === 'cardio') exercises = exercises.filter(x => x.sType === 'cardio');
-
-  // Dedupe by name for display
-  const seen = new Set();
-  exercises = exercises.filter(ex => {
-    const k = (ex.name||'').toLowerCase().trim();
-    if(seen.has(k)) return false;
-    seen.add(k); return true;
-  });
-
-  // Group by category (defined order)
-  const CAT_ORDER = ['Brust','Rücken','Schulter','Arme','Beine','Glutes','Core','Cardio','Sonstige'];
-  const grouped = {};
-  exercises.forEach(ex => {
-    const c = ex.cat || 'Sonstige';
-    if(!grouped[c]) grouped[c] = [];
-    grouped[c].push(ex);
-  });
-
-  const sections = CAT_ORDER.filter(c => grouped[c]?.length).map(cat => `
-    <div class="m-ueb-section-hdr">${cat}</div>
-    ${grouped[cat].map(ex => `
-      <div class="m-ueb-row" onclick="openLoggerForExercise(${ex.id})">
-        <div class="m-ueb-thumb">
-          ${ex.img
-            ? `<img src="${ex.img}" alt="" loading="lazy" onerror="this.parentNode.innerHTML='<div class=m-ueb-no-img>${(ex.cat||'?')[0]}</div>'">`
-            : `<div class="m-ueb-no-img">${(ex.cat||'?')[0]}</div>`}
-        </div>
-        <div class="m-ueb-info">
-          <div class="m-ueb-name">${ex.name}</div>
-          <div class="m-ueb-meta">${[ex.brand, ex.gym].filter(Boolean).join(' · ') || ex.group || ''}</div>
-        </div>
-        <div class="m-ueb-chevron">›</div>
-      </div>`).join('')}
-  `).join('');
-
-  el.innerHTML = `
-    <div class="m-ueb-sticky">
-      <div class="m-ueb-title">Alle Übungen</div>
-      <div class="m-ueb-segment">
-        <button class="m-seg-btn${filter==='alle'?' active':''}" onclick="mUebFilter('alle')">Alles</button>
-        <button class="m-seg-btn${filter==='kraft'?' active':''}" onclick="mUebFilter('kraft')">Kraft</button>
-        <button class="m-seg-btn${filter==='cardio'?' active':''}" onclick="mUebFilter('cardio')">Cardio</button>
-      </div>
-    </div>
-    <div class="m-ueb-list">${sections || '<div style="padding:20px 16px;color:var(--soft);font-size:13px">Keine Übungen gefunden</div>'}</div>
-  `;
+function closeMobileQuickSearch(){
+  document.getElementById('m-quick-backdrop')?.classList.remove('open');
+  document.getElementById('m-quick-sheet')?.classList.remove('open');
 }
 
-function mUebFilter(filter){
-  localStorage.setItem('ifl_ueb_filter', filter);
-  renderMobileUebungen();
+function _mQuickRowHtml(ex, hotIdSet){
+  const inSess = ex.status === 'active' && ex.sType === currentTab;
+  const badge = inSess ? 'In Session' : 'Pool';
+  const meta = [ex.cat, ex.group].filter(Boolean).join(' · ') || '–';
+  const oft = hotIdSet && hotIdSet.has(ex.id)
+    ? '<span class="pill pill-gold" style="font-size:7px;padding:1px 5px;margin-left:4px">oft</span>'
+    : '';
+  return `<div class="m-quick-row" onclick="mQuickPick(${ex.id})">
+    <div><div class="m-quick-name">${mEsc(ex.name)}${oft}</div><div class="m-quick-meta">${mEsc(meta)}</div></div>
+    <span class="m-quick-badge">${badge}</span>
+  </div>`;
+}
+
+function renderMobileQuickSearchResults(){
+  const list = document.getElementById('m-quick-list');
+  const inp = document.getElementById('m-quick-input');
+  if(!list || !inp) return;
+  const q = (inp.value || '').toLowerCase().trim();
+  const poolOrActive = ex => ex.status === 'pool' || (ex.status === 'active' && ex.sType === currentTab);
+
+  let scored;
+  if(!q){
+    const seen = new Set();
+    const head = [];
+    for(const rec of getFrequentExerciseRecords(18)){
+      const ex = db.find(x => x.id === rec.id);
+      if(!ex || !poolOrActive(ex)) continue;
+      seen.add(ex.id);
+      head.push({ ex, score: 50 + (rec.n || 0) });
+    }
+    const tail = db
+      .filter(ex => poolOrActive(ex) && !seen.has(ex.id))
+      .map(ex => ({ ex, score: 1 }));
+    scored = [...head, ...tail]
+      .sort((a, b) => b.score - a.score || a.ex.name.localeCompare(b.ex.name))
+      .slice(0, 40);
+  } else {
+    scored = db
+      .filter(poolOrActive)
+      .map(ex => {
+        const n = (ex.name || '').toLowerCase();
+        const g = (ex.group || '').toLowerCase();
+        const c = (ex.cat || '').toLowerCase();
+        let score = 0;
+        if(n.includes(q)) score = 10 + (n.startsWith(q) ? 4 : 0);
+        else if(g.includes(q) || c.includes(q)) score = 3;
+        return { ex, score };
+      })
+      .filter(x => x.score > 0)
+      .sort((a, b) => b.score - a.score || a.ex.name.localeCompare(b.ex.name))
+      .slice(0, 40);
+  }
+
+  const hotIdSet = new Set(
+    getFrequentExerciseRecords(20)
+      .filter(r => (r.n || 0) >= 3)
+      .map(r => r.id)
+  );
+  list.innerHTML = scored.length
+    ? scored.map(({ ex }) => _mQuickRowHtml(ex, hotIdSet)).join('')
+    : `<div class="m-tools-muted" style="padding:16px;text-align:center">Keine Treffer</div>`;
+}
+
+function mQuickPick(id){
+  const ex = db.find(x => x.id === id);
+  if(!ex) return;
+  if(ex.status === 'active' && ex.sType === currentTab){
+    const items = getMobileSessionItems();
+    const ix = items.findIndex(x => x.id === id);
+    if(ix >= 0) mobileExIdx = ix;
+    closeMobileQuickSearch();
+    renderMobileSession();
+    showToast(ex.name + ' — in Session', 'ok');
+    return;
+  }
+  addToCurrentSession(id);
+}
+
+function togglePoolStudioOnly(checked){
+  localStorage.setItem('ifl_pool_studio_only', checked ? '1' : '0');
+  renderMobilePoolSheet();
 }
 
 function openLoggerForExercise(id){
@@ -4576,9 +5081,10 @@ function openLoggerForExercise(id){
     ex.sType  = currentTab;
     const maxO = Math.max(...db.filter(x=>x.status==='active'&&x.sType===currentTab).map(x=>x.order||0), 0);
     ex.order = maxO + 1;
+    bumpFrequentExercise(ex);
     saveDB();
   }
-  openLogger(id);
+  openLogger(ex);
 }
 
 // ════════════════════════════════════════════════════════════
@@ -4833,12 +5339,14 @@ function runPeptideCalc(){
 render();
 updateSyncStatus();
 initMobile();
+closeAnalyseForgeFoldForMobile();
+window.addEventListener('pageshow', () => closeAnalyseForgeFoldForMobile());
 if(!getSyncConfig().supabaseUrl || !getSyncConfig().anonKey){
   openSetupWizard(true);
 }
 window.addEventListener('resize', ()=>{
   renderMobilePhase();
-  if(isMobile()) initMobile();
+  syncMobileLayout();
 });
 
 // ═══ TOAST ═══════════════════════════════════════════════════

@@ -107,41 +107,51 @@
   <div class="card s4">
     <div class="sh">
       <div class="sh-title">Recovery</div>
-      {% if has_hrv and L.hrv < 30 %}
-      <span class="pill pill-red">Regeneration nötig</span>
-      {% elif has_hrv and L.hrv >= 35 %}
-      <span class="pill pill-teal">Gut erholt</span>
-      {% endif %}
+      {% if hrv and hrv < 30 %}<span class="pill pill-red">Regeneration nötig</span>
+      {% elif hrv and hrv >= 35 %}<span class="pill pill-teal">Gut erholt</span>{% endif %}
     </div>
     <div class="llist">
-      {% if has_hrv %}
+      {% macro age_badge(days) %}{% if days and days > 0 %}<span style="font-size:10px;color:var(--muted);margin-left:5px">vor {{ days }}T</span>{% endif %}{% endmacro %}
+      {% if hrv %}
       <div class="litem">
-        <strong>HRV</strong>
-        <span style="font-family:'JetBrains Mono';color:{% if L.hrv >= 35 %}var(--teal){% elif L.hrv >= 28 %}var(--warn){% else %}var(--red){% endif %};font-weight:700">{{ L.hrv }} ms</span>
+        <strong>HRV{{ age_badge(hrv_age) }}</strong>
+        <span style="font-family:'JetBrains Mono';color:{% if hrv >= 35 %}var(--teal){% elif hrv >= 28 %}var(--warn){% else %}var(--red){% endif %};font-weight:700">{{ hrv|int }} ms</span>
       </div>
       {% endif %}
-      {% if has_bb %}
+      {% if body_battery %}
       <div class="litem">
-        <strong>Body Battery</strong>
-        <span style="font-family:'JetBrains Mono';color:{% if L.body_battery >= 70 %}var(--teal){% elif L.body_battery >= 45 %}var(--gold){% else %}var(--red){% endif %};font-weight:700">{{ L.body_battery }}</span>
+        <strong>Body Battery{{ age_badge(bb_age) }}</strong>
+        <span style="font-family:'JetBrains Mono';color:{% if body_battery >= 70 %}var(--teal){% elif body_battery >= 45 %}var(--gold){% else %}var(--red){% endif %};font-weight:700">{{ body_battery }}</span>
       </div>
       {% endif %}
-      {% if L and L.sleep_score %}
+      {% if sleep_score %}
       <div class="litem">
-        <strong>Sleep Score</strong>
-        <span style="font-family:'JetBrains Mono';color:{% if L.sleep_score >= 80 %}var(--teal){% elif L.sleep_score >= 65 %}var(--gold){% else %}var(--red){% endif %};font-weight:700">{{ L.sleep_score }}</span>
+        <strong>Sleep Score{{ age_badge(sleep_age) }}</strong>
+        <span style="font-family:'JetBrains Mono';color:{% if sleep_score >= 80 %}var(--teal){% elif sleep_score >= 65 %}var(--gold){% else %}var(--red){% endif %};font-weight:700">{{ sleep_score }}</span>
       </div>
       {% endif %}
-      {% if L and L.resting_pulse %}
+      {% if resting_pulse %}
       <div class="litem">
-        <strong>Ruhepuls</strong>
-        <span style="font-family:'JetBrains Mono';color:var(--muted);font-weight:700">{{ L.resting_pulse }} bpm</span>
+        <strong>Ruhepuls{{ age_badge(rp_age) }}</strong>
+        <span style="font-family:'JetBrains Mono';color:var(--muted);font-weight:700">{{ resting_pulse }} bpm</span>
       </div>
       {% endif %}
-      {% if L and L.training_readiness %}
+      {% if training_readiness %}
       <div class="litem">
-        <strong>Training Readiness</strong>
-        <span style="font-family:'JetBrains Mono';color:{% if L.training_readiness >= 70 %}var(--teal){% elif L.training_readiness >= 45 %}var(--gold){% else %}var(--red){% endif %};font-weight:700">{{ L.training_readiness }}</span>
+        <strong>Readiness{{ age_badge(tr_age) }}</strong>
+        <span style="font-family:'JetBrains Mono';color:{% if training_readiness >= 70 %}var(--teal){% elif training_readiness >= 45 %}var(--gold){% else %}var(--red){% endif %};font-weight:700">{{ training_readiness }}</span>
+      </div>
+      {% endif %}
+      {% if training_status %}
+      <div class="litem">
+        <strong>Status{{ age_badge(ts_age) }}</strong>
+        <span style="font-family:'JetBrains Mono';font-size:12px;color:var(--muted);font-weight:700">{{ training_status }}</span>
+      </div>
+      {% endif %}
+      {% if breath_rate %}
+      <div class="litem">
+        <strong>Atemfreq.{{ age_badge(br_age) }}</strong>
+        <span style="font-family:'JetBrains Mono';color:{% if breath_rate <= 16 %}var(--teal){% elif breath_rate <= 18 %}var(--gold){% else %}var(--red){% endif %};font-weight:700">{{ "%.1f"|format(breath_rate) }} /min</span>
       </div>
       {% endif %}
     </div>
@@ -165,42 +175,42 @@
   <!-- ── VITALS ── -->
   <div class="card s4">
     <div class="sh"><div class="sh-title">Vitals</div></div>
-    {% if (L and L.bp_systolic and L.bp_diastolic) or (L and L.pulse_wave_velocity) %}
+    {% if bp_systolic and bp_diastolic %}
     <div class="mg mg-2" style="border-radius:14px">
-      {% if L and L.bp_systolic and L.bp_diastolic %}
       <div class="metric">
-        <div class="m-label">Blutdruck</div>
-        <div class="m-val" style="color:{% if L.bp_systolic > 140 %}var(--red){% elif L.bp_systolic > 130 %}var(--warn){% else %}var(--teal){% endif %};font-size:18px">{{ L.bp_systolic }}/{{ L.bp_diastolic }}</div>
+        <div class="m-label">Blutdruck{% if bp_age and bp_age > 0 %}<br><span style="font-size:9px;color:var(--muted)">vor {{ bp_age }}T</span>{% endif %}</div>
+        <div class="m-val" style="color:{% if bp_systolic > 140 %}var(--red){% elif bp_systolic > 130 %}var(--warn){% else %}var(--teal){% endif %};font-size:18px">{{ bp_systolic }}/{{ bp_diastolic }}</div>
         <div class="m-small">mmHg</div>
       </div>
-      {% endif %}
-      {% if L and L.pulse_wave_velocity %}
+      {% if pwv %}
       <div class="metric">
-        <div class="m-label">PWV</div>
-        <div class="m-val" style="color:{% if L.pulse_wave_velocity < 7 %}var(--teal){% else %}var(--warn){% endif %};font-size:18px">{{ "%.2f"|format(L.pulse_wave_velocity) }}</div>
+        <div class="m-label">PWV{% if pwv_age and pwv_age > 0 %}<br><span style="font-size:9px;color:var(--muted)">vor {{ pwv_age }}T</span>{% endif %}</div>
+        <div class="m-val" style="color:{% if pwv < 7 %}var(--teal){% else %}var(--warn){% endif %};font-size:18px">{{ "%.1f"|format(pwv) }}</div>
         <div class="m-small">m/s</div>
       </div>
       {% endif %}
     </div>
     {% endif %}
-    {% if L and L.stress_avg %}
+    {% if stress_avg or vo2max %}
     <div class="mg mg-2" style="border-radius:14px;margin-top:2px">
+      {% if stress_avg %}
       <div class="metric">
-        <div class="m-label">Stress</div>
-        <div class="m-val" style="color:{% if L.stress_avg > 60 %}var(--red){% elif L.stress_avg > 40 %}var(--warn){% else %}var(--teal){% endif %};font-size:18px">{{ L.stress_avg }}</div>
+        <div class="m-label">Stress{% if stress_age and stress_age > 0 %}<br><span style="font-size:9px;color:var(--muted)">vor {{ stress_age }}T</span>{% endif %}</div>
+        <div class="m-val" style="color:{% if stress_avg > 60 %}var(--red){% elif stress_avg > 40 %}var(--warn){% else %}var(--teal){% endif %};font-size:18px">{{ stress_avg }}</div>
         <div class="m-small">/ 100</div>
       </div>
-      {% if L.vo2max %}
+      {% endif %}
+      {% if vo2max %}
       <div class="metric">
-        <div class="m-label">VO₂max</div>
-        <div class="m-val" style="font-size:18px">{{ L.vo2max }}</div>
+        <div class="m-label">VO₂max{% if vo2_age and vo2_age > 0 %}<br><span style="font-size:9px;color:var(--muted)">vor {{ vo2_age }}T</span>{% endif %}</div>
+        <div class="m-val" style="font-size:18px">{{ vo2max }}</div>
         <div class="m-small">ml/kg/min</div>
       </div>
       {% endif %}
     </div>
     {% endif %}
-    {% if not ((L and L.bp_systolic and L.bp_diastolic) or (L and L.pulse_wave_velocity) or (L and L.stress_avg)) %}
-    <div style="font-size:12px;color:var(--soft);padding:8px 0">Keine aktuellen Vitals vorhanden</div>
+    {% if not (bp_systolic or stress_avg or vo2max) %}
+    <div style="font-size:12px;color:var(--soft);padding:8px 0">Kein Garmin-Fetch in den letzten 90 Tagen</div>
     {% endif %}
   </div>
 
@@ -238,6 +248,96 @@
     <span class="badge badge-gray">Kein aktiver Stack</span>
     {% endif %}
   </div>
+
+  <!-- ── APPLE HEALTH HEUTE ── -->
+  {% if apple_today %}
+  <div class="card s4">
+    <div class="sh">
+      <div class="sh-title">Heute · Apple Health</div>
+      <span class="pill" style="font-size:10px">{{ apple_today.date }}</span>
+    </div>
+    <div class="mg mg-4" style="margin-top:4px">
+      {% if apple_today.calories %}
+      <div class="metric">
+        <div class="m-label">Kalorien</div>
+        <div class="m-val c-gold">{{ apple_today.calories | int }}</div>
+        <div class="m-small">kcal</div>
+      </div>
+      {% endif %}
+      {% if apple_today.protein_g %}
+      <div class="metric">
+        <div class="m-label">Protein</div>
+        <div class="m-val c-teal">{{ apple_today.protein_g | round(1) }}</div>
+        <div class="m-small">g</div>
+      </div>
+      {% endif %}
+      {% if apple_today.carbs_g %}
+      <div class="metric">
+        <div class="m-label">Carbs</div>
+        <div class="m-val">{{ apple_today.carbs_g | round(1) }}</div>
+        <div class="m-small">g</div>
+      </div>
+      {% endif %}
+      {% if apple_today.fat_g %}
+      <div class="metric">
+        <div class="m-label">Fett</div>
+        <div class="m-val">{{ apple_today.fat_g | round(1) }}</div>
+        <div class="m-small">g</div>
+      </div>
+      {% endif %}
+      {% if apple_today.steps %}
+      <div class="metric">
+        <div class="m-label">Schritte</div>
+        <div class="m-val">{{ "{:,}".format(apple_today.steps | int).replace(",", ".") }}</div>
+        <div class="m-small">heute</div>
+      </div>
+      {% endif %}
+      {% if apple_today.resting_hr %}
+      <div class="metric">
+        <div class="m-label">Ruhepuls</div>
+        <div class="m-val" style="color:{% if apple_today.resting_hr <= 55 %}var(--teal){% elif apple_today.resting_hr <= 65 %}var(--gold){% else %}var(--red){% endif %}">{{ apple_today.resting_hr | int }}</div>
+        <div class="m-small">bpm</div>
+      </div>
+      {% endif %}
+      {% if apple_today.body_fat_pct %}
+      <div class="metric">
+        <div class="m-label">KFA</div>
+        <div class="m-val c-teal">{{ apple_today.body_fat_pct | round(1) }}</div>
+        <div class="m-small">%</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ── APPLE HEALTH SYNC-STATUS ── -->
+  {% if apple_today or apple_local %}
+  <div class="card s4">
+    <div class="sh">
+      <div class="sh-title">Apple Health · Sync-Status</div>
+    </div>
+    <div style="font-size:.72rem;color:var(--soft);line-height:1.45;margin-top:6px">
+      {% if apple_today %}
+      <div><strong>Supabase</strong> (neueste Zeile nach <code>synced_at</code> / Datum):</div>
+      <div style="margin:4px 0 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text)">
+        Datum {{ apple_today.date }}{% if apple_today.synced_at %} · synced_at {{ apple_today.synced_at }}{% endif %}
+      </div>
+      {% else %}
+      <div style="margin-bottom:8px">Supabase: noch keine Zeile in <code>apple_health_daily</code> (oder Keys fehlen).</div>
+      {% endif %}
+      {% if apple_local %}
+      <div><strong>Lokal</strong> (letzter <code>POST /import/apple-health</code>):</div>
+      <div style="margin:4px 0;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text)">
+        {{ apple_local.received_at or '–' }} · Tagesdatum {{ apple_local.entry_date or '–' }}
+        {% if apple_local.fields %}<br>Felder: {{ apple_local.fields | join(', ') }}{% endif %}
+      </div>
+      {% else %}
+      <div>Lokal: noch kein Import über das Dashboard / die API.</div>
+      {% endif %}
+      <div style="margin-top:8px;color:var(--muted)">Kurzbefehl: <em>Kurzbefehle</em> → Shortcut → letzte Ausführung. Details: <code>docs/APPLE_HEALTH_SYNC.md</code> im Projektordner.</div>
+    </div>
+  </div>
+  {% endif %}
 
   <!-- ── BLUTBILD ── -->
   <div class="card s4">

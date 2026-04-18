@@ -17,6 +17,8 @@ from app.services.gym80_catalog_import import import_gym80_sql
 from app.services.extra_catalog_import import import_extra_catalogs
 from app.services.supabase_catalog_sync import sync_catalog_to_supabase, get_supabase_catalog_status
 from app.services.training_equipment_seed import seed_training_equipment
+from app.services.catalog_targets import infer_stype, infer_target, target_to_key
+from app.services.catalog_overrides import load_override_rules, resolve_catalog_row_targets
 import sqlite3
 import subprocess
 import datetime
@@ -557,40 +559,26 @@ async def catalog_search_api(
                 ).fetchall()
             )
 
-        def infer_target(text: str) -> str:
-            v = (text or "").lower()
-            if any(x in v for x in ["hip thrust", "glute", "gesäß", "po ", "abdukt"]): return "Glutes"
-            if any(x in v for x in ["lat", "row", "rücken", "back", "ruder"]): return "Rücken"
-            if any(x in v for x in ["chest", "brust", "fly", "flye"]): return "Brust"
-            if any(x in v for x in ["press", "bench"]) and not any(x in v for x in ["shoulder", "schulter", "lat", "leg"]): return "Brust"
-            if any(x in v for x in ["leg", "quad", "ham", "bein", "squat", "knie"]): return "Beine"
-            if any(x in v for x in ["shoulder", "schulter", "delt", "seitheb"]): return "Schulter"
-            if any(x in v for x in ["biceps", "triceps", "bizeps", "trizeps", "curl"]): return "Arme"
-            if any(x in v for x in ["core", "abdominal", "bauch", "crunch", "sit-up"]): return "Core"
-            if any(x in v for x in ["cardio", "bike", "treadmill", "elliptical", "climb", "laufband"]): return "Cardio"
-            return "Brust"
-
-        def infer_stype(target_name: str) -> str:
-            tt = target_name.lower()
-            if tt == "rücken": return "pull"
-            if tt in ("beine", "glutes"): return "legs"
-            if tt == "cardio": return "cardio"
-            if tt == "core": return "free"
-            return "push"
+        rules = load_override_rules(conn)
 
         norm = []
         for r in rows:
             model = (r["model"] or "").strip()
             serie = (r["serie"] or "").strip()
             mg = (r["muscle_groups"] or "").strip()
-            category = (r["category"] or "").strip().lower()
-            full_text = f"{model} {serie} {mg} {category} {(r['notes'] or '')}".lower()
-            target_name = infer_target(f"{model} {mg} {category}")
+            category_raw = (r["category"] or "").strip()
+            category = category_raw.lower()
             src = (r["src"] or "").strip().lower() if "src" in r.keys() else ""
-            s_type = "cardio" if src == "matrix_cardio" else infer_stype(target_name)
+
             brand_name = (r["brand"] or "").strip() if "brand" in r.keys() else ""
             if not brand_name:
                 brand_name = "gym80" if "pure kraft" in serie.lower() or category in ("plate_loaded", "weight_stack", "outdoor") else ("eGym" if "egym" in serie.lower() else "Matrix")
+
+            target_name, group_resolved = resolve_catalog_row_targets(
+                brand_name, model, serie, mg, category_raw, rules, infer_target_fn=infer_target
+            )
+            full_text = f"{model} {serie} {mg} {category} {(r['notes'] or '')}".lower()
+            s_type = infer_stype(target_name, is_matrix_cardio_row=(src == "matrix_cardio"))
 
             if b and b not in brand_name.lower():
                 continue
@@ -604,11 +592,13 @@ async def catalog_search_api(
             norm.append({
                 "brand": brand_name,
                 "name": model,
-                "type": "Digital" if brand_name == "eGym" else ("Cardio" if target_name == "Cardio" else "Machine"),
+                "type": "Digital" if brand_name == "eGym" else ("Cardio" if src == "matrix_cardio" or target_name == "Cardio" else "Machine"),
                 "target": target_name,
                 "cat": target_name,
                 "sType": s_type,
-                "group": serie or None,
+                "targetKey": target_to_key(target_name),
+                "sessionType": s_type,
+                "group": group_resolved,
                 "art": None,
                 "img": r["image_url"],
                 "product_url": r["product_url"],

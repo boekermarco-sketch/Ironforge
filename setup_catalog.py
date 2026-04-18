@@ -18,6 +18,8 @@ from pathlib import Path
 
 import requests
 
+from app.services.catalog_targets import infer_target
+
 # ─────────────────────────────────────────────
 # Pfade
 # ─────────────────────────────────────────────
@@ -287,18 +289,6 @@ def populate_sqlite(matrix_img_map: dict, egym_img_map: dict) -> None:
 # ─────────────────────────────────────────────
 # 3. Supabase ifl_device_catalog befüllen
 # ─────────────────────────────────────────────
-def _infer_target(name: str, muscle: str, kat: str) -> str:
-    txt = f"{name} {muscle} {kat}".lower()
-    if any(x in txt for x in ["lat", "rücken", "ruderzug", "ruder", "back", "reverse butterfly"]): return "Rücken"
-    if any(x in txt for x in ["brust", "chest", "butterfly", "brustpresse"]): return "Brust"
-    if any(x in txt for x in ["bein", "leg", "quad", "ham", "glute", "addukt", "abdukt", "knie", "wade", "hip thrust", "squat"]): return "Beine"
-    if any(x in txt for x in ["schulter", "shoulder", "schulterpresse"]): return "Schulter"
-    if any(x in txt for x in ["bizeps", "trizeps", "curl", "dips"]): return "Arme"
-    if any(x in txt for x in ["bauch", "core", "rumpf"]): return "Core"
-    if any(x in txt for x in ["cardio", "laufband", "crosstrainer", "stepper", "fahrrad", "ergometer", "rudergerät"]): return "Cardio"
-    return "Core"
-
-
 def push_to_supabase() -> None:
     if not SUPABASE_URL or not SUPABASE_KEY:
         print("  Supabase: keine Credentials → übersprungen")
@@ -327,6 +317,8 @@ def push_to_supabase() -> None:
     target         TEXT,
     cat            TEXT,
     s_type         TEXT,
+    session_type   TEXT,
+    target_key     TEXT,
     movement_group TEXT,
     art            TEXT,
     img            TEXT,
@@ -343,7 +335,7 @@ def push_to_supabase() -> None:
 
     # Matrix Strength
     for de_name, kat, muscle, stype, slug in MATRIX_DEVICES:
-        target = _infer_target(de_name, muscle, kat)
+        target = infer_target(f"{de_name} {muscle} {kat}")
         rows.append({
             "brand":          "Matrix",
             "name":           de_name,
@@ -358,7 +350,7 @@ def push_to_supabase() -> None:
 
     # eGym
     for code, de_name, muscle, stype, img_stem in EGYM_DEVICES:
-        target = _infer_target(de_name, muscle, "smartstrength")
+        target = infer_target(f"{de_name} {muscle} smartstrength")
         img = None
         if img_stem:
             slug = img_stem.lower().replace(" ", "_") + ".jpeg"
