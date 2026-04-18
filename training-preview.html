@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Letzte inhaltliche Änderung: 2026-04-18 18:22 MEZ (Pool-Sheet: Thumbnails + Suche über alle Kategorien) -->
+<!-- Letzte inhaltliche Änderung: 2026-04-18 19:08 MEZ (Übungs-Vorschau: resolveExerciseImageUrl überall) -->
 <html lang="de" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -511,6 +511,9 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
     display:flex;flex-direction:column;gap:10px;
     min-height:220px;
   }
+  .m-ex-head{display:flex;gap:12px;align-items:flex-start;margin-bottom:2px}
+  .m-ex-head-img{width:72px;height:72px;border-radius:14px;object-fit:cover;border:1px solid var(--line);flex-shrink:0;background:rgba(255,255,255,.04)}
+  .m-ex-head-text{flex:1;min-width:0}
   .m-ex-progress-row{display:flex;justify-content:space-between;align-items:center}
   .m-ex-counter{font-size:10px;color:var(--soft);font-weight:800;letter-spacing:.12em;text-transform:uppercase}
   .m-ex-dots{display:flex;gap:5px;align-items:center}
@@ -713,6 +716,8 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
 #m-quick-input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.2);color:var(--text);font-size:15px;margin-bottom:10px}
 .m-quick-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 8px;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer}
 .m-quick-row:active{background:rgba(208,163,90,.06)}
+.m-quick-row-inner{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.m-quick-thumb{width:44px;height:44px;border-radius:10px;object-fit:cover;border:1px solid var(--line);flex-shrink:0;background:rgba(255,255,255,.04)}
 .m-quick-name{font-size:13px;font-weight:700}
 .m-quick-meta{font-size:10px;color:var(--soft)}
 .m-quick-badge{font-size:9px;font-weight:800;padding:2px 8px;border-radius:6px;background:rgba(255,255,255,.06);color:var(--muted)}
@@ -1790,7 +1795,7 @@ function togglePoolFavOnly(checked){
   localStorage.setItem('ifl_pool_fav_only', checked ? '1' : '0');
   renderMobilePoolSheet();
 }
-const BUILD_STAMP = '2026-04-18 18:22 MEZ';
+const BUILD_STAMP = '2026-04-18 19:08 MEZ';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -1996,6 +2001,113 @@ let db = loadDB();
   });
   if(changed) localStorage.setItem('ifl_training_db', JSON.stringify(db));
 })();
+
+/** Katalog-Bilder (relativ zum App-Root), eGym-Heuristik nutzt ASCII-Dateinamen wo möglich. */
+const STATIC_CATALOG_BASE = '/static/img/catalog/';
+const CAT_HEX_PREVIEW = {Brust:'#d0a35a',Rücken:'#58b9b0',Beine:'#de7171',Glutes:'#c084fc',Schulter:'#e8a64a',Arme:'#a78bfa',Core:'#898174'};
+
+const EGYM_PREVIEW_RULES = [
+  { keys: ['schulterdrück', 'schulter press', 'shoulder press'], file: 'schulterpresse.jpeg' },
+  { keys: ['latpresse', 'latzug', 'lat pull'], file: 'latzug.jpeg' },
+  { keys: ['beinpresse'], file: 'beinpresse.jpeg' },
+  { keys: ['beinstreck'], file: 'beinstrecker.jpeg' },
+  { keys: ['beinbeug'], file: 'beinbeuger.jpeg' },
+  { keys: ['brust', 'chest press'], file: 'brustpresse.jpeg' },
+  { keys: ['hip thrust', 'glut'], file: 'glutaeus_hip_thrust.jpeg' },
+  { keys: ['bauch', 'abdo'], file: 'bauchtrainer.jpeg' },
+  { keys: ['butterfly reverse'], file: 'butterfly_reverse.jpeg' },
+  { keys: ['butterfly'], file: 'butterfly.jpeg' },
+  { keys: ['bizeps'], file: 'bizepscurl.jpeg' },
+  { keys: ['trizeps', 'dip'], file: 'trizeps-dips.jpeg' },
+  { keys: ['rückenstrecker', 'rueckenstrecker', 'ruckenstrecker'], file: 'rueckenstrecker.jpeg' },
+  { keys: ['rückentrainer', 'rueckentrainer'], file: 'rueckenstrecker.jpeg' },
+  { keys: ['addukt'], file: 'adduktor.jpeg' },
+  { keys: ['abdukt'], file: 'abduktor.jpeg' },
+  { keys: ['kniebeug'], file: 'kniebeugen.jpeg' },
+  { keys: ['seitheb'], file: 'seitbeuger.jpeg' },
+];
+
+const MATRIX_PREVIEW_RULES = [
+  { keys: ['chest press', 'brustpresse', 'brust pres'], file: 'brustpresse.jpg' },
+  { keys: ['incline', 'schräg', 'schrag'], file: 'hantelbank_verstellbar_3.jpg' },
+  { keys: ['lat pull', 'latzug', 'lat pull'], file: 'lat_pulldown.jpg' },
+  { keys: ['seated row', 'rudern', 'seated row'], file: 'rudergeraet.jpg' },
+  { keys: ['beinpresse', 'leg press'], file: 'beinpresse_1.jpg' },
+  { keys: ['beinstreck', 'leg extension'], file: 'beinstrecker.jpg' },
+  { keys: ['beinbeug', 'leg curl'], file: 'beinbeuger.jpg' },
+  { keys: ['schulter', 'shoulder'], file: 'schulterpresse.jpg' },
+  { keys: ['bauch', 'crunch'], file: 'bauchtrainer.jpg' },
+  { keys: ['curl', 'bizeps'], file: 'curl_maschine.jpg' },
+  { keys: ['kniebeug', 'hack squat', 'squat'], file: 'kniebeugen_1.jpg' },
+  { keys: ['waden', 'calf'], file: 'wadenmaschine.jpg' },
+  { keys: ['kabelzug', 'cable'], file: 'kabelzug.jpg' },
+  { keys: ['crosstrainer'], file: 'crosstrainer.jpg' },
+  { keys: ['laufband', 'treadmill'], file: 'laufband_1.jpg' },
+  { keys: ['ergometer', 'fahrrad', 'bike'], file: 'fahrrad_ergometer_1.jpg' },
+  { keys: ['stepper'], file: 'stepper.jpg' },
+  { keys: ['rumpf', 'rotation'], file: 'rumpfrotation.jpg' },
+  { keys: ['multi station'], file: 'multi_station_1.jpg' },
+];
+
+function normImgKey(s){
+  return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function exerciseImagePlaceholderUrl(ex){
+  const fill = CAT_HEX_PREVIEW[ex.cat] || '#898174';
+  const raw = ((ex && ex.name) || '?').trim() || '?';
+  const ch0 = raw.charAt(0).toUpperCase();
+  const ch = /[A-Za-z0-9ÄÖÜäöüß]/.test(ch0) ? ch0 : '?';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96"><rect fill="#12141a" width="96" height="96" rx="14"/><text x="48" y="56" text-anchor="middle" fill="${fill}" font-family="Manrope,Arial,sans-serif" font-size="38" font-weight="800">${ch.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</text></svg>`;
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
+
+function matchDeviceCatalogImage(ex){
+  const n = normImgKey(ex.name);
+  let exact = '';
+  let partial = '';
+  if(!n) return '';
+  for(const it of DEVICE_CATALOG){
+    if(!it.img) continue;
+    const iname = normImgKey(it.name);
+    if(!iname) continue;
+    if(n === iname){ exact = it.img; break; }
+    if(iname.length >= 5 && n.includes(iname)) partial = partial || it.img;
+    else if(n.length >= 5 && iname.includes(n)) partial = partial || it.img;
+  }
+  return exact || partial;
+}
+
+/** Für Kacheln, Pool, Logger, Mobile: immer eine URL (echtes Bild, Katalog-Heuristik oder SVG-Platzhalter). */
+function resolveExerciseImageUrl(ex){
+  if(!ex) return exerciseImagePlaceholderUrl({ cat: 'Core', name: '?' });
+  const direct = (ex.img && String(ex.img).trim()) ? String(ex.img).trim() : '';
+  if(direct) return direct;
+  const artRaw = ex.art != null && String(ex.art).trim();
+  if(artRaw) return SB_IMG + artRaw + '.webp';
+  const b = normImgKey(ex.brand);
+  const n = normImgKey(ex.name);
+  if(b.includes('egym')){
+    for(const r of EGYM_PREVIEW_RULES){
+      if(r.keys.some(k => n.includes(k))) return STATIC_CATALOG_BASE + 'egym/' + r.file;
+    }
+  }
+  if(b.includes('matrix')){
+    for(const r of MATRIX_PREVIEW_RULES){
+      if(r.keys.some(k => n.includes(k))) return STATIC_CATALOG_BASE + 'matrix/' + r.file;
+    }
+  }
+  if(b.includes('freihantel') || b.includes('frei')){
+    if(n.includes('kurzhantel') || n.includes('hantel') || n.includes('bank')) return STATIC_CATALOG_BASE + 'matrix/hantelbank.jpg';
+  }
+  const matched = matchDeviceCatalogImage(ex);
+  if(matched) return matched;
+  return exerciseImagePlaceholderUrl(ex);
+}
+
+function attrUrl(s){
+  return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+}
 
 let nextId = Math.max(...db.map(x=>x.id)) + 1;
 function saveDB(){
@@ -2236,7 +2348,9 @@ function tileHTML(ex, inActive){
     ? `<span class="ex-tile-group" onclick="event.stopPropagation();promptGroup(${ex.id})">${ex.group}</span>`
     : `<span class="ex-tile-group" style="opacity:.5" onclick="event.stopPropagation();promptGroup(${ex.id})">+ Gruppe</span>`;
   const catColor = CAT_COLOR[ex.cat]||'var(--soft)';
-  const imgHTML = ex.img ? `<img src="${ex.img}" class="ex-tile-img" loading="lazy" draggable="false">` : '';
+  const _pv = resolveExerciseImageUrl(ex);
+  const _fb = exerciseImagePlaceholderUrl(ex);
+  const imgHTML = `<img src="${attrUrl(_pv)}" class="ex-tile-img" loading="lazy" draggable="false" alt="" onerror="this.onerror=null;this.src='${attrUrl(_fb)}'">`;
   const optBadge = ex.optional ? `<span style="font-size:8px;color:var(--warn);background:rgba(232,166,74,.1);border:1px solid rgba(232,166,74,.25);border-radius:4px;padding:1px 5px;margin-left:5px">noch nachzulegen</span>` : '';
   const artLabel = ex.art ? `${ex.brand||'gym80'} · ${ex.art}` : (ex.brand ? ex.brand : null);
   const artHTML = artLabel ? `<div style="font-size:9px;color:var(--soft);font-family:'JetBrains Mono',monospace;margin-top:2px">${artLabel}${optBadge}</div>` : '';
@@ -3610,8 +3724,13 @@ function openLogger(ex){
   const artInfo = ex.art ? ` · ${ex.brand||'gym80'} ${ex.art}` : '';
   document.getElementById('modal-info').textContent = [ex.cat, ex.group].filter(Boolean).join(' · ') + artInfo;
   const modalImg = document.getElementById('modal-ex-img');
-  if(ex.img){ modalImg.src = ex.img; modalImg.style.display = 'block'; }
-  else { modalImg.style.display = 'none'; }
+  if(modalImg){
+    const ms = resolveExerciseImageUrl(ex);
+    const mf = exerciseImagePlaceholderUrl(ex);
+    modalImg.onerror = function(){ this.onerror = null; this.src = mf; };
+    modalImg.src = ms;
+    modalImg.style.display = 'block';
+  }
   const prev = ex.history[currentStudio]||[];
   const pw = document.getElementById('prev-wrap');
   const pr = document.getElementById('prev-row');
@@ -4478,6 +4597,9 @@ function renderMobileSession(){
     return `<span class="m-ex-dot ${cls}"></span>`;
   }).join('');
 
+  const mImgSrc = resolveExerciseImageUrl(ex);
+  const mImgFb = exerciseImagePlaceholderUrl(ex);
+
   card.innerHTML = `
     <div class="m-ex-progress-row">
       <span class="m-ex-counter">${mobileExIdx+1} / ${items.length}</span>
@@ -4488,8 +4610,13 @@ function renderMobileSession(){
       ${ex.group ? `<span class="pill pill-teal" style="font-size:9px;padding:2px 8px">${ex.group}</span>` : ''}
       ${rm>0 ? `<span class="pill" style="font-size:9px;padding:2px 8px;color:var(--gold)">1RM ~${rm}kg</span>` : ''}
     </div>
-    <div class="m-ex-big-name">${ex.name}</div>
-    ${ex.brand||ex.art ? `<div style="font-size:10px;color:var(--soft);font-family:'JetBrains Mono',monospace">${[ex.brand,ex.art].filter(Boolean).join(' · ')}</div>` : ''}
+    <div class="m-ex-head">
+      <img class="m-ex-head-img" src="${attrUrl(mImgSrc)}" alt="" loading="lazy" onerror="this.onerror=null;this.src='${attrUrl(mImgFb)}'">
+      <div class="m-ex-head-text">
+        <div class="m-ex-big-name">${ex.name}</div>
+        ${ex.brand||ex.art ? `<div style="font-size:10px;color:var(--soft);font-family:'JetBrains Mono',monospace">${[ex.brand,ex.art].filter(Boolean).join(' · ')}</div>` : ''}
+      </div>
+    </div>
     <div>
       <div class="m-ex-hist-label">Letztes Mal</div>
       <div class="m-ex-hist-sets">${histHTML}</div>
@@ -4564,13 +4691,11 @@ function mPoolMatchesSearch(ex, qRaw){
 
 function mPoolThumbHTML(ex){
   const cell = (inner) => `<div class="m-pool-thumb-cell">${inner}</div>`;
-  if(ex && ex.img){
-    const u = String(ex.img).replace(/"/g, '&quot;');
-    return cell(
-      `<img src="${u}" class="m-pool-thumb" alt="" loading="lazy" draggable="false" onerror="this.onerror=null;this.replaceWith(Object.assign(document.createElement('div'),{className:'m-pool-thumb-empty'}))">`
-    );
-  }
-  return cell('<div class="m-pool-thumb-empty"></div>');
+  const u = resolveExerciseImageUrl(ex);
+  const fb = exerciseImagePlaceholderUrl(ex);
+  return cell(
+    `<img src="${attrUrl(u)}" class="m-pool-thumb" alt="" loading="lazy" draggable="false" onerror="this.onerror=null;this.src='${attrUrl(fb)}'">`
+  );
 }
 
 function renderMobilePoolSheet(){
@@ -5040,8 +5165,13 @@ function _mQuickRowHtml(ex, hotIdSet){
   const oft = hotIdSet && hotIdSet.has(ex.id)
     ? '<span class="pill pill-gold" style="font-size:7px;padding:1px 5px;margin-left:4px">oft</span>'
     : '';
+  const qs = resolveExerciseImageUrl(ex);
+  const qf = exerciseImagePlaceholderUrl(ex);
   return `<div class="m-quick-row" onclick="mQuickPick(${ex.id})">
-    <div><div class="m-quick-name">${mEsc(ex.name)}${oft}</div><div class="m-quick-meta">${mEsc(meta)}</div></div>
+    <div class="m-quick-row-inner">
+      <img class="m-quick-thumb" src="${attrUrl(qs)}" alt="" loading="lazy" onerror="this.onerror=null;this.src='${attrUrl(qf)}'">
+      <div><div class="m-quick-name">${mEsc(ex.name)}${oft}</div><div class="m-quick-meta">${mEsc(meta)}</div></div>
+    </div>
     <span class="m-quick-badge">${badge}</span>
   </div>`;
 }
