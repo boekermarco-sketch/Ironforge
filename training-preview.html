@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Letzte inhaltliche Änderung: 2026-04-18 21:08 MEZ (Pool/Schnellsuche: SQL-Gerätekatalog bei Suchtext) -->
+<!-- Letzte inhaltliche Änderung: 2026-04-18 21:35 MEZ (Suche: Häufigkeit zuerst, dann Katalog) -->
 <html lang="de" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -1801,7 +1801,7 @@ function togglePoolFavOnly(checked){
   localStorage.setItem('ifl_pool_fav_only', checked ? '1' : '0');
   renderMobilePoolSheet();
 }
-const BUILD_STAMP = '2026-04-18 21:08 MEZ';
+const BUILD_STAMP = '2026-04-18 21:35 MEZ';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -4922,6 +4922,23 @@ function mPoolMatchesSearch(ex, qRaw){
   return tokens.every(t => blob.includes(t));
 }
 
+function buildPoolFreqOrderMap(){
+  const m = new Map();
+  getFrequentExerciseRecords(48).forEach((r, i)=>{
+    if(r && r.id != null) m.set(r.id, i);
+  });
+  return m;
+}
+
+function sortPoolItemsByFrequencyThenOrder(items, freqOrderMap){
+  return [...items].sort((a, b)=>{
+    const da = freqOrderMap.has(a.id) ? freqOrderMap.get(a.id) : 999;
+    const db = freqOrderMap.has(b.id) ? freqOrderMap.get(b.id) : 999;
+    if(da !== db) return da - db;
+    return (a.order || 0) - (b.order || 0);
+  });
+}
+
 function mPoolThumbHTML(ex){
   const cell = (inner) => `<div class="m-pool-thumb-cell">${inner}</div>`;
   const u = resolveExerciseImageUrl(ex);
@@ -4956,6 +4973,11 @@ function renderMobilePoolSheet(){
     items = items.filter(ex => mPoolMatchesSearch(ex, qPool));
   }
 
+  const freqOrderMap = buildPoolFreqOrderMap();
+  if(qPool && items.length){
+    items = sortPoolItemsByFrequencyThenOrder(items, freqOrderMap);
+  }
+
   const searchHint = (qPool && mobilePoolCat !== 'Alle')
     ? `<div class="m-tools-muted" style="font-size:10px;width:100%;margin:0 0 8px;line-height:1.35">Suche aktiv: <strong>alle Kategorien</strong> im Pool (Pille „${mEsc(mobilePoolCat)}“ greift nur ohne Suchtext).</div>`
     : '';
@@ -4974,7 +4996,7 @@ function renderMobilePoolSheet(){
   const idInList = new Set(items.map(x => x.id));
   const freqRows = [];
   const freqIds = new Set();
-  for(const rec of getFrequentExerciseRecords(16)){
+  if(!qPool) for(const rec of getFrequentExerciseRecords(16)){
     const ex = db.find(x => x.id === rec.id);
     if(!ex || ex.status !== 'pool' || !idInList.has(ex.id)) continue;
     freqIds.add(ex.id);
@@ -5008,7 +5030,7 @@ function renderMobilePoolSheet(){
     });
     window.__iflPoolCatHits = catHits;
     if(catHits.length){
-      catalogPoolHtml = `<div class="m-tools-h" style="margin:14px 0 8px">Gerätekatalog (Supabase, noch nicht als Übung)</div>` +
+      catalogPoolHtml = `<div class="m-tools-h" style="margin:14px 0 8px">Danach: Gerätekatalog (Supabase, noch nicht als Übung)</div>` +
         catHits.map((row, i)=>{
           const meta = [row.brand, row.cat, row.group].filter(Boolean).join(' · ') || '–';
           const ph = { name: row.name, brand: row.brand, art: row.art, img: row.img, cat: row.cat || 'Brust' };
@@ -5032,10 +5054,13 @@ function renderMobilePoolSheet(){
         const rm   = maxRM(hist);
         const lastSet = hist.length ? `${hist[hist.length-1].w}×${hist[hist.length-1].r}` : '–';
         const star = isPoolFavorite(ex.id) ? '★' : '☆';
+        const oftPill = (qPool && freqOrderMap.has(ex.id))
+          ? ' <span class="pill pill-gold" style="font-size:8px;padding:1px 6px">oft</span>'
+          : '';
         return `<div class="m-pool-item">
           ${mPoolThumbHTML(ex)}
           <div class="m-pool-item-text">
-            <div class="m-pool-item-name">${mEsc(ex.name)}</div>
+            <div class="m-pool-item-name">${mEsc(ex.name)}${oftPill}</div>
             <div class="m-pool-item-meta">${mEsc(ex.group||ex.cat||'')} · Letztes Mal: ${lastSet}${rm>0?' · 1RM ~'+rm+'kg':''}</div>
           </div>
           <button type="button" class="m-pool-star" onclick="togglePoolFavorite(${ex.id},event)" aria-label="Favorit">${star}</button>
@@ -5424,11 +5449,11 @@ function closeMobileQuickSearch(){
   document.getElementById('m-quick-sheet')?.classList.remove('open');
 }
 
-function _mQuickRowHtml(ex, hotIdSet){
+function _mQuickRowHtml(ex, hotIdSet, freqOrderMap){
   const inSess = ex.status === 'active' && ex.sType === currentTab;
   const badge = inSess ? 'In Session' : 'Pool';
   const meta = [ex.cat, ex.group].filter(Boolean).join(' · ') || '–';
-  const oft = hotIdSet && hotIdSet.has(ex.id)
+  const oft = (hotIdSet && hotIdSet.has(ex.id)) || (freqOrderMap && freqOrderMap.has(ex.id))
     ? '<span class="pill pill-gold" style="font-size:7px;padding:1px 5px;margin-left:4px">oft</span>'
     : '';
   const qs = resolveExerciseImageUrl(ex);
@@ -5480,11 +5505,18 @@ function renderMobileQuickSearchResults(){
         else if(g.includes(q) || c.includes(q)) score = 3;
         return { ex, score };
       })
-      .filter(x => x.score > 0)
-      .sort((a, b) => b.score - a.score || a.ex.name.localeCompare(b.ex.name))
-      .slice(0, 40);
+      .filter(x => x.score > 0);
+    const fmap = buildPoolFreqOrderMap();
+    scored.sort((a, b)=>{
+      const fa = fmap.has(a.ex.id) ? fmap.get(a.ex.id) : 999;
+      const fb = fmap.has(b.ex.id) ? fmap.get(b.ex.id) : 999;
+      if(fa !== fb) return fa - fb;
+      return b.score - a.score || a.ex.name.localeCompare(b.ex.name);
+    });
+    scored = scored.slice(0, 40);
   }
 
+  const freqOrderMapQuick = buildPoolFreqOrderMap();
   const hotIdSet = new Set(
     getFrequentExerciseRecords(20)
       .filter(r => (r.n || 0) >= 3)
@@ -5497,7 +5529,7 @@ function renderMobileQuickSearchResults(){
     const catHits = rawCat.filter(r => !used.has((r.name || '').toLowerCase().trim()));
     window.__iflQuickCatHits = catHits;
     if(catHits.length){
-      catHtml = `<div class="m-tools-h" style="margin:10px 0 6px;padding-top:10px;border-top:1px solid var(--line)">Gerätekatalog (Supabase)</div>` +
+      catHtml = `<div class="m-tools-h" style="margin:10px 0 6px;padding-top:10px;border-top:1px solid var(--line)">Danach: Gerätekatalog (Supabase)</div>` +
         catHits.slice(0, 80).map((row, i)=>{
           const meta = [row.brand, row.cat, row.group].filter(Boolean).join(' · ') || '–';
           const ph = { name: row.name, brand: row.brand, art: row.art, img: row.img, cat: row.cat || 'Brust' };
@@ -5518,7 +5550,7 @@ function renderMobileQuickSearchResults(){
       catHtml = `<div class="m-tools-muted" style="padding:12px 0 0;border-top:1px solid var(--line)">Gerätekatalog noch nicht geladen (Seite kurz offen lassen).</div>`;
     }
   }
-  const top = scored.length ? scored.map(({ ex }) => _mQuickRowHtml(ex, hotIdSet)).join('') : '';
+  const top = scored.length ? scored.map(({ ex }) => _mQuickRowHtml(ex, hotIdSet, freqOrderMapQuick)).join('') : '';
   list.innerHTML = (top || catHtml)
     ? top + catHtml
     : `<div class="m-tools-muted" style="padding:16px;text-align:center">Keine Treffer</div>`;
