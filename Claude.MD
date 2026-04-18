@@ -635,3 +635,12 @@ Nach **jeder inhaltlichen Session**, in der sich produktionsrelevante Dateien ä
 
 Ziel: **GitHub-Stand = öffentlich nutzbare Quelle** (z. B. GitHub Pages für `training-preview.html`); persönliche Rohdaten bleiben offline.
 
+### Änderungsnachweise (MEZ)
+
+Bei Anpassungen an **`training-preview.html`** (und vergleichbaren „Single-File“-Frontends):
+
+- **`BUILD_STAMP`** im Skript auf **Datum und Uhrzeit in MEZ** setzen, z. B. `2026-04-18 14:27 MEZ`.
+- Direkt unter `<!DOCTYPE html>` einen **HTML-Kommentar** mit derselben Zeit (`Letzte inhaltliche Änderung: … MEZ`) ergänzen oder aktualisieren.
+
+So ist auf GitHub Pages und im UI sofort erkennbar, welche Version live ist.
+

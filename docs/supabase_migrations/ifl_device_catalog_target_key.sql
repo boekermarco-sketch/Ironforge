@@ -1,3 +1,4 @@
+-- Stand Doku: 2026-04-18 14:27 MEZ
 -- Einmalig in Supabase SQL Editor ausführen (nach bestehender Tabelle ifl_device_catalog).
 -- Ergänzt kanonische Filterfelder für einheitliche Katalog-API / Training-App.
 

@@ -39,3 +39,15 @@ Auf dem **Dashboard** erscheint dazu ein kurzer Statusblock („Letzter lokaler 
 | Shortcut / anderer Client → `POST /import/apple-health` | SQLite `daily_logs` + Metadaten `apple_health_last_local`. |
 
 Beides parallel nutzen ist möglich; das Dashboard kombiniert Gewicht/KFA/Ruhepuls aus Supabase, wenn lokal etwas fehlt.
+
+---
+
+## 4. Prüfprotokoll (manuell, MEZ)
+
+Hier kannst du Stichprotokolle festhalten (Zeit immer als **MEZ** notieren).
+
+| Geprüft am (MEZ) | Shortcut: letzte Ausführung (Datum/Uhrzeit) | Supabase: neueste Zeile `date` / `synced_at` | Lokaler POST / Dashboard ok? |
+|-------------------|---------------------------------------------|-----------------------------------------------|--------------------------------|
+| 2026-04-18 14:27  | *bitte eintragen*                           | *bitte eintragen*                             | *ja/nein*                      |
+
+**Hinweis:** Nach Änderungen an `training-preview.html` oder am FastAPI-Dashboard steht im UI bzw. im HTML-Kommentar ein **Build-/Änderungsstempel (MEZ)**.

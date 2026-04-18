@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Letzte inhaltliche Änderung: 2026-04-18 14:27 MEZ (Mobile-Layout Fix + BUILD_STAMP) -->
 <html lang="de" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -354,8 +355,11 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
   #view-training,#view-analyse,#view-kalender,#view-uebungen{transition:opacity .22s cubic-bezier(.4,0,.2,1),transform .22s cubic-bezier(.4,0,.2,1)}
   .view-entering{opacity:0;transform:translateY(8px)}
 }
+@media(min-width:641px){
+  /* Pool-Schnellzeile nur auf schmalen Viewports; sonst ausblenden (sonst überschreibt ein globales display:none die Mobile-Regel) */
+  .m-web-pool-tools{display:none !important}
+}
 @keyframes timer-pop{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-.m-web-pool-tools{display:none}
 /* Session Focus Bar (nur auf Mobile) */
 .session-focus-bar{display:none;background:var(--goldSoft);border:1px solid rgba(208,163,90,.25);border-radius:14px;padding:12px 14px;margin-bottom:12px}
 .focus-bar-label{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:800;margin-bottom:4px}
@@ -1781,7 +1785,7 @@ function togglePoolFavOnly(checked){
   localStorage.setItem('ifl_pool_fav_only', checked ? '1' : '0');
   renderMobilePoolSheet();
 }
-const BUILD_STAMP = '2026-04-18 22:15';
+const BUILD_STAMP = '2026-04-18 14:27 MEZ';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};

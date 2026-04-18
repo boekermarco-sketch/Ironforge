@@ -1,4 +1,5 @@
 from __future__ import annotations
+# Letzte inhaltliche Änderung: 2026-04-18 14:27 MEZ — Insert-Fallback ohne target_key/session_type wenn Spalten fehlen
 
 import os
 import sqlite3
@@ -205,24 +206,44 @@ def sync_catalog_to_supabase(
             "error": f"Löschen in Supabase fehlgeschlagen ({delete_res.status_code}). Prüfe RLS.",
         }
 
+    def _rows_without_extended_cols(src: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        return [{k: v for k, v in r.items() if k not in ("target_key", "session_type")} for r in src]
+
+    def _attempt_insert(src: list[dict[str, Any]]) -> tuple[bool, int, str | None]:
+        n = 0
+        for chunk in _chunked(src, chunk_size):
+            ins = requests.post(
+                endpoint,
+                headers={
+                    **headers,
+                    "Content-Type": "application/json",
+                    "Prefer": "return=minimal",
+                },
+                json=chunk,
+                timeout=60,
+            )
+            if ins.status_code >= 300:
+                return False, n, ins.text[:400] if ins.text else ""
+            n += len(chunk)
+        return True, n, None
+
     inserted = 0
-    for chunk in _chunked(rows, chunk_size):
-        ins = requests.post(
-            endpoint,
-            headers={
-                **headers,
-                "Content-Type": "application/json",
-                "Prefer": "return=minimal",
-            },
-            json=chunk,
-            timeout=60,
+    used_extended = True
+    ok_ins, inserted, err_txt = _attempt_insert(rows)
+    if not ok_ins:
+        requests.delete(
+            f"{endpoint}?id=not.is.null",
+            headers={**delete_headers, "Prefer": "return=minimal"},
+            timeout=120,
         )
-        if ins.status_code >= 300:
-            return {
-                "ok": False,
-                "error": f"Insert fehlgeschlagen ({ins.status_code}). Prüfe Tabellenstruktur/RLS.",
-            }
-        inserted += len(chunk)
+        slim = _rows_without_extended_cols(rows)
+        ok_ins, inserted, err_txt = _attempt_insert(slim)
+        used_extended = False
+    if not ok_ins:
+        return {
+            "ok": False,
+            "error": f"Insert fehlgeschlagen. Zuletzt: {err_txt or 'ohne Text'} — prüfe Migration docs/supabase_migrations/ifl_device_catalog_target_key.sql und RLS.",
+        }
 
     verify = requests.get(
         f"{endpoint}?select=id",
@@ -247,6 +268,7 @@ def sync_catalog_to_supabase(
         "prepared_local_rows": len(rows),
         "inserted_rows": inserted,
         "supabase_rows": total_in_supabase,
+        "catalog_extended_cols": used_extended,
     }
 
 

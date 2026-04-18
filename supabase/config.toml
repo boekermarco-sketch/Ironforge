@@ -1,0 +1,3 @@
+# Minimal für Supabase CLI (npx supabase db query --linked …).
+# Vollständiges `supabase link` + Access Token siehe https://supabase.com/docs/guides/cli
+project_id = "dbamakgjtrgqplufwlca"
