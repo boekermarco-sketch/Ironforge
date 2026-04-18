@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Letzte inhaltliche Änderung: 2026-04-18 20:18 MEZ (Vorschau: ifl_device_catalog Snapshot + Hydration Übung.img) -->
+<!-- Letzte inhaltliche Änderung: 2026-04-18 20:45 MEZ (Öffentliche Supabase-Defaults für Katalog-Snapshot) -->
 <html lang="de" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -1798,7 +1798,7 @@ function togglePoolFavOnly(checked){
   localStorage.setItem('ifl_pool_fav_only', checked ? '1' : '0');
   renderMobilePoolSheet();
 }
-const BUILD_STAMP = '2026-04-18 20:18 MEZ';
+const BUILD_STAMP = '2026-04-18 20:45 MEZ';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -4162,8 +4162,21 @@ function handleBackupFile(event){
 }
 
 // ═══ SETUP / CLOUD SYNC (SUPABASE) ═══════════════════════════
+/** Öffentliches Iron-Forge-Projekt: Anon-Key ist für Client/API gedacht (Schutz via RLS). Eigene Werte in Sync-Setup überschreiben diese Defaults. */
+const IFL_PUBLIC_SUPABASE_URL = 'https://dbamakgjtrgqplufwlca.supabase.co';
+const IFL_PUBLIC_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRiYW1ha2dqdHJncXBsdWZ3bGNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwODY0MzMsImV4cCI6MjA5MTY2MjQzM30.nXRtfxvgqg0Ccgo2FRtFYGrBjx-voNfQOpDCAzK_EME';
+
 function getSyncConfig(){
-  return JSON.parse(localStorage.getItem('ifl_sync_config') || '{}');
+  const stored = JSON.parse(localStorage.getItem('ifl_sync_config') || '{}');
+  const url = (stored.supabaseUrl && String(stored.supabaseUrl).trim()) || IFL_PUBLIC_SUPABASE_URL;
+  const key = (stored.anonKey && String(stored.anonKey).trim()) || IFL_PUBLIC_SUPABASE_ANON_KEY;
+  return { ...stored, supabaseUrl: url, anonKey: key };
+}
+
+/** Nur wenn Sync-Setup gespeichert wurde (Profil + Pages-URL); Katalog-Snapshot läuft dagegen mit öffentlichen Defaults. */
+function canRunCloudSync(){
+  const raw = JSON.parse(localStorage.getItem('ifl_sync_config') || '{}');
+  return !!(String(raw.profile || '').trim() && String(raw.pagesUrl || '').trim());
 }
 
 function saveSyncConfig(cfg){
@@ -4177,8 +4190,12 @@ function updateSyncStatus(text){
   const el = document.getElementById('sync-status');
   if(!el) return;
   if(text){ el.textContent = text; return; }
+  const raw = JSON.parse(localStorage.getItem('ifl_sync_config') || '{}');
+  const hasSavedCreds = !!(raw.supabaseUrl && raw.anonKey);
   el.textContent = (cfg.supabaseUrl && cfg.anonKey)
-    ? `Sync aktiv · ${cfg.profile || 'Profil'} · ${cfg.supabaseUrl}`
+    ? (hasSavedCreds
+      ? `Sync aktiv · ${cfg.profile || 'Profil'} · ${cfg.supabaseUrl}`
+      : `Katalog online (öffentliche Defaults) · Sync-Setup für Profil/Cloud: optional · ${cfg.supabaseUrl}`)
     : 'Sync: noch nicht eingerichtet';
 }
 
@@ -4451,6 +4468,7 @@ function applyAppState(data){
 function scheduleAutoSync(){
   const cfg = getSyncConfig();
   if(!cfg.supabaseUrl || !cfg.anonKey) return;
+  if(!canRunCloudSync()) return;
   clearTimeout(autoSyncTimer);
   autoSyncTimer = setTimeout(()=>{ syncToCloud({ silent: true }); }, 1200);
 }
@@ -4459,6 +4477,10 @@ async function syncToCloud(options = {}){
   const silent = !!options.silent;
   const cfg = getSyncConfig();
   if(!cfg.supabaseUrl || !cfg.anonKey){ openSetupWizard(true); return; }
+  if(!canRunCloudSync()){
+    if(!silent) openSetupWizard(true);
+    return;
+  }
   updateSyncStatus(silent ? 'Sync: automatische Sicherung...' : 'Sync: lade in Cloud hoch...');
   try{
     if(cfg.syncMode === 'structured_v1') await syncToCloudStructured(cfg);
@@ -4543,6 +4565,7 @@ function base64ToBytes(base64){
 async function syncFromCloud(){
   const cfg = getSyncConfig();
   if(!cfg.supabaseUrl || !cfg.anonKey){ openSetupWizard(true); return; }
+  if(!canRunCloudSync()){ openSetupWizard(true); return; }
   updateSyncStatus('Sync: lade Cloud-Daten...');
   try{
     const payload = cfg.syncMode === 'structured_v1'
