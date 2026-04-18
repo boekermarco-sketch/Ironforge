@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Letzte inhaltliche Änderung: 2026-04-18 23:40 MEZ (Bild: immer Katalog-ifl_device_catalog wenn möglich) -->
+<!-- Letzte inhaltliche Änderung: 2026-04-19 12:05 MEZ (Katalogsuche: Relevanz, kein Ausblenden bei gleichem Namen im Pool) -->
 <html lang="de" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -1776,7 +1776,7 @@ function togglePoolFavOnly(checked){
   localStorage.setItem('ifl_pool_fav_only', checked ? '1' : '0');
   renderMobilePoolSheet();
 }
-const BUILD_STAMP = '2026-04-18 23:40 MEZ';
+const BUILD_STAMP = '2026-04-19 12:05 MEZ';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -2111,7 +2111,11 @@ const CATALOG_SEARCH_ALIASES = {
   trizeps: ['tricep', 'triceps', 'extension'],
   core: ['abd', 'abs', 'bauch', 'trunk', 'twist'],
   presse: ['press'],
-  zug: ['pull', 'row', 'lat']
+  zug: ['pull', 'row', 'lat'],
+  beinstrecker: ['leg extension', 'leg ext', 'quadrizeps'],
+  beinbeuger: ['leg curl', 'lying leg curl', 'hamstring'],
+  beinpresse: ['leg press'],
+  kniebeuge: ['hack squat', 'squat']
 };
 
 function catalogTokenMatchesNormalizedBlob(normBlob, token){
@@ -2128,20 +2132,32 @@ function deviceCatalogSearchBlobRaw(r){
     .join(' ');
 }
 
-/** Treffer im SQL-Katalog: normierte Tokens + einfache DE/EN-Aliases (wie Pool-Suche). */
+/** Treffer im SQL-Katalog: normierte Tokens + Aliases; Relevanz (Name zuerst), kein Abbruch nach „ersten 800“ in API-Reihenfolge. */
 function deviceCatalogMatchesQuery(qRaw, limit){
   const q = (qRaw || '').trim();
   if(!q || !deviceCatalogSnapRows.length) return [];
-  const tokens = normalizeSearchText(q).split(/\s+/).filter(Boolean);
+  let tokens = normalizeSearchText(q).split(/\s+/).filter(Boolean);
+  if(tokens.length > 1) tokens = tokens.filter(t => t.length >= 2);
+  else if(tokens.length === 1 && tokens[0].length < 2) return [];
   if(!tokens.length) return [];
   const lim = limit || 800;
-  const out = [];
+  const scored = [];
   for(const r of deviceCatalogSnapRows){
     const normBlob = normalizeSearchText(deviceCatalogSearchBlobRaw(r));
-    if(tokens.every(t => catalogTokenMatchesNormalizedBlob(normBlob, t))) out.push(r);
-    if(out.length >= lim) break;
+    if(!tokens.every(t => catalogTokenMatchesNormalizedBlob(normBlob, t))) continue;
+    const nameN = normalizeSearchText(String(r.name || ''));
+    let sc = 0;
+    for(const t of tokens){
+      if(nameN.includes(t)) sc += 80;
+      else if(normBlob.includes(t)) sc += 12;
+    }
+    scored.push({ r, sc });
   }
-  return out;
+  scored.sort((a, b)=>{
+    if(b.sc !== a.sc) return b.sc - a.sc;
+    return String(a.r.name || '').localeCompare(String(b.r.name || ''), 'de');
+  });
+  return scored.slice(0, lim).map(x => x.r);
 }
 
 /** Bild-URL aus geladenem Gerätekatalog (Supabase ifl_device_catalog), nicht aus Übung.img. */
@@ -5073,11 +5089,7 @@ function renderMobilePoolSheet(){
   let catalogPoolHtml = '';
   if(qPoolActive){
     const rawCat = deviceCatalogMatchesQuery(qPoolRaw, 800);
-    const usedNames = new Set(db.map(x => (x.name || '').toLowerCase().trim()).filter(Boolean));
-    const catHits = rawCat.filter(r => {
-      const nn = (r.name || '').toLowerCase().trim();
-      return nn && !usedNames.has(nn);
-    });
+    const catHits = rawCat.filter(r => String(r.name || '').trim());
     window.__iflCatHits = catHits;
     if(catHits.length){
       catalogPoolHtml = `<div class="m-tools-h" style="margin:14px 0 8px">Gerätekatalog (Supabase, noch nicht als Übung)</div>` +
