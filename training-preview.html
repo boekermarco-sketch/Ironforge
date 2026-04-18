@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Letzte inhaltliche Änderung: 2026-04-18 21:35 MEZ (Suche: Häufigkeit zuerst, dann Katalog) -->
+<!-- Letzte inhaltliche Änderung: 2026-04-18 22:55 MEZ (Pool+Katalog: volle Pagination, normierte Suche, eine Oberfläche) -->
 <html lang="de" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -711,19 +711,7 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
 .m-tools-fold > summary::-webkit-details-marker{display:none}
 .m-tools-fold[open] > summary{border-bottom:1px solid var(--line);color:var(--muted)}
 .m-tools-fold .m-tools-inset{padding:4px 8px 12px}
-#m-quick-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:88;backdrop-filter:blur(2px)}
-#m-quick-backdrop.open{display:block}
-#m-quick-sheet{position:fixed;left:0;right:0;bottom:0;z-index:90;background:var(--panel);border-radius:18px 18px 0 0;border-top:1px solid var(--line);padding:10px 14px 88px;transform:translateY(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);max-height:78dvh}
-#m-quick-sheet.open{transform:translateY(0)}
-#m-quick-input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.2);color:var(--text);font-size:15px;margin-bottom:10px}
-.m-quick-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 8px;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer}
-.m-quick-row:active{background:rgba(208,163,90,.06)}
-.m-quick-row-inner{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
-.m-quick-thumb{width:44px;height:44px;border-radius:10px;object-fit:cover;border:1px solid var(--line);flex-shrink:0;background:rgba(255,255,255,.04)}
-.m-quick-name{font-size:13px;font-weight:700}
-.m-quick-meta{font-size:10px;color:var(--soft)}
-.m-quick-badge{font-size:9px;font-weight:800;padding:2px 8px;border-radius:6px;background:rgba(255,255,255,.06);color:var(--muted)}
-.m-session-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px;flex-shrink:0}
+.m-session-actions{display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:6px;flex-shrink:0}
 
 /* ══ MOBILE FORTSCHRITT (Analyse-Tab) ═══════════════════════════ */
 #m-analyse-view{display:none;position:fixed;top:54px;left:0;right:0;bottom:68px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px 20px;flex-direction:column;gap:12px;background:var(--bg)}
@@ -1109,9 +1097,8 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
       <button class="pill" id="phase-check-btn" onclick="setMobilePhase('checkin')">Check-In</button>
     </div>
     <div id="phase-note" style="font-size:11px;color:var(--soft);margin-bottom:8px"></div>
-    <div id="m-web-pool-tools" class="m-web-pool-tools" aria-label="Pool und Schnellsuche (Mobile-Web)">
-      <button type="button" class="btn btn-secondary btn-sm" onclick="openMobileQuickSearch()">Schnellsuche</button>
-      <button type="button" class="btn btn-primary btn-sm" onclick="openMobilePool()">Pool · Suche</button>
+    <div id="m-web-pool-tools" class="m-web-pool-tools" aria-label="Pool und Gerätekatalog (Mobile-Web)">
+      <button type="button" class="btn btn-primary btn-sm" style="width:100%" onclick="openMobilePool()">Pool &amp; Katalog</button>
     </div>
     <div id="edit-mode-banner" class="edit-mode-banner">
       <div style="font-size:11px;color:var(--muted);font-weight:700">Sortiermodus aktiv (Long-Press)</div>
@@ -1504,8 +1491,7 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
     <button class="m-subtab"        id="mst-cardio" onclick="mChangeTab('cardio')">Cardio</button>
   </div>
   <div class="m-session-actions">
-    <button type="button" class="btn btn-primary btn-sm" style="padding:10px" onclick="openMobileQuickSearch()">Schnellsuche</button>
-    <button type="button" class="btn btn-secondary btn-sm" style="padding:10px" onclick="openMobilePool()">Pool</button>
+    <button type="button" class="btn btn-primary btn-sm" style="padding:10px" onclick="openMobilePool()">Pool &amp; Katalog</button>
   </div>
   <div class="m-tools-muted" style="text-align:center;margin:-2px 0 4px">Rand wischen: Training ↔ Rechner · Subtabs: Session-Typ</div>
 
@@ -1553,28 +1539,17 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
 </div>
 </div><!-- /ifl-shell-root -->
 
-<!-- Pool + Schnellsuche außerhalb der App-Shell → funktioniert auch im Mobile-Web (scrollbare Seite) -->
+<!-- Pool-Sheet außerhalb der App-Shell → funktioniert auch im Mobile-Web (scrollbare Seite) -->
 <div id="m-pool-backdrop" onclick="closeMobilePool()"></div>
 <div id="m-pool-sheet">
   <div class="m-sheet-handle"></div>
   <div class="sh" style="margin-bottom:10px">
-    <div class="sh-title">Pool · <span id="m-pool-sheet-tab"></span></div>
+    <div class="sh-title">Pool · <span id="m-pool-sheet-tab"></span><span id="m-pool-catalog-count" style="font-weight:600;color:var(--soft);font-size:11px"></span></div>
     <button onclick="closeMobilePool()" class="btn btn-secondary btn-sm" style="padding:3px 10px">✕</button>
   </div>
-  <input type="search" id="m-pool-search" class="m-pool-search" placeholder="Pool durchsuchen (Name, Gruppe, Kategorie)…" autocomplete="off" oninput="renderMobilePoolSheet()">
+  <input type="search" id="m-pool-search" class="m-pool-search" placeholder="Übungen &amp; Gerätekatalog (Name, Muskel, Hersteller)…" autocomplete="off" oninput="renderMobilePoolSheet()">
   <div class="cat-filters" id="m-pool-cat-filters"></div>
   <div id="m-pool-sheet-list" style="overflow-y:auto;max-height:55dvh;padding-bottom:8px"></div>
-</div>
-
-<div id="m-quick-backdrop" onclick="closeMobileQuickSearch()"></div>
-<div id="m-quick-sheet">
-  <div class="m-sheet-handle"></div>
-  <div class="sh" style="margin-bottom:8px">
-    <div class="sh-title">Übung suchen</div>
-    <button type="button" class="btn btn-secondary btn-sm" onclick="closeMobileQuickSearch()">✕</button>
-  </div>
-  <input type="search" id="m-quick-input" placeholder="Name tippen…" autocomplete="off" oninput="renderMobileQuickSearchResults()">
-  <div id="m-quick-list" style="max-height:52dvh;overflow-y:auto;-webkit-overflow-scrolling:touch"></div>
 </div>
 
 <button id="edit-done-fab" class="edit-done-fab" onclick="exitEditMode()">Fertig</button>
@@ -1801,7 +1776,7 @@ function togglePoolFavOnly(checked){
   localStorage.setItem('ifl_pool_fav_only', checked ? '1' : '0');
   renderMobilePoolSheet();
 }
-const BUILD_STAMP = '2026-04-18 21:35 MEZ';
+const BUILD_STAMP = '2026-04-18 22:55 MEZ';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -2099,7 +2074,9 @@ function catalogSnapFromApi(r){
     sType: r.s_type || r.sType || null,
     group: r.movement_group || r.group || null,
     type: r.type || null,
-    target: r.target || null
+    target: r.target || null,
+    targetKey: r.target_key || r.targetKey || null,
+    sessionType: r.session_type || r.sessionType || null
   };
 }
 
@@ -2118,21 +2095,53 @@ function mergeDeviceCatalogSnapshotRows(rows){
   deviceCatalogSnapRows = [...map.values()];
 }
 
-function deviceCatalogSearchBlob(r){
-  return [r.name, r.brand, r.cat, r.target, r.group, r.type, r.art].map(x => String(x || '').toLowerCase()).join(' ');
+/** DE/EN Kurz-Synonyme: Katalog oft englisch, Suche deutsch (und umgekehrt). */
+const CATALOG_SEARCH_ALIASES = {
+  brust: ['chest', 'pectoral', 'pectoralis', 'fly', 'press'],
+  chest: ['brust', 'pectoral'],
+  ruecken: ['rucken', 'back', 'lat', 'latissimus', 'pull', 'row'],
+  rucken: ['ruecken', 'back', 'lat'],
+  back: ['lat', 'ruecken', 'rucken', 'pull'],
+  bein: ['leg', 'quad', 'quadriceps', 'ham', 'hamstring', 'calf'],
+  beine: ['leg', 'quad'],
+  leg: ['bein', 'quad', 'ham'],
+  schulter: ['shoulder', 'delt', 'ohp'],
+  shoulder: ['schulter', 'delt'],
+  bizeps: ['bicep', 'biceps', 'curl'],
+  trizeps: ['tricep', 'triceps', 'extension'],
+  core: ['abd', 'abs', 'bauch', 'trunk', 'twist'],
+  presse: ['press'],
+  zug: ['pull', 'row', 'lat']
+};
+
+function catalogTokenMatchesNormalizedBlob(normBlob, token){
+  if(!token) return true;
+  if(normBlob.includes(token)) return true;
+  const alts = CATALOG_SEARCH_ALIASES[token];
+  if(alts) return alts.some(a => normBlob.includes(a));
+  return false;
 }
 
-/** Treffer im SQL-Katalog (gleiche Token-Logik wie Pool-Suche auf Übungen). */
+function deviceCatalogSearchBlobRaw(r){
+  return [r.name, r.brand, r.cat, r.target, r.targetKey, r.group, r.type, r.art, r.sType, r.sessionType]
+    .map(x => String(x || ''))
+    .join(' ');
+}
+
+/** Treffer im SQL-Katalog: normierte Tokens + einfache DE/EN-Aliases (wie Pool-Suche). */
 function deviceCatalogMatchesQuery(qRaw, limit){
-  const q = (qRaw || '').trim().toLowerCase();
+  const q = (qRaw || '').trim();
   if(!q || !deviceCatalogSnapRows.length) return [];
-  const tokens = q.split(/\s+/).filter(Boolean);
-  const out = deviceCatalogSnapRows.filter(r => {
-    const blob = deviceCatalogSearchBlob(r);
-    return tokens.every(t => blob.includes(t));
-  });
-  const lim = limit || 200;
-  return out.length > lim ? out.slice(0, lim) : out;
+  const tokens = normalizeSearchText(q).split(/\s+/).filter(Boolean);
+  if(!tokens.length) return [];
+  const lim = limit || 800;
+  const out = [];
+  for(const r of deviceCatalogSnapRows){
+    const normBlob = normalizeSearchText(deviceCatalogSearchBlobRaw(r));
+    if(tokens.every(t => catalogTokenMatchesNormalizedBlob(normBlob, t))) out.push(r);
+    if(out.length >= lim) break;
+  }
+  return out;
 }
 
 /** Bild-URL aus geladenem Gerätekatalog (Supabase ifl_device_catalog), nicht aus Übung.img. */
@@ -2192,16 +2201,40 @@ async function refreshDeviceCatalogImageCache(){
   if(!cfg.supabaseUrl || !cfg.anonKey) return;
   if(deviceCatalogImageLoading) return;
   deviceCatalogImageLoading = true;
+  const page = 1000;
+  const selectVariants = [
+    'brand,name,art,img,cat,s_type,movement_group,type,target,target_key,session_type',
+    'brand,name,art,img,cat,s_type,movement_group,type,target'
+  ];
+  const collected = [];
   try{
-    const sel = 'brand,name,art,img,cat,s_type,movement_group,type,target';
-    const res = await fetch(`${cfg.supabaseUrl}/rest/v1/ifl_device_catalog?select=${sel}&order=name.asc&limit=5000`, {
-      headers: { apikey: cfg.anonKey, Authorization: `Bearer ${cfg.anonKey}` }
+    outer: for(let selIdx = 0; selIdx < selectVariants.length; selIdx++){
+      const sel = selectVariants[selIdx];
+      collected.length = 0;
+      for(let offset = 0; offset < 200000; offset += page){
+        const u = `${cfg.supabaseUrl}/rest/v1/ifl_device_catalog?select=${encodeURIComponent(sel)}&order=name.asc&limit=${page}&offset=${offset}`;
+        const res = await fetch(u, {
+          headers: { apikey: cfg.anonKey, Authorization: `Bearer ${cfg.anonKey}` }
+        });
+        if(!res.ok){
+          if(offset === 0 && selIdx + 1 < selectVariants.length) continue outer;
+          break outer;
+        }
+        const rows = await res.json();
+        if(!Array.isArray(rows) || !rows.length) break outer;
+        for(const raw of rows){
+          const row = catalogSnapFromApi(raw);
+          if(row) collected.push(row);
+        }
+        if(rows.length < page) break outer;
+      }
+    }
+    const map = new Map();
+    collected.forEach(r=>{
+      if(!r || !r.name) return;
+      map.set(`${normImgKey(r.brand || '')}|${normImgKey(r.name || '')}|${String(r.art || '')}`, r);
     });
-    if(!res.ok) return;
-    const rows = await res.json();
-    deviceCatalogSnapRows = (Array.isArray(rows) ? rows : [])
-      .map(catalogSnapFromApi)
-      .filter(Boolean);
+    deviceCatalogSnapRows = [...map.values()];
     hydrateLocalDbImagesFromDeviceCatalog();
   }catch(_e){}
   finally{
@@ -2527,7 +2560,7 @@ function addToCurrentSession(id){
     const items = getMobileSessionItems();
     const ix = items.findIndex(x => x.id === id);
     if(ix >= 0) mobileExIdx = ix;
-    closeMobileQuickSearch();
+    closeMobilePool();
     renderMobileSession();
     showToast(`${ex.name} — bereits in Session`, 'warn');
     return;
@@ -2541,7 +2574,7 @@ function addToCurrentSession(id){
   ex.order = maxOrder + 1;
   bumpFrequentExercise(ex);
   saveDB();
-  closeMobileQuickSearch();
+  closeMobilePool();
   render();
   showToast(`✓ ${ex.name} → Session`, 'ok');
 }
@@ -3868,25 +3901,19 @@ function addCatalogExerciseFromDeviceRow(row, target){
   saveDB();
   render();
   if(document.getElementById('m-pool-sheet')?.classList.contains('open')) renderMobilePoolSheet();
-  if(document.getElementById('m-quick-sheet')?.classList.contains('open')) renderMobileQuickSearchResults();
 }
 
 function mAddPoolCatalogIdx(i){
-  const row = (window.__iflPoolCatHits || [])[i];
+  const row = (window.__iflCatHits || [])[i];
   if(row) addCatalogExerciseFromDeviceRow(row, 'global');
 }
 
 function mAddSessionCatalogIdx(i){
-  const row = (window.__iflQuickCatHits || [])[i];
+  const row = (window.__iflCatHits || [])[i];
   if(!row) return;
   addCatalogExerciseFromDeviceRow(row, true);
-  closeMobileQuickSearch();
+  closeMobilePool();
   renderMobileSession();
-}
-
-function mAddPoolCatalogFromQuickIdx(i){
-  const row = (window.__iflQuickCatHits || [])[i];
-  if(row) addCatalogExerciseFromDeviceRow(row, 'global');
 }
 
 function resetDB(){
@@ -4776,8 +4803,8 @@ function renderMobileSession(){
       <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:30px 0">
         <div style="font-size:36px">💪</div>
         <div style="font-size:14px;color:var(--muted);font-weight:700;text-align:center">Keine Übungen in dieser Session</div>
-        <div style="font-size:12px;color:var(--soft);text-align:center">Schnellsuche oder Pool nutzen.</div>
-        <button type="button" onclick="openMobileQuickSearch()" class="btn btn-primary btn-sm" style="margin-top:6px">Schnellsuche</button>
+        <div style="font-size:12px;color:var(--soft);text-align:center">Pool &amp; Katalog öffnen und Übungen hinzufügen.</div>
+        <button type="button" onclick="openMobilePool()" class="btn btn-primary btn-sm" style="margin-top:6px">Pool &amp; Katalog</button>
       </div>`;
     document.getElementById('m-log-btn').style.opacity = '.3';
     document.getElementById('m-log-btn').disabled = true;
@@ -4888,6 +4915,9 @@ function openMobilePool(){
   if(tabLabel) tabLabel.textContent = (currentTab||'Push').toUpperCase();
   renderMobilePoolCatFilters();
   renderMobilePoolSheet();
+  if(!deviceCatalogSnapRows.length){
+    refreshDeviceCatalogImageCache().then(()=>{ renderMobilePoolSheet(); }).catch(()=>{});
+  }
   const inp = document.getElementById('m-pool-search');
   if(inp) setTimeout(()=>{ try{ inp.focus(); inp.select(); }catch(_){} }, 140);
 }
@@ -4910,16 +4940,16 @@ function mFilterPoolCat(cat){
   renderMobilePoolSheet();
 }
 
-function mPoolSearchBlob(ex){
-  return [ex.name, ex.group, ex.cat, ex.art, ex.brand].map(x => String(x || '').toLowerCase()).join(' ');
+function mPoolSearchBlobRaw(ex){
+  return [ex.name, ex.group, ex.cat, ex.art, ex.brand, ex.target, ex.type].map(x => String(x || '')).join(' ');
 }
-/** Mehrere Wörter im Suchfeld: alle müssen irgendwo im Treffer vorkommen (Leerzeichen-getrennt). */
+/** Mehrere Wörter: alle Tokens müssen passen (normiert + einfache DE/EN wie Katalog). */
 function mPoolMatchesSearch(ex, qRaw){
-  const q = (qRaw || '').trim().toLowerCase();
+  const q = (qRaw || '').trim();
   if(!q) return true;
-  const blob = mPoolSearchBlob(ex);
-  const tokens = q.split(/\s+/).filter(Boolean);
-  return tokens.every(t => blob.includes(t));
+  const normBlob = normalizeSearchText(mPoolSearchBlobRaw(ex));
+  const tokens = normalizeSearchText(q).split(/\s+/).filter(Boolean);
+  return tokens.every(t => catalogTokenMatchesNormalizedBlob(normBlob, t));
 }
 
 function buildPoolFreqOrderMap(){
@@ -4951,16 +4981,21 @@ function mPoolThumbHTML(ex){
 function renderMobilePoolSheet(){
   const list = document.getElementById('m-pool-sheet-list');
   if(!list) return;
+  const cc = document.getElementById('m-pool-catalog-count');
+  if(cc){
+    const n = deviceCatalogSnapRows.length;
+    cc.textContent = n ? ` · ${n} Katalog` : (deviceCatalogImageLoading ? ' · Katalog …' : '');
+  }
   const studioLines = getStudioEquipmentList(currentStudio);
   const studioOnly = localStorage.getItem('ifl_pool_studio_only') === '1';
   const favOnly = localStorage.getItem('ifl_pool_fav_only') === '1';
   const favSet = loadPoolFavoriteSet();
   const qPoolRaw = (document.getElementById('m-pool-search')?.value || '').trim();
-  const qPool = qPoolRaw.toLowerCase();
+  const qPoolActive = qPoolRaw.length > 0;
   /* Mit Suchtext: ganzen Pool durchsuchen (Kategorie-Pille sonst zu restriktiv, z. B. nur wenige „Brust“-Pool-Einträge). */
   let items = db
     .filter(x=>x.status==='pool')
-    .filter(x=> qPool ? true : (mobilePoolCat==='Alle' || x.cat===mobilePoolCat))
+    .filter(x=> qPoolActive ? true : (mobilePoolCat==='Alle' || x.cat===mobilePoolCat))
     .filter(x=>poolMode==='global' ? (x.poolScope||'global')==='global' : (x.poolScope||'global')==='studio' && x.gym===currentStudio)
     .sort((a,b)=>a.order-b.order);
   if(studioOnly && studioLines.length){
@@ -4969,16 +5004,16 @@ function renderMobilePoolSheet(){
   if(favOnly){
     items = items.filter(ex => favSet.has(String(ex.id)));
   }
-  if(qPool){
-    items = items.filter(ex => mPoolMatchesSearch(ex, qPool));
+  if(qPoolActive){
+    items = items.filter(ex => mPoolMatchesSearch(ex, qPoolRaw));
   }
 
   const freqOrderMap = buildPoolFreqOrderMap();
-  if(qPool && items.length){
+  if(qPoolActive && items.length){
     items = sortPoolItemsByFrequencyThenOrder(items, freqOrderMap);
   }
 
-  const searchHint = (qPool && mobilePoolCat !== 'Alle')
+  const searchHint = (qPoolActive && mobilePoolCat !== 'Alle')
     ? `<div class="m-tools-muted" style="font-size:10px;width:100%;margin:0 0 8px;line-height:1.35">Suche aktiv: <strong>alle Kategorien</strong> im Pool (Pille „${mEsc(mobilePoolCat)}“ greift nur ohne Suchtext).</div>`
     : '';
 
@@ -4996,7 +5031,7 @@ function renderMobilePoolSheet(){
   const idInList = new Set(items.map(x => x.id));
   const freqRows = [];
   const freqIds = new Set();
-  if(!qPool) for(const rec of getFrequentExerciseRecords(16)){
+  if(!qPoolActive) for(const rec of getFrequentExerciseRecords(16)){
     const ex = db.find(x => x.id === rec.id);
     if(!ex || ex.status !== 'pool' || !idInList.has(ex.id)) continue;
     freqIds.add(ex.id);
@@ -5021,16 +5056,16 @@ function renderMobilePoolSheet(){
   const rest = items.filter(ex => !freqIds.has(ex.id));
 
   let catalogPoolHtml = '';
-  if(qPool){
-    const rawCat = deviceCatalogMatchesQuery(qPoolRaw, 250);
+  if(qPoolActive){
+    const rawCat = deviceCatalogMatchesQuery(qPoolRaw, 800);
     const usedNames = new Set(db.map(x => (x.name || '').toLowerCase().trim()).filter(Boolean));
     const catHits = rawCat.filter(r => {
       const nn = (r.name || '').toLowerCase().trim();
       return nn && !usedNames.has(nn);
     });
-    window.__iflPoolCatHits = catHits;
+    window.__iflCatHits = catHits;
     if(catHits.length){
-      catalogPoolHtml = `<div class="m-tools-h" style="margin:14px 0 8px">Danach: Gerätekatalog (Supabase, noch nicht als Übung)</div>` +
+      catalogPoolHtml = `<div class="m-tools-h" style="margin:14px 0 8px">Gerätekatalog (Supabase, noch nicht als Übung)</div>` +
         catHits.map((row, i)=>{
           const meta = [row.brand, row.cat, row.group].filter(Boolean).join(' · ') || '–';
           const ph = { name: row.name, brand: row.brand, art: row.art, img: row.img, cat: row.cat || 'Brust' };
@@ -5040,7 +5075,10 @@ function renderMobilePoolSheet(){
               <div class="m-pool-item-name">${mEsc(row.name)}</div>
               <div class="m-pool-item-meta">${mEsc(meta)}</div>
             </div>
-            <button type="button" class="m-pool-add-btn" onclick="mAddPoolCatalogIdx(${i})">+ Pool</button>
+            <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;align-items:stretch">
+              <button type="button" class="btn btn-teal btn-sm" style="padding:6px 8px;font-size:10px;white-space:nowrap" onclick="mAddSessionCatalogIdx(${i})">Session</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="padding:6px 8px;font-size:10px;white-space:nowrap" onclick="mAddPoolCatalogIdx(${i})">+ Pool</button>
+            </div>
           </div>`;
         }).join('');
     } else if(!deviceCatalogSnapRows.length){
@@ -5054,7 +5092,7 @@ function renderMobilePoolSheet(){
         const rm   = maxRM(hist);
         const lastSet = hist.length ? `${hist[hist.length-1].w}×${hist[hist.length-1].r}` : '–';
         const star = isPoolFavorite(ex.id) ? '★' : '☆';
-        const oftPill = (qPool && freqOrderMap.has(ex.id))
+        const oftPill = (qPoolActive && freqOrderMap.has(ex.id))
           ? ' <span class="pill pill-gold" style="font-size:8px;padding:1px 6px">oft</span>'
           : '';
         return `<div class="m-pool-item">
@@ -5067,10 +5105,10 @@ function renderMobilePoolSheet(){
           <button class="m-pool-add-btn" onclick="mAddToSession(${ex.id})">+ Session</button>
         </div>`;
       }).join('')
-    : (qPool ? '' : '<div style="padding:20px;text-align:center;color:var(--soft);font-size:13px">Kein Pool für diesen Tab</div>');
+    : (qPoolActive ? '' : '<div style="padding:20px;text-align:center;color:var(--soft);font-size:13px">Kein Pool für diesen Tab</div>');
 
   list.innerHTML = searchHint + toolbar + freqBlock + localBlock + catalogPoolHtml +
-    (!items.length && !catalogPoolHtml && qPool
+    (!items.length && !catalogPoolHtml && qPoolActive
       ? '<div style="padding:16px;text-align:center;color:var(--soft);font-size:13px">Keine lokalen Pool-Treffer</div>'
       : '');
 }
@@ -5149,7 +5187,6 @@ function cleanupMobileApp(){
   document.getElementById('m-session-overlay')?.classList.remove('active');
   document.getElementById('m-studio-overlay')?.classList.remove('active');
   closeMobilePool();
-  closeMobileQuickSearch();
   syncMobileRestTimer();
 }
 
@@ -5433,142 +5470,6 @@ function mEditStat(type){
   localStorage.setItem(key, v);
   if(type === 'kfa' && !localStorage.getItem('ifl_kfa_start')) localStorage.setItem('ifl_kfa_start', v);
   if(isMobile() && document.body.classList.contains('ifl-mobile-app') && mobileView === 'tools') renderMobileTools();
-}
-
-function openMobileQuickSearch(){
-  const b = document.getElementById('m-quick-backdrop');
-  const s = document.getElementById('m-quick-sheet');
-  const inp = document.getElementById('m-quick-input');
-  if(b) b.classList.add('open');
-  if(s) s.classList.add('open');
-  if(inp){ inp.value = ''; renderMobileQuickSearchResults(); setTimeout(()=>inp.focus(), 120); }
-}
-
-function closeMobileQuickSearch(){
-  document.getElementById('m-quick-backdrop')?.classList.remove('open');
-  document.getElementById('m-quick-sheet')?.classList.remove('open');
-}
-
-function _mQuickRowHtml(ex, hotIdSet, freqOrderMap){
-  const inSess = ex.status === 'active' && ex.sType === currentTab;
-  const badge = inSess ? 'In Session' : 'Pool';
-  const meta = [ex.cat, ex.group].filter(Boolean).join(' · ') || '–';
-  const oft = (hotIdSet && hotIdSet.has(ex.id)) || (freqOrderMap && freqOrderMap.has(ex.id))
-    ? '<span class="pill pill-gold" style="font-size:7px;padding:1px 5px;margin-left:4px">oft</span>'
-    : '';
-  const qs = resolveExerciseImageUrl(ex);
-  const qf = exerciseImagePlaceholderUrl(ex);
-  return `<div class="m-quick-row" onclick="mQuickPick(${ex.id})">
-    <div class="m-quick-row-inner">
-      <img class="m-quick-thumb" src="${attrUrl(qs)}" alt="" loading="lazy" onerror="this.onerror=null;this.src='${attrUrl(qf)}'">
-      <div><div class="m-quick-name">${mEsc(ex.name)}${oft}</div><div class="m-quick-meta">${mEsc(meta)}</div></div>
-    </div>
-    <span class="m-quick-badge">${badge}</span>
-  </div>`;
-}
-
-function renderMobileQuickSearchResults(){
-  const list = document.getElementById('m-quick-list');
-  const inp = document.getElementById('m-quick-input');
-  if(!list || !inp) return;
-  const q = (inp.value || '').toLowerCase().trim();
-  const poolOrActive = ex => ex.status === 'pool' || (ex.status === 'active' && ex.sType === currentTab);
-
-  let scored;
-  if(!q){
-    const seen = new Set();
-    const head = [];
-    for(const rec of getFrequentExerciseRecords(18)){
-      const ex = db.find(x => x.id === rec.id);
-      if(!ex || !poolOrActive(ex)) continue;
-      seen.add(ex.id);
-      head.push({ ex, score: 50 + (rec.n || 0) });
-    }
-    const tail = db
-      .filter(ex => poolOrActive(ex) && !seen.has(ex.id))
-      .map(ex => ({ ex, score: 1 }));
-    scored = [...head, ...tail]
-      .sort((a, b) => b.score - a.score || a.ex.name.localeCompare(b.ex.name))
-      .slice(0, 40);
-  } else {
-    scored = db
-      .filter(poolOrActive)
-      .map(ex => {
-        const n = (ex.name || '').toLowerCase();
-        const g = (ex.group || '').toLowerCase();
-        const c = (ex.cat || '').toLowerCase();
-        const br = (ex.brand || '').toLowerCase();
-        const ar = String(ex.art || '').toLowerCase();
-        let score = 0;
-        if(n.includes(q)) score = 10 + (n.startsWith(q) ? 4 : 0);
-        else if(br.includes(q) || ar.includes(q)) score = 5;
-        else if(g.includes(q) || c.includes(q)) score = 3;
-        return { ex, score };
-      })
-      .filter(x => x.score > 0);
-    const fmap = buildPoolFreqOrderMap();
-    scored.sort((a, b)=>{
-      const fa = fmap.has(a.ex.id) ? fmap.get(a.ex.id) : 999;
-      const fb = fmap.has(b.ex.id) ? fmap.get(b.ex.id) : 999;
-      if(fa !== fb) return fa - fb;
-      return b.score - a.score || a.ex.name.localeCompare(b.ex.name);
-    });
-    scored = scored.slice(0, 40);
-  }
-
-  const freqOrderMapQuick = buildPoolFreqOrderMap();
-  const hotIdSet = new Set(
-    getFrequentExerciseRecords(20)
-      .filter(r => (r.n || 0) >= 3)
-      .map(r => r.id)
-  );
-  let catHtml = '';
-  if(q){
-    const rawCat = deviceCatalogMatchesQuery(inp.value, 200);
-    const used = new Set(db.map(x => (x.name || '').toLowerCase().trim()).filter(Boolean));
-    const catHits = rawCat.filter(r => !used.has((r.name || '').toLowerCase().trim()));
-    window.__iflQuickCatHits = catHits;
-    if(catHits.length){
-      catHtml = `<div class="m-tools-h" style="margin:10px 0 6px;padding-top:10px;border-top:1px solid var(--line)">Danach: Gerätekatalog (Supabase)</div>` +
-        catHits.slice(0, 80).map((row, i)=>{
-          const meta = [row.brand, row.cat, row.group].filter(Boolean).join(' · ') || '–';
-          const ph = { name: row.name, brand: row.brand, art: row.art, img: row.img, cat: row.cat || 'Brust' };
-          const qs = resolveExerciseImageUrl(ph);
-          const qf = exerciseImagePlaceholderUrl(ph);
-          return `<div class="m-quick-row" style="border-left:3px solid rgba(208,163,90,.5)">
-            <div class="m-quick-row-inner" style="flex:1;min-width:0">
-              <img class="m-quick-thumb" src="${attrUrl(qs)}" alt="" loading="lazy" onerror="this.onerror=null;this.src='${attrUrl(qf)}'">
-              <div style="min-width:0"><div class="m-quick-name">${mEsc(row.name)}</div><div class="m-quick-meta">${mEsc(meta)}</div></div>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
-              <button type="button" class="btn btn-teal btn-sm" style="padding:5px 8px;font-size:9px" onclick="event.stopPropagation();mAddSessionCatalogIdx(${i})">Session</button>
-              <button type="button" class="btn btn-secondary btn-sm" style="padding:5px 8px;font-size:9px" onclick="event.stopPropagation();mAddPoolCatalogFromQuickIdx(${i})">Pool</button>
-            </div>
-          </div>`;
-        }).join('');
-    } else if(!deviceCatalogSnapRows.length){
-      catHtml = `<div class="m-tools-muted" style="padding:12px 0 0;border-top:1px solid var(--line)">Gerätekatalog noch nicht geladen (Seite kurz offen lassen).</div>`;
-    }
-  }
-  const top = scored.length ? scored.map(({ ex }) => _mQuickRowHtml(ex, hotIdSet, freqOrderMapQuick)).join('') : '';
-  list.innerHTML = (top || catHtml)
-    ? top + catHtml
-    : `<div class="m-tools-muted" style="padding:16px;text-align:center">Keine Treffer</div>`;
-}
-
-function mQuickPick(id){
-  const ex = db.find(x => x.id === id);
-  if(!ex) return;
-  if(ex.status === 'active' && ex.sType === currentTab){
-    const items = getMobileSessionItems();
-    const ix = items.findIndex(x => x.id === id);
-    if(ix >= 0) mobileExIdx = ix;
-    closeMobileQuickSearch();
-    renderMobileSession();
-    showToast(ex.name + ' — in Session', 'ok');
-    return;
-  }
-  addToCurrentSession(id);
 }
 
 function togglePoolStudioOnly(checked){
