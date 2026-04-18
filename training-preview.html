@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Letzte inhaltliche Änderung: 2026-04-18 14:27 MEZ (Mobile-Layout Fix + BUILD_STAMP) -->
+<!-- Letzte inhaltliche Änderung: 2026-04-18 17:12 MEZ (Mobile: App-Shell Standard + Web-Umschalter in Rechner) -->
 <html lang="de" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -379,7 +379,7 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
 [data-theme="light"] .mobile-main-tab{background:rgba(0,0,0,.04)}
 [data-theme="light"] .mobile-train-tab{background:rgba(0,0,0,.03)}
 @media(max-width:640px){
-  /* Web-Standard: volle Seite scrollen. App-Chrome nur mit body.ifl-mobile-app (localStorage ifl_app_shell=1). */
+  /* Standard: kompakte App-Chrome (body.ifl-mobile-app). Klassische Sidebar-Seite nur bei localStorage ifl_app_shell=0. */
   .ifl-shell-root{display:none;}
   body.ifl-mobile-app .ifl-shell-root{display:contents;}
 
@@ -1024,7 +1024,7 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
     <a href="#" class="nav-btn">Import</a>
   </nav>
   <button id="theme-btn" class="nav-btn" onclick="toggleTheme()" style="color:var(--soft);border-color:var(--line)"></button>
-  <button type="button" id="app-shell-btn" class="nav-btn" onclick="toggleMobileAppShellPref()" style="color:var(--soft);border-color:var(--line)" title="Kompakte Vollbild-Ansicht (Training/Rechner) für schmale Screens">App-Ansicht</button>
+  <button type="button" id="app-shell-btn" class="nav-btn" onclick="toggleMobileAppShellPref()" style="color:var(--soft);border-color:var(--line)" title="Auf dem Handy: Standard ist die kompakte App. Hier zur klassischen scrollbaren Seitenansicht wechseln (oder zurück).">App-Ansicht</button>
   <div class="blast-widget">
     <div class="blast-label">Aktuelle Phase</div>
     <div class="blast-num">W7<span> / 16</span></div>
@@ -1448,7 +1448,7 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
 
 </main>
 </div>
-<!-- Optionale Mobile-App-Shell (nur ≤640px + localStorage ifl_app_shell=1) -->
+<!-- Mobile-App-Shell (≤640px): Standard an; Aus mit localStorage ifl_app_shell=0 -->
 <div id="ifl-shell-root" class="ifl-shell-root" aria-hidden="true">
 <!-- MOBILE BOTTOM NAV: Training + kompakte Tools (Rest = Desktop) -->
 <nav class="mobile-bottom-nav" id="mobile-bottom-nav">
@@ -1677,19 +1677,20 @@ function syncThemeBtn(){
 }
 
 const IFL_APP_SHELL_KEY = 'ifl_app_shell';
+/** Auf schmalen Screens: App-Chrome (Header, Training/Rechner) ist Standard. Nur explizites '0' = klassische Sidebar-Scroll-Ansicht. */
 function wantsMobileAppShell(){
-  try{ return localStorage.getItem(IFL_APP_SHELL_KEY) === '1'; }
-  catch{ return false; }
+  try{ return localStorage.getItem(IFL_APP_SHELL_KEY) !== '0'; }
+  catch{ return true; }
 }
 function syncAppShellBtn(){
   const b = document.getElementById('app-shell-btn');
   if(!b) return;
-  b.textContent = wantsMobileAppShell() ? '↩ Web-Ansicht' : 'App-Ansicht (Vollbild)';
+  b.textContent = wantsMobileAppShell() ? '↩ Klassische Web-Ansicht' : '↩ App-Ansicht (kompakt)';
 }
 function toggleMobileAppShellPref(){
   try{
-    if(wantsMobileAppShell()) localStorage.removeItem(IFL_APP_SHELL_KEY);
-    else localStorage.setItem(IFL_APP_SHELL_KEY, '1');
+    if(wantsMobileAppShell()) localStorage.setItem(IFL_APP_SHELL_KEY, '0');
+    else localStorage.removeItem(IFL_APP_SHELL_KEY);
   }catch{}
   syncMobileLayout();
   render();
@@ -1785,7 +1786,7 @@ function togglePoolFavOnly(checked){
   localStorage.setItem('ifl_pool_fav_only', checked ? '1' : '0');
   renderMobilePoolSheet();
 }
-const BUILD_STAMP = '2026-04-18 14:27 MEZ';
+const BUILD_STAMP = '2026-04-18 17:12 MEZ';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -4683,7 +4684,7 @@ function _updateMobileHeader(){
   if(chip) chip.textContent = currentStudio || '';
 }
 
-// ── Init mobile state (Web-Standard; App-Shell nur bei localStorage ifl_app_shell=1) ──
+// ── Init mobile state: App-Shell Standard; localStorage ifl_app_shell=0 = klassische Seite ──
 
 function cleanupMobileApp(){
   document.body.classList.remove('ifl-mobile-app');
@@ -4867,6 +4868,8 @@ function renderMobileTools(){
 
   el.innerHTML = `
     <div class="m-tools-muted" style="margin-bottom:4px">${new Date().toLocaleDateString('de-DE', {weekday:'short', day:'2-digit', month:'2-digit'})} · Session-Editor &amp; Charts: <strong>Desktop</strong></div>
+
+    <button type="button" class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:10px" onclick="toggleMobileAppShellPref()" title="Lange scrollbare Seite mit Sidebar statt kompakter App">Klassische Web-Ansicht (Sidebar, volle Seite)</button>
 
     <div class="m-tools-panel">
       <div class="m-tools-h">Aktuelles Studio</div>
