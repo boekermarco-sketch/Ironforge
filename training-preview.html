@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Letzte inhaltliche Änderung: 2026-04-18 17:12 MEZ (Mobile: App-Shell Standard + Web-Umschalter in Rechner) -->
+<!-- Letzte inhaltliche Änderung: 2026-04-18 18:22 MEZ (Pool-Sheet: Thumbnails + Suche über alle Kategorien) -->
 <html lang="de" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -561,7 +561,11 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
   }
   #m-pool-sheet.open{transform:translateY(0)}
   .m-sheet-handle{width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,.12);margin:0 auto 12px}
-  .m-pool-item{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:6px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);margin-bottom:6px}
+  .m-pool-item{display:grid;grid-template-columns:44px 1fr auto auto;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);margin-bottom:6px}
+  .m-pool-item-text{min-width:0}
+  .m-pool-thumb-cell{display:flex;align-items:center;justify-content:center;width:44px;height:44px;flex-shrink:0}
+  .m-pool-thumb{width:44px;height:44px;border-radius:10px;object-fit:cover;border:1px solid var(--line);background:rgba(255,255,255,.04)}
+  .m-pool-thumb-empty{width:44px;height:44px;border-radius:10px;border:1px dashed var(--line);background:rgba(255,255,255,.03)}
   .m-pool-star{background:transparent;border:none;color:var(--gold);font-size:17px;line-height:1;cursor:pointer;padding:4px 6px;flex-shrink:0;opacity:.85}
   .m-pool-star:active{opacity:1;transform:scale(0.92)}
   .m-pool-search{width:100%;box-sizing:border-box;margin:0 0 10px;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.22);color:var(--text);font-size:15px;font-family:'Manrope',sans-serif}
@@ -894,7 +898,7 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
 
   /* Pool list items */
   .m-pool-item{
-    grid-template-columns:1fr auto auto !important;
+    grid-template-columns:48px 1fr auto auto !important;
     border-radius:16px !important;
     background:rgba(255,255,255,.04) !important;
     border:1px solid rgba(255,255,255,.09) !important;
@@ -1786,7 +1790,7 @@ function togglePoolFavOnly(checked){
   localStorage.setItem('ifl_pool_fav_only', checked ? '1' : '0');
   renderMobilePoolSheet();
 }
-const BUILD_STAMP = '2026-04-18 17:12 MEZ';
+const BUILD_STAMP = '2026-04-18 18:22 MEZ';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -4546,6 +4550,29 @@ function mFilterPoolCat(cat){
   renderMobilePoolSheet();
 }
 
+function mPoolSearchBlob(ex){
+  return [ex.name, ex.group, ex.cat, ex.art, ex.brand].map(x => String(x || '').toLowerCase()).join(' ');
+}
+/** Mehrere Wörter im Suchfeld: alle müssen irgendwo im Treffer vorkommen (Leerzeichen-getrennt). */
+function mPoolMatchesSearch(ex, qRaw){
+  const q = (qRaw || '').trim().toLowerCase();
+  if(!q) return true;
+  const blob = mPoolSearchBlob(ex);
+  const tokens = q.split(/\s+/).filter(Boolean);
+  return tokens.every(t => blob.includes(t));
+}
+
+function mPoolThumbHTML(ex){
+  const cell = (inner) => `<div class="m-pool-thumb-cell">${inner}</div>`;
+  if(ex && ex.img){
+    const u = String(ex.img).replace(/"/g, '&quot;');
+    return cell(
+      `<img src="${u}" class="m-pool-thumb" alt="" loading="lazy" draggable="false" onerror="this.onerror=null;this.replaceWith(Object.assign(document.createElement('div'),{className:'m-pool-thumb-empty'}))">`
+    );
+  }
+  return cell('<div class="m-pool-thumb-empty"></div>');
+}
+
 function renderMobilePoolSheet(){
   const list = document.getElementById('m-pool-sheet-list');
   if(!list) return;
@@ -4553,8 +4580,12 @@ function renderMobilePoolSheet(){
   const studioOnly = localStorage.getItem('ifl_pool_studio_only') === '1';
   const favOnly = localStorage.getItem('ifl_pool_fav_only') === '1';
   const favSet = loadPoolFavoriteSet();
+  const qPoolRaw = (document.getElementById('m-pool-search')?.value || '').trim();
+  const qPool = qPoolRaw.toLowerCase();
+  /* Mit Suchtext: ganzen Pool durchsuchen (Kategorie-Pille sonst zu restriktiv, z. B. nur wenige „Brust“-Pool-Einträge). */
   let items = db
-    .filter(x=>x.status==='pool' && (mobilePoolCat==='Alle' || x.cat===mobilePoolCat))
+    .filter(x=>x.status==='pool')
+    .filter(x=> qPool ? true : (mobilePoolCat==='Alle' || x.cat===mobilePoolCat))
     .filter(x=>poolMode==='global' ? (x.poolScope||'global')==='global' : (x.poolScope||'global')==='studio' && x.gym===currentStudio)
     .sort((a,b)=>a.order-b.order);
   if(studioOnly && studioLines.length){
@@ -4563,13 +4594,13 @@ function renderMobilePoolSheet(){
   if(favOnly){
     items = items.filter(ex => favSet.has(String(ex.id)));
   }
-  const qPool = (document.getElementById('m-pool-search')?.value || '').trim().toLowerCase();
   if(qPool){
-    items = items.filter(ex=>{
-      const blob = [ex.name, ex.group, ex.cat, ex.art, ex.brand].map(x => String(x || '').toLowerCase()).join(' ');
-      return blob.includes(qPool);
-    });
+    items = items.filter(ex => mPoolMatchesSearch(ex, qPool));
   }
+
+  const searchHint = (qPool && mobilePoolCat !== 'Alle')
+    ? `<div class="m-tools-muted" style="font-size:10px;width:100%;margin:0 0 8px;line-height:1.35">Suche aktiv: <strong>alle Kategorien</strong> im Pool (Pille „${mEsc(mobilePoolCat)}“ greift nur ohne Suchtext).</div>`
+    : '';
 
   const toolbar = `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap">
     <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600">
@@ -4584,15 +4615,18 @@ function renderMobilePoolSheet(){
 
   const idInList = new Set(items.map(x => x.id));
   const freqRows = [];
+  const freqIds = new Set();
   for(const rec of getFrequentExerciseRecords(16)){
     const ex = db.find(x => x.id === rec.id);
     if(!ex || ex.status !== 'pool' || !idInList.has(ex.id)) continue;
+    freqIds.add(ex.id);
     const hist = ex.history[currentStudio] || [];
     const rm = maxRM(hist);
     const lastSet = hist.length ? `${hist[hist.length - 1].w}×${hist[hist.length - 1].r}` : '–';
     const starH = isPoolFavorite(ex.id) ? '★' : '☆';
     freqRows.push(`<div class="m-pool-item" style="border-color:rgba(208,163,90,.35);background:rgba(208,163,90,.06)">
-      <div>
+      ${mPoolThumbHTML(ex)}
+      <div class="m-pool-item-text">
         <div class="m-pool-item-name">${mEsc(ex.name)} <span class="pill pill-gold" style="font-size:8px;padding:1px 6px">oft</span></div>
         <div class="m-pool-item-meta">${mEsc(ex.group || ex.cat || '')} · Letztes Mal: ${lastSet}${rm > 0 ? ' · 1RM ~' + rm + 'kg' : ''}</div>
       </div>
@@ -4604,14 +4638,17 @@ function renderMobilePoolSheet(){
     ? `<div class="m-tools-h" style="margin-bottom:6px">Häufig genutzt</div>${freqRows.join('')}`
     : '';
 
-  list.innerHTML = toolbar + freqBlock + (items.length
-    ? items.map(ex=>{
+  const rest = items.filter(ex => !freqIds.has(ex.id));
+
+  list.innerHTML = searchHint + toolbar + freqBlock + (items.length
+    ? rest.map(ex=>{
         const hist = ex.history[currentStudio]||[];
         const rm   = maxRM(hist);
         const lastSet = hist.length ? `${hist[hist.length-1].w}×${hist[hist.length-1].r}` : '–';
         const star = isPoolFavorite(ex.id) ? '★' : '☆';
         return `<div class="m-pool-item">
-          <div>
+          ${mPoolThumbHTML(ex)}
+          <div class="m-pool-item-text">
             <div class="m-pool-item-name">${mEsc(ex.name)}</div>
             <div class="m-pool-item-meta">${mEsc(ex.group||ex.cat||'')} · Letztes Mal: ${lastSet}${rm>0?' · 1RM ~'+rm+'kg':''}</div>
           </div>
