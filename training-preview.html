@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Letzte inhaltliche Änderung: 2026-04-18 19:08 MEZ (Übungs-Vorschau: resolveExerciseImageUrl überall) -->
+<!-- Letzte inhaltliche Änderung: 2026-04-18 20:18 MEZ (Vorschau: ifl_device_catalog Snapshot + Hydration Übung.img) -->
 <html lang="de" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -1757,6 +1757,9 @@ let editMode = false;
 let reorderSourceId = null;
 let catalogOffset = 0;
 let catalogMatches = [];
+/** Zeilen aus Supabase ifl_device_catalog (mit img) — Quelle für fehlende Übung.img */
+let deviceCatalogImageRows = [];
+let deviceCatalogImageLoading = false;
 const CATALOG_PAGE_SIZE = 8;
 let mobilePhase = localStorage.getItem('ifl_mobile_phase') || 'plan';
 let iftttEvents = JSON.parse(localStorage.getItem('ifl_ifttt_events') || '[]');
@@ -1795,7 +1798,7 @@ function togglePoolFavOnly(checked){
   localStorage.setItem('ifl_pool_fav_only', checked ? '1' : '0');
   renderMobilePoolSheet();
 }
-const BUILD_STAMP = '2026-04-18 19:08 MEZ';
+const BUILD_STAMP = '2026-04-18 20:18 MEZ';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -2078,11 +2081,101 @@ function matchDeviceCatalogImage(ex){
   return exact || partial;
 }
 
+function slugLetters(s){
+  return normImgKey(String(s || '')).replace(/[^a-z0-9äöü]+/g, '');
+}
+
+function mergeDeviceCatalogSnapshotRows(rows){
+  if(!Array.isArray(rows) || !rows.length) return;
+  const map = new Map();
+  deviceCatalogImageRows.forEach(r=>{
+    if(r && r.img) map.set(`${normImgKey(r.brand || '')}|${normImgKey(r.name || '')}|${String(r.art || '')}`, r);
+  });
+  rows.forEach(r=>{
+    if(!r || !r.img || !String(r.img).trim()) return;
+    const row = { brand: r.brand, name: r.name, art: r.art, img: String(r.img).trim() };
+    map.set(`${normImgKey(row.brand || '')}|${normImgKey(row.name || '')}|${String(row.art || '')}`, row);
+  });
+  deviceCatalogImageRows = [...map.values()];
+}
+
+/** Bild-URL aus geladenem Gerätekatalog (Supabase ifl_device_catalog), nicht aus Übung.img. */
+function matchRemoteDeviceCatalogImage(ex){
+  if(!deviceCatalogImageRows.length) return '';
+  const ea = String(ex.art || '').trim();
+  if(ea){
+    for(const r of deviceCatalogImageRows){
+      const ra = String(r.art || '').trim();
+      if(ra && ra === ea) return r.img;
+    }
+  }
+  const en = normImgKey(ex.name);
+  const els = slugLetters(ex.name);
+  const eb = normImgKey(ex.brand || '');
+  let best = '', bestScore = 0;
+  for(const r of deviceCatalogImageRows){
+    const rn = normImgKey(r.name || '');
+    const rls = slugLetters(r.name);
+    const rb = normImgKey(r.brand || '');
+    let sc = 0;
+    if(en && rn && en === rn) sc = 100;
+    else if(els && rls){
+      if(rls === els) sc = 95;
+      else if(rls.includes(els) && els.length >= 6) sc = 75 + Math.min(els.length, 20);
+      else if(els.includes(rls) && rls.length >= 6) sc = 70 + Math.min(rls.length, 20);
+    }
+    if(sc && eb && rb){
+      if(eb.includes(rb) || rb.includes(eb)) sc += 12;
+      else if(eb.slice(0, 4) === rb.slice(0, 4)) sc += 5;
+    }
+    if(sc > bestScore){ bestScore = sc; best = r.img; }
+  }
+  return best;
+}
+
+function hydrateLocalDbImagesFromDeviceCatalog(){
+  if(!deviceCatalogImageRows.length) return;
+  let changed = false;
+  for(const ex of db){
+    if(ex.img && String(ex.img).trim()) continue;
+    const u = matchRemoteDeviceCatalogImage(ex);
+    if(u){ ex.img = u; changed = true; }
+  }
+  if(changed){
+    try{
+      saveDB();
+    }catch(_e){}
+  }
+}
+
+async function refreshDeviceCatalogImageCache(){
+  const cfg = getSyncConfig();
+  if(!cfg.supabaseUrl || !cfg.anonKey) return;
+  if(deviceCatalogImageLoading) return;
+  deviceCatalogImageLoading = true;
+  try{
+    const res = await fetch(`${cfg.supabaseUrl}/rest/v1/ifl_device_catalog?select=brand,name,art,img&order=name.asc&limit=5000`, {
+      headers: { apikey: cfg.anonKey, Authorization: `Bearer ${cfg.anonKey}` }
+    });
+    if(!res.ok) return;
+    const rows = await res.json();
+    deviceCatalogImageRows = (Array.isArray(rows) ? rows : [])
+      .filter(r => r && r.img && String(r.img).trim())
+      .map(r => ({ brand: r.brand, name: r.name, art: r.art, img: String(r.img).trim() }));
+    hydrateLocalDbImagesFromDeviceCatalog();
+  }catch(_e){}
+  finally{
+    deviceCatalogImageLoading = false;
+  }
+}
+
 /** Für Kacheln, Pool, Logger, Mobile: immer eine URL (echtes Bild, Katalog-Heuristik oder SVG-Platzhalter). */
 function resolveExerciseImageUrl(ex){
   if(!ex) return exerciseImagePlaceholderUrl({ cat: 'Core', name: '?' });
   const direct = (ex.img && String(ex.img).trim()) ? String(ex.img).trim() : '';
   if(direct) return direct;
+  const fromRemote = matchRemoteDeviceCatalogImage(ex);
+  if(fromRemote) return fromRemote;
   const artRaw = ex.art != null && String(ex.art).trim();
   if(artRaw) return SB_IMG + artRaw + '.webp';
   const b = normImgKey(ex.brand);
@@ -3172,6 +3265,7 @@ async function catalogSearchSupabase(filters, reset){
     if(!rows.length){
       return false;
     }
+    mergeDeviceCatalogSnapshotRows(rows);
     const q = (filters.q || '').toLowerCase();
     catalogMatches = rows
       .map(r=>({
@@ -3213,6 +3307,7 @@ async function catalogSearchDatabase(filters, reset){
     const items = Array.isArray(data?.items) ? data.items : [];
     if(!items.length) return false;
     catalogMatches = dedupeCatalogItems(items);
+    mergeDeviceCatalogSnapshotRows(catalogMatches);
     if(reset) catalogOffset = 0;
     catalogSource = 'db';
     catalogStatusText = `Zusatzpool-DB aktiv (${data.total || catalogMatches.length} Treffer).`;
@@ -5515,8 +5610,13 @@ updateSyncStatus();
 initMobile();
 closeAnalyseForgeFoldForMobile();
 window.addEventListener('pageshow', () => closeAnalyseForgeFoldForMobile());
-if(!getSyncConfig().supabaseUrl || !getSyncConfig().anonKey){
+const _initSync = getSyncConfig();
+if(!_initSync.supabaseUrl || !_initSync.anonKey){
   openSetupWizard(true);
+} else {
+  refreshDeviceCatalogImageCache().then(()=>{
+    if(typeof render === 'function') render();
+  }).catch(()=>{});
 }
 window.addEventListener('resize', ()=>{
   renderMobilePhase();
