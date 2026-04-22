@@ -23,6 +23,7 @@ import sqlite3
 import subprocess
 import datetime
 import base64
+import requests
 
 
 def _norm_filter_text(value: str) -> str:
@@ -543,6 +544,133 @@ async def push_catalog_to_supabase_route():
             f"Supabase gesamt: {result['supabase_rows']}"
         ),
     )
+
+
+@router.get("/catalog/sanity", include_in_schema=False)
+async def catalog_sanity():
+    """
+    1-Klick Diagnose:
+    - lokale gym80 Rows / image_blob vorhanden
+    - Supabase-Katalog total / Rows mit img
+    """
+    local_total = 0
+    local_blob_count = 0
+    local_url_count = 0
+    local_without_image = 0
+
+    conn = sqlite3.connect(str(DB_PATH))
+    conn.row_factory = sqlite3.Row
+    try:
+        cols = _sqlite_table_columns(conn, "gym80_devices")
+        if "model" in cols:
+            local_total = conn.execute("SELECT COUNT(*) FROM gym80_devices").fetchone()[0]
+        if "image_blob" in cols:
+            local_blob_count = conn.execute(
+                "SELECT COUNT(*) FROM gym80_devices WHERE image_blob IS NOT NULL AND length(image_blob) > 0"
+            ).fetchone()[0]
+        if "image_url" in cols:
+            local_url_count = conn.execute(
+                "SELECT COUNT(*) FROM gym80_devices WHERE image_url IS NOT NULL AND trim(image_url) <> ''"
+            ).fetchone()[0]
+        local_without_image = max(local_total - max(local_blob_count, local_url_count), 0)
+    finally:
+        conn.close()
+
+    supabase_url = (os.getenv("SUPABASE_URL") or "").strip().rstrip("/")
+    supabase_anon_key = (os.getenv("SUPABASE_ANON_KEY") or "").strip()
+    if not supabase_url or not supabase_anon_key:
+        return {
+            "ok": False,
+            "error": "SUPABASE_URL oder SUPABASE_ANON_KEY fehlt.",
+            "local": {
+                "gym80_total": local_total,
+                "gym80_with_blob": local_blob_count,
+                "gym80_with_image_url": local_url_count,
+                "gym80_without_image": local_without_image,
+            },
+            "supabase": None,
+        }
+
+    endpoint = f"{supabase_url}/rest/v1/ifl_device_catalog"
+    headers = {
+        "apikey": supabase_anon_key,
+        "Authorization": f"Bearer {supabase_anon_key}",
+        "Prefer": "count=exact",
+    }
+
+    try:
+        # total rows
+        total_res = requests.get(f"{endpoint}?select=id&limit=1", headers=headers, timeout=30)
+        if total_res.status_code >= 300:
+            return {
+                "ok": False,
+                "error": f"Supabase total-Abfrage fehlgeschlagen ({total_res.status_code}).",
+                "local": {
+                    "gym80_total": local_total,
+                    "gym80_with_blob": local_blob_count,
+                    "gym80_with_image_url": local_url_count,
+                    "gym80_without_image": local_without_image,
+                },
+                "supabase": None,
+            }
+        total_count = 0
+        total_range = total_res.headers.get("Content-Range", "")
+        if "/" in total_range:
+            try:
+                total_count = int(total_range.split("/")[-1])
+            except Exception:
+                total_count = 0
+
+        # rows with img
+        img_res = requests.get(
+            f"{endpoint}?select=id&img=not.is.null&limit=1", headers=headers, timeout=30
+        )
+        if img_res.status_code >= 300:
+            return {
+                "ok": False,
+                "error": f"Supabase img-Abfrage fehlgeschlagen ({img_res.status_code}).",
+                "local": {
+                    "gym80_total": local_total,
+                    "gym80_with_blob": local_blob_count,
+                    "gym80_with_image_url": local_url_count,
+                    "gym80_without_image": local_without_image,
+                },
+                "supabase": {"catalog_total": total_count},
+            }
+        img_count = 0
+        img_range = img_res.headers.get("Content-Range", "")
+        if "/" in img_range:
+            try:
+                img_count = int(img_range.split("/")[-1])
+            except Exception:
+                img_count = 0
+
+        return {
+            "ok": True,
+            "local": {
+                "gym80_total": local_total,
+                "gym80_with_blob": local_blob_count,
+                "gym80_with_image_url": local_url_count,
+                "gym80_without_image": local_without_image,
+            },
+            "supabase": {
+                "catalog_total": total_count,
+                "catalog_with_img": img_count,
+            },
+            "hint": "Wenn gym80_with_blob hoch ist, aber catalog_with_img niedrig: /import/catalog/push-supabase erneut ausführen.",
+        }
+    except Exception as exc:
+        return {
+            "ok": False,
+            "error": f"Sanity-Check fehlgeschlagen: {exc}",
+            "local": {
+                "gym80_total": local_total,
+                "gym80_with_blob": local_blob_count,
+                "gym80_with_image_url": local_url_count,
+                "gym80_without_image": local_without_image,
+            },
+            "supabase": None,
+        }
 
 
 @router.post("/catalog/seed-top-equipment", include_in_schema=False)
