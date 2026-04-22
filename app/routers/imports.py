@@ -22,6 +22,7 @@ from app.services.catalog_overrides import load_override_rules, resolve_catalog_
 import sqlite3
 import subprocess
 import datetime
+import base64
 
 
 def _norm_filter_text(value: str) -> str:
@@ -58,6 +59,25 @@ def _target_tokens(target: str) -> list[str]:
     if not norm:
         return []
     return list(TARGET_ALIASES.get(norm, (norm,)))
+
+
+def _sqlite_table_columns(conn: sqlite3.Connection, table: str) -> set[str]:
+    try:
+        rows = conn.execute(f"PRAGMA table_info({table})").fetchall()
+    except sqlite3.DatabaseError:
+        return set()
+    return {str(r[1]).lower() for r in rows}
+
+
+def _blob_to_data_url(blob_value) -> str | None:
+    if not blob_value:
+        return None
+    try:
+        payload = base64.b64encode(bytes(blob_value)).decode("ascii")
+    except Exception:
+        return None
+    # gym80 source files are webp; browsers also tolerate generic octet-stream fallback.
+    return f"data:image/webp;base64,{payload}"
 
 
 def _redirect(path: str, msg: str) -> RedirectResponse:
@@ -562,9 +582,13 @@ async def catalog_search_api(
     try:
         rows = []
         if b in ("", "gym80"):
+            gym80_cols = _sqlite_table_columns(conn, "gym80_devices")
+            has_image_blob = "image_blob" in gym80_cols
+            img_blob_select = ", image_blob" if has_image_blob else ", NULL AS image_blob"
             rows.extend(
                 conn.execute(
-                    "SELECT model, serie, image_url, muscle_groups, product_url, category, notes, '' as brand, 'gym80' as src FROM gym80_devices"
+                    "SELECT model, serie, image_url, muscle_groups, product_url, category, notes, '' as brand, 'gym80' as src"
+                    f"{img_blob_select} FROM gym80_devices"
                 ).fetchall()
             )
         if b in ("", "matrix"):
@@ -632,7 +656,10 @@ async def catalog_search_api(
                 "sessionType": s_type,
                 "group": group_resolved,
                 "art": None,
-                "img": r["image_url"],
+                "img": (
+                    (r["image_url"] or "").strip()
+                    or _blob_to_data_url(r["image_blob"] if "image_blob" in r.keys() else None)
+                ),
                 "product_url": r["product_url"],
                 "notes": r["notes"],
             })
