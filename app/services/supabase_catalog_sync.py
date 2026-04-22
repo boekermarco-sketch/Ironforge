@@ -14,10 +14,6 @@ from app.services.catalog_overrides import load_override_rules, resolve_catalog_
 from app.services.catalog_targets import infer_stype, infer_target, target_to_key
 
 
-def _normalize_text(value: str | None) -> str:
-    return (value or "").strip().lower()
-
-
 def _table_exists(conn: sqlite3.Connection, table: str) -> bool:
     row = conn.execute(
         "SELECT 1 FROM sqlite_master WHERE type='table' AND name=? LIMIT 1",
@@ -34,6 +30,34 @@ def _table_columns(conn: sqlite3.Connection, table: str) -> set[str]:
 
 
 MODEL_CODE_RE = re.compile(r"^\s*(\d{3,5}N?)\b", re.IGNORECASE)
+IMAGE_EXT_TO_MIME = {
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".webp": "image/webp",
+}
+EGYM_LOCAL_IMAGE_MAP: tuple[tuple[str, str], ...] = (
+    ("beinstrecker", "Beinstrecker.jpeg"),
+    ("bauchtrainer", "Bauchtrainer.jpeg"),
+    ("ruckenstrecker", "Rückenstrecker.jpeg"),
+    ("rueckenstrecker", "Rückenstrecker.jpeg"),
+    ("beinbeuger", "Beinbeuger.jpeg"),
+    ("brustpresse", "Brustpresse.jpeg"),
+    ("ruderzug", "Seitbeuger.jpeg"),
+    ("latzug", "Latzug.jpeg"),
+    ("hip thrust", "Glutaeus Hip Thrust.jpeg"),
+    ("beinpresse", "Beinpresse.jpeg"),
+    ("abduktor", "Abduktor.jpeg"),
+    ("adduktor", "Adduktor.jpeg"),
+    ("rumpfrotation", "Seitbeuger.jpeg"),
+    ("butterfly reverse", "Butterfly Reverse.jpeg"),
+    ("butterfly", "Butterfly.jpeg"),
+    ("bizeps", "Bizepscurl.jpeg"),
+    ("schulterpresse", "Schulterpresse.jpeg"),
+    ("trizeps", "Trizeps-Dips.jpeg"),
+    ("kniebeuge", "Kniebeugen.jpeg"),
+    ("smart flex", "Seitbeuger.jpeg"),
+)
 
 
 def _model_to_local_asset(model: str | None) -> str | None:
@@ -54,6 +78,55 @@ def _blob_to_data_url(blob_value: Any) -> str | None:
     return f"data:image/webp;base64,{payload}"
 
 
+def _image_file_to_data_url(path: Path) -> str | None:
+    if not path.exists() or not path.is_file():
+        return None
+    mime = IMAGE_EXT_TO_MIME.get(path.suffix.lower(), "application/octet-stream")
+    try:
+        payload = base64.b64encode(path.read_bytes()).decode("ascii")
+    except Exception:
+        return None
+    return f"data:{mime};base64,{payload}"
+
+
+def _normalize_text(value: str | None) -> str:
+    return (
+        (value or "")
+        .strip()
+        .lower()
+        .replace("ä", "a")
+        .replace("ö", "o")
+        .replace("ü", "u")
+        .replace("ß", "ss")
+    )
+
+
+def _resolve_matrix_image(image_url: str | None, root_dir: Path) -> str | None:
+    value = (image_url or "").strip()
+    if not value:
+        return None
+    if value.startswith(("http://", "https://", "data:")):
+        return value
+    local_path = (root_dir / "SQL" / "Matrix" / value).resolve()
+    return _image_file_to_data_url(local_path) or value
+
+
+def _resolve_egym_image(image_url: str | None, model: str | None, root_dir: Path) -> str | None:
+    model_norm = _normalize_text(model)
+    egym_dir = root_dir / "SQL" / "egym_dump"
+    for key, filename in EGYM_LOCAL_IMAGE_MAP:
+        if key in model_norm:
+            img = _image_file_to_data_url(egym_dir / filename)
+            if img:
+                return img
+    value = (image_url or "").strip()
+    if not value:
+        return None
+    if value.startswith(("http://", "https://", "data:")):
+        return value
+    return _image_file_to_data_url(egym_dir / value) or value
+
+
 def _chunked(rows: list[dict[str, Any]], size: int):
     for i in range(0, len(rows), size):
         yield rows[i : i + size]
@@ -62,6 +135,7 @@ def _chunked(rows: list[dict[str, Any]], size: int):
 def read_sqlite_device_catalog_rows(db_path: Path) -> list[dict[str, Any]]:
     conn = sqlite3.connect(str(db_path))
     conn.row_factory = sqlite3.Row
+    root_dir = Path(__file__).resolve().parents[2]
     try:
         rules = load_override_rules(conn)
         rows: list[dict[str, Any]] = []
@@ -125,7 +199,7 @@ def read_sqlite_device_catalog_rows(db_path: Path) -> list[dict[str, Any]]:
                         "target_key": target_to_key(target),
                         "movement_group": movement,
                         "art": None,
-                        "img": r["image_url"] or None,
+                        "img": _resolve_matrix_image(r["image_url"], root_dir),
                     }
                 )
 
@@ -154,7 +228,7 @@ def read_sqlite_device_catalog_rows(db_path: Path) -> list[dict[str, Any]]:
                         "target_key": target_to_key(target),
                         "movement_group": movement,
                         "art": None,
-                        "img": r["image_url"] or None,
+                        "img": _resolve_matrix_image(r["image_url"], root_dir),
                     }
                 )
 
@@ -183,7 +257,7 @@ def read_sqlite_device_catalog_rows(db_path: Path) -> list[dict[str, Any]]:
                         "target_key": target_to_key(target),
                         "movement_group": movement,
                         "art": None,
-                        "img": r["image_url"] or None,
+                        "img": _resolve_egym_image(r["image_url"], model, root_dir),
                     }
                 )
 
