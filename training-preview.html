@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Letzte inhaltliche Änderung: 2026-04-22 19:00 MEZ (Supabase gym80 BLOB-Bild-Transfer + Build-Stempel aktualisiert) -->
+<!-- Letzte inhaltliche Änderung: 2026-04-22 19:10 MEZ (GitHub Preview: Supabase-first Katalogsuche, lokale DB nicht mehr primär) -->
 <html lang="de" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -1422,10 +1422,10 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
             </select>
           </div>
           <div class="form-group" style="margin:0;display:flex;align-items:flex-end">
-            <button onclick="catalogSearch(true)" class="btn btn-secondary btn-sm" style="width:100%">Offline suchen</button>
+            <button onclick="catalogSearch(true)" class="btn btn-secondary btn-sm" style="width:100%">Offline (Fallback)</button>
           </div>
           <div class="form-group" style="margin:0;display:flex;align-items:flex-end">
-            <button onclick="catalogSearchDb(true)" class="btn btn-teal btn-sm" style="width:100%">DB suchen</button>
+            <button onclick="catalogSearchDb(true)" class="btn btn-teal btn-sm" style="width:100%">Cloud suchen (Supabase)</button>
           </div>
         </div>
         <div id="catalog-status" class="sync-status" style="margin-bottom:8px"></div>
@@ -1776,7 +1776,7 @@ function togglePoolFavOnly(checked){
   localStorage.setItem('ifl_pool_fav_only', checked ? '1' : '0');
   renderMobilePoolSheet();
 }
-const BUILD_STAMP = '2026-04-22 19:00 MEZ';
+const BUILD_STAMP = '2026-04-22 19:10 MEZ';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -3234,7 +3234,7 @@ function renderUebungen(){
   dl.innerHTML = groups.map(g=>`<option value="${g}">`).join('');
   list.appendChild(dl);
   if(!catalogMatches.length){
-    catalogStatusText = 'Kein Hersteller gewählt. Wähle Hersteller und klicke DB suchen.';
+    catalogStatusText = 'Kein Hersteller gewählt. Wähle Hersteller und klicke Cloud suchen.';
     renderCatalogResults(false);
   }else{
     renderCatalogResults(false);
@@ -3290,12 +3290,12 @@ async function catalogSearch(reset){
 
 async function catalogSearchDb(reset){
   const filters = getCatalogFilters();
-  const remoteOk = await catalogSearchRemoteDbFirst(filters, reset);
+  const remoteOk = await catalogSearchRemote(filters, reset);
   if(!remoteOk){
     catalogMatches = [];
     catalogOffset = 0;
-    catalogSource = 'db';
-    catalogStatusText = 'DB-Suche ohne Treffer. Tipp: Suche breiter (z.B. nur "Matrix" oder "Brustpresse").';
+    catalogSource = 'supabase';
+    catalogStatusText = 'Cloud-Suche ohne Treffer. Tipp: Suche breiter (z.B. nur "Matrix" oder "Brustpresse").';
     renderCatalogResults(true);
     return;
   }
