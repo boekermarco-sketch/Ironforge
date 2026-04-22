@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 import sqlite3
+import re
 from pathlib import Path
 from typing import Any
 
@@ -14,6 +15,32 @@ from app.services.catalog_targets import infer_stype, infer_target, target_to_ke
 
 def _normalize_text(value: str | None) -> str:
     return (value or "").strip().lower()
+
+
+def _table_exists(conn: sqlite3.Connection, table: str) -> bool:
+    row = conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name=? LIMIT 1",
+        (table,),
+    ).fetchone()
+    return bool(row)
+
+
+def _table_columns(conn: sqlite3.Connection, table: str) -> set[str]:
+    if not _table_exists(conn, table):
+        return set()
+    rows = conn.execute(f"PRAGMA table_info({table})").fetchall()
+    return {str(r[1]).lower() for r in rows}
+
+
+MODEL_CODE_RE = re.compile(r"^\s*(\d{3,5}N?)\b", re.IGNORECASE)
+
+
+def _model_to_local_asset(model: str | None) -> str | None:
+    m = MODEL_CODE_RE.search(model or "")
+    if not m:
+        return None
+    code = m.group(1).lower()
+    return f"assets/gym80/{code}.webp"
 
 
 def _chunked(rows: list[dict[str, Any]], size: int):
@@ -28,117 +55,124 @@ def read_sqlite_device_catalog_rows(db_path: Path) -> list[dict[str, Any]]:
         rules = load_override_rules(conn)
         rows: list[dict[str, Any]] = []
 
-        gym80 = conn.execute(
-            "SELECT model, serie, image_url, muscle_groups, category FROM gym80_devices"
-        ).fetchall()
-        for r in gym80:
-            model = (r["model"] or "").strip()
-            serie = (r["serie"] or "").strip()
-            category = (r["category"] or "").strip()
-            mg = r["muscle_groups"] or ""
-            target, movement = resolve_catalog_row_targets(
-                "gym80", model, serie, mg, category, rules, infer_target_fn=infer_target
-            )
-            st = infer_stype(target)
-            rows.append(
-                {
-                    "brand": "gym80",
-                    "name": model,
-                    "type": "Machine",
-                    "target": target,
-                    "cat": target,
-                    "s_type": st,
-                    "session_type": st,
-                    "target_key": target_to_key(target),
-                    "movement_group": movement,
-                    "art": None,
-                    "img": r["image_url"] or None,
-                }
-            )
+        if _table_exists(conn, "gym80_devices"):
+            gym80_cols = _table_columns(conn, "gym80_devices")
+            img_expr = "image_url AS image_url" if "image_url" in gym80_cols else "NULL AS image_url"
+            gym80 = conn.execute(
+                f"SELECT model, serie, {img_expr}, muscle_groups, category FROM gym80_devices"
+            ).fetchall()
+            for r in gym80:
+                model = (r["model"] or "").strip()
+                serie = (r["serie"] or "").strip()
+                category = (r["category"] or "").strip()
+                mg = r["muscle_groups"] or ""
+                target, movement = resolve_catalog_row_targets(
+                    "gym80", model, serie, mg, category, rules, infer_target_fn=infer_target
+                )
+                st = infer_stype(target)
+                img_value = (r["image_url"] or "").strip() if "image_url" in r.keys() else ""
+                rows.append(
+                    {
+                        "brand": "gym80",
+                        "name": model,
+                        "type": "Machine",
+                        "target": target,
+                        "cat": target,
+                        "s_type": st,
+                        "session_type": st,
+                        "target_key": target_to_key(target),
+                        "movement_group": movement,
+                        "art": None,
+                        "img": img_value or _model_to_local_asset(model),
+                    }
+                )
 
-        matrix_strength = conn.execute(
-            "SELECT model, serie, image_url, muscle_groups, category FROM matrix_strength_devices"
-        ).fetchall()
-        for r in matrix_strength:
-            model = (r["model"] or "").strip()
-            serie = (r["serie"] or "").strip()
-            category = (r["category"] or "").strip()
-            mg = r["muscle_groups"] or ""
-            target, movement = resolve_catalog_row_targets(
-                "Matrix", model, serie, mg, category, rules, infer_target_fn=infer_target
-            )
-            st = infer_stype(target)
-            rows.append(
-                {
-                    "brand": "Matrix",
-                    "name": model,
-                    "type": "Machine",
-                    "target": target,
-                    "cat": target,
-                    "s_type": st,
-                    "session_type": st,
-                    "target_key": target_to_key(target),
-                    "movement_group": movement,
-                    "art": None,
-                    "img": r["image_url"] or None,
-                }
-            )
+        if _table_exists(conn, "matrix_strength_devices"):
+            matrix_strength = conn.execute(
+                "SELECT model, serie, image_url, muscle_groups, category FROM matrix_strength_devices"
+            ).fetchall()
+            for r in matrix_strength:
+                model = (r["model"] or "").strip()
+                serie = (r["serie"] or "").strip()
+                category = (r["category"] or "").strip()
+                mg = r["muscle_groups"] or ""
+                target, movement = resolve_catalog_row_targets(
+                    "Matrix", model, serie, mg, category, rules, infer_target_fn=infer_target
+                )
+                st = infer_stype(target)
+                rows.append(
+                    {
+                        "brand": "Matrix",
+                        "name": model,
+                        "type": "Machine",
+                        "target": target,
+                        "cat": target,
+                        "s_type": st,
+                        "session_type": st,
+                        "target_key": target_to_key(target),
+                        "movement_group": movement,
+                        "art": None,
+                        "img": r["image_url"] or None,
+                    }
+                )
 
-        matrix_cardio = conn.execute(
-            "SELECT model, serie, image_url, cardio_type, category FROM matrix_cardio_devices"
-        ).fetchall()
-        for r in matrix_cardio:
-            model = (r["model"] or "").strip()
-            serie = (r["serie"] or "").strip()
-            category = (r["category"] or "").strip()
-            ct = r["cardio_type"] or ""
-            target, movement = resolve_catalog_row_targets(
-                "Matrix", model, serie, ct, category, rules, infer_target_fn=infer_target
-            )
-            st = infer_stype(target, is_matrix_cardio_row=True)
-            rows.append(
-                {
-                    "brand": "Matrix",
-                    "name": model,
-                    "type": "Cardio",
-                    "target": target,
-                    "cat": target,
-                    "s_type": st,
-                    "session_type": st,
-                    "target_key": target_to_key(target),
-                    "movement_group": movement,
-                    "art": None,
-                    "img": r["image_url"] or None,
-                }
-            )
+        if _table_exists(conn, "matrix_cardio_devices"):
+            matrix_cardio = conn.execute(
+                "SELECT model, serie, image_url, cardio_type, category FROM matrix_cardio_devices"
+            ).fetchall()
+            for r in matrix_cardio:
+                model = (r["model"] or "").strip()
+                serie = (r["serie"] or "").strip()
+                category = (r["category"] or "").strip()
+                ct = r["cardio_type"] or ""
+                target, movement = resolve_catalog_row_targets(
+                    "Matrix", model, serie, ct, category, rules, infer_target_fn=infer_target
+                )
+                st = infer_stype(target, is_matrix_cardio_row=True)
+                rows.append(
+                    {
+                        "brand": "Matrix",
+                        "name": model,
+                        "type": "Cardio",
+                        "target": target,
+                        "cat": target,
+                        "s_type": st,
+                        "session_type": st,
+                        "target_key": target_to_key(target),
+                        "movement_group": movement,
+                        "art": None,
+                        "img": r["image_url"] or None,
+                    }
+                )
 
-        egym = conn.execute(
-            "SELECT model, series, image_url, muscle_groups, category FROM egym_devices"
-        ).fetchall()
-        for r in egym:
-            model = (r["model"] or "").strip()
-            series = (r["series"] or "").strip()
-            category = (r["category"] or "").strip()
-            mg = r["muscle_groups"] or ""
-            target, movement = resolve_catalog_row_targets(
-                "eGym", model, series, mg, category, rules, infer_target_fn=infer_target
-            )
-            st = infer_stype(target)
-            rows.append(
-                {
-                    "brand": "eGym",
-                    "name": model,
-                    "type": "Digital",
-                    "target": target,
-                    "cat": target,
-                    "s_type": st,
-                    "session_type": st,
-                    "target_key": target_to_key(target),
-                    "movement_group": movement,
-                    "art": None,
-                    "img": r["image_url"] or None,
-                }
-            )
+        if _table_exists(conn, "egym_devices"):
+            egym = conn.execute(
+                "SELECT model, series, image_url, muscle_groups, category FROM egym_devices"
+            ).fetchall()
+            for r in egym:
+                model = (r["model"] or "").strip()
+                series = (r["series"] or "").strip()
+                category = (r["category"] or "").strip()
+                mg = r["muscle_groups"] or ""
+                target, movement = resolve_catalog_row_targets(
+                    "eGym", model, series, mg, category, rules, infer_target_fn=infer_target
+                )
+                st = infer_stype(target)
+                rows.append(
+                    {
+                        "brand": "eGym",
+                        "name": model,
+                        "type": "Digital",
+                        "target": target,
+                        "cat": target,
+                        "s_type": st,
+                        "session_type": st,
+                        "target_key": target_to_key(target),
+                        "movement_group": movement,
+                        "art": None,
+                        "img": r["image_url"] or None,
+                    }
+                )
 
         # Eine Zeile pro Marke+Modell (target ist Attribut, kein Schlüsselbestandteil)
         dedup: dict[str, dict[str, Any]] = {}

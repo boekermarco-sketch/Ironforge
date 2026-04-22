@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Letzte inhaltliche Änderung: 2026-04-19 12:05 MEZ (Katalogsuche: Relevanz, kein Ausblenden bei gleichem Namen im Pool) -->
+<!-- Letzte inhaltliche Änderung: 2026-04-22 15:52 MEZ (Katalogsuche-Fix: Re-Render + Zielmuskel-Aliase robust) -->
 <html lang="de" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -1776,7 +1776,7 @@ function togglePoolFavOnly(checked){
   localStorage.setItem('ifl_pool_fav_only', checked ? '1' : '0');
   renderMobilePoolSheet();
 }
-const BUILD_STAMP = '2026-04-19 12:05 MEZ';
+const BUILD_STAMP = '2026-04-22 15:52 MEZ';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -3272,38 +3272,24 @@ function normalizeSearchText(str){
 
 async function catalogSearch(reset){
   const filters = getCatalogFilters();
-  if(filters.brand === 'all'){
-    catalogMatches = [];
-    if(reset) catalogOffset = 0;
-    catalogSource = 'local';
-    catalogStatusText = 'Bitte zuerst Hersteller wählen, dann suchen.';
-    renderCatalogResults(true);
-    return;
-  }
   const { brand, target, sType, q } = filters;
   catalogMatches = DEVICE_CATALOG.filter(item=>{
     const byBrand = brand === 'all' || !brand || normalizeBrandFilter(item.brand)===brand;
-    const byTarget = !target || target === 'alle' || normalizeSearchText(item.target).includes(target) || normalizeSearchText(item.cat).includes(target);
+    const targetBlob = normalizeSearchText(`${item.target || ''} ${item.cat || ''} ${item.group || ''} ${item.name || ''}`);
+    const byTarget = !target || target === 'alle' || catalogTokenMatchesNormalizedBlob(targetBlob, target);
     const bySType = !sType || sType === 'alle' || normalizeSearchText(item.sType) === sType;
     const byText = !q || normalizeSearchText(`${item.name} ${item.brand} ${item.type} ${item.target} ${item.group||''} ${item.art||''}`).includes(q);
     return byBrand && byTarget && bySType && byText;
   });
+  catalogMatches = rankCatalogItemsByUsage(catalogMatches, filters);
   if(reset) catalogOffset = 0;
   catalogSource = 'local';
-  catalogStatusText = 'Offline-Katalog aktiv.';
+  catalogStatusText = 'Offline-Katalog aktiv (Top-Treffer nach deiner Nutzung).';
   renderCatalogResults(true);
 }
 
 async function catalogSearchDb(reset){
   const filters = getCatalogFilters();
-  if(filters.brand === 'all'){
-    catalogMatches = [];
-    if(reset) catalogOffset = 0;
-    catalogSource = 'db';
-    catalogStatusText = 'Bitte Hersteller wählen, dann DB suchen.';
-    renderCatalogResults(true);
-    return;
-  }
   const remoteOk = await catalogSearchRemoteDbFirst(filters, reset);
   if(!remoteOk){
     catalogMatches = [];
@@ -3351,18 +3337,22 @@ async function catalogSearchSupabase(filters, reset){
     'order=name.asc',
     'limit=250'
   ];
-  if(filters.brand){
-    clauses.push(`brand=ilike.${encodeURIComponent(filters.brand)}`);
+  const brandFilter = normalizeBrandFilter(filters.brandRaw || filters.brand || '');
+  if(brandFilter && brandFilter !== 'all'){
+    const brandMap = {
+      gym80: 'gym80',
+      matrix: 'Matrix',
+      egym: 'eGym',
+      freihantel: 'Freihantel'
+    };
+    const brandNeedle = brandMap[brandFilter] || (filters.brandRaw || filters.brand || '');
+    clauses.push(`brand=ilike.${encodeURIComponent(`*${brandNeedle}*`)}`);
   }
   const sTypeFilter = normalizeSearchText(filters.sTypeRaw || filters.sType);
   if(sTypeFilter){
     clauses.push(`s_type=eq.${encodeURIComponent(sTypeFilter)}`);
   }
-  const targetFilter = (filters.targetRaw || '').trim();
-  if(targetFilter){
-    const t = encodeURIComponent(`*${targetFilter}*`);
-    clauses.push(`or=(target.ilike.${t},cat.ilike.${t},movement_group.ilike.${t})`);
-  }
+  const targetFilter = normalizeSearchText(filters.targetRaw || filters.target || '');
   try{
     const res = await sbFetch(`ifl_device_catalog?${clauses.join('&')}`, cfg, {});
     const rows = await res.json();
@@ -3370,7 +3360,7 @@ async function catalogSearchSupabase(filters, reset){
       return false;
     }
     mergeDeviceCatalogSnapshotRows(rows);
-    const q = (filters.q || '').toLowerCase();
+    const q = normalizeSearchText(filters.q || '');
     catalogMatches = rows
       .map(r=>({
         brand: r.brand || 'Unknown',
@@ -3384,15 +3374,21 @@ async function catalogSearchSupabase(filters, reset){
         img: r.img || null
       }))
       .filter(item=>{
-        if(!q) return true;
-        return `${item.name} ${item.brand} ${item.type} ${item.target} ${item.group || ''} ${item.art || ''}`.toLowerCase().includes(q);
+        const blob = normalizeSearchText(`${item.name} ${item.brand} ${item.type} ${item.target} ${item.group || ''} ${item.art || ''}`);
+        if(q && !blob.includes(q)) return false;
+        if(targetFilter){
+          const targetBlob = normalizeSearchText(`${item.target || ''} ${item.cat || ''} ${item.group || ''} ${item.name || ''}`);
+          if(!catalogTokenMatchesNormalizedBlob(targetBlob, targetFilter)) return false;
+        }
+        return true;
       });
+    catalogMatches = rankCatalogItemsByUsage(catalogMatches, filters);
     if(!catalogMatches.length){
       return false;
     }
     if(reset) catalogOffset = 0;
     catalogSource = 'supabase';
-    catalogStatusText = 'Cloud-Katalog aus Supabase aktiv.';
+    catalogStatusText = 'Cloud-Katalog aus Supabase aktiv (Top-Treffer nach deiner Nutzung).';
     return true;
   }catch(_err){
     return false;
@@ -3411,10 +3407,11 @@ async function catalogSearchDatabase(filters, reset){
     const items = Array.isArray(data?.items) ? data.items : [];
     if(!items.length) return false;
     catalogMatches = dedupeCatalogItems(items);
+    catalogMatches = rankCatalogItemsByUsage(catalogMatches, filters);
     mergeDeviceCatalogSnapshotRows(catalogMatches);
     if(reset) catalogOffset = 0;
     catalogSource = 'db';
-    catalogStatusText = `Zusatzpool-DB aktiv (${data.total || catalogMatches.length} Treffer).`;
+    catalogStatusText = `Zusatzpool-DB aktiv (${data.total || catalogMatches.length} Treffer, nach Nutzung priorisiert).`;
     return true;
   }catch(_err){
     return false;
@@ -3438,6 +3435,71 @@ function applyCatalogTextFilter(items, q){
   return items.filter(item=>
     normalizeSearchText(`${item.name} ${item.brand} ${item.type} ${item.target} ${item.group || ''} ${item.art || ''}`).includes(query)
   );
+}
+
+function buildCatalogUsageMap(){
+  const usage = new Map();
+  const logs = Array.isArray(sessionLog) ? sessionLog : [];
+  logs.forEach(s=>{
+    (s.exercises || []).forEach(ex=>{
+      const key = normalizeSearchText(ex?.name || '');
+      if(!key) return;
+      const prev = usage.get(key) || 0;
+      const setBonus = Array.isArray(ex?.sets) ? ex.sets.length : 1;
+      usage.set(key, prev + Math.max(1, setBonus));
+    });
+  });
+  return usage;
+}
+
+function catalogQueryTokens(q){
+  const norm = normalizeSearchText(q || '');
+  if(!norm) return [];
+  return norm.split(/\s+/).filter(Boolean);
+}
+
+function rankCatalogItemsByUsage(items, filters){
+  const usageMap = buildCatalogUsageMap();
+  const tokens = catalogQueryTokens(filters?.qRaw || filters?.q || '');
+  const selectedBrand = normalizeBrandFilter(filters?.brandRaw || filters?.brand || '');
+  const selectedTarget = normalizeSearchText(filters?.targetRaw || filters?.target || '');
+  const selectedSType = normalizeSearchText(filters?.sTypeRaw || filters?.sType || '');
+
+  const scored = (items || []).map((item, idx)=>{
+    const nameNorm = normalizeSearchText(item?.name || '');
+    const targetNorm = normalizeSearchText(item?.target || item?.cat || '');
+    const groupNorm = normalizeSearchText(item?.group || '');
+    const brandNorm = normalizeBrandFilter(item?.brand || '');
+    const sTypeNorm = normalizeSearchText(item?.sType || '');
+    const searchHay = normalizeSearchText(
+      `${item?.name || ''} ${item?.brand || ''} ${item?.target || ''} ${item?.group || ''} ${item?.art || ''}`
+    );
+
+    let score = 0;
+    const usageCount = usageMap.get(nameNorm) || 0;
+    score += usageCount * 1000; // frequent used exercises always on top
+
+    if(selectedBrand && selectedBrand !== 'all' && selectedBrand === brandNorm) score += 80;
+    if(selectedTarget && targetNorm.includes(selectedTarget)) score += 70;
+    if(selectedSType && sTypeNorm === selectedSType) score += 60;
+
+    tokens.forEach(tok=>{
+      if(!tok) return;
+      if(searchHay.includes(tok)) score += 15;
+      if(nameNorm.includes(tok)) score += 20;
+      if(targetNorm.includes(tok) || groupNorm.includes(tok)) score += 10;
+    });
+
+    return { item, idx, score, usageCount };
+  });
+
+  scored.sort((a,b)=>{
+    if(b.score !== a.score) return b.score - a.score;
+    if(b.usageCount !== a.usageCount) return b.usageCount - a.usageCount;
+    return a.idx - b.idx;
+  });
+
+  return scored.map(x=>x.item);
 }
 
 function dedupeCatalogItems(items){
@@ -3765,10 +3827,16 @@ function getCatalogImage(item){
 
 function handleImageError(img, brand){
   if(!img) return;
-  img.style.display = 'none';
-  const parent = img.parentElement;
-  if(!parent) return;
-  parent.innerHTML = `<div class="catalog-img" style="display:flex;align-items:center;justify-content:center;color:var(--soft);border:1px dashed var(--line);cursor:default;">[${brand || 'Gerät'} ohne Bild]</div>`;
+  const fallback = document.createElement('div');
+  fallback.className = 'catalog-img';
+  fallback.style.display = 'flex';
+  fallback.style.alignItems = 'center';
+  fallback.style.justifyContent = 'center';
+  fallback.style.color = 'var(--soft)';
+  fallback.style.border = '1px dashed var(--line)';
+  fallback.style.cursor = 'default';
+  fallback.textContent = `[${brand || 'Gerät'} ohne Bild]`;
+  img.replaceWith(fallback);
 }
 
 // ── Device Detail Overlay ─────────────────────────────────────

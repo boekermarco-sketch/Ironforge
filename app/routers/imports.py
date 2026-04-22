@@ -36,6 +36,30 @@ def _norm_filter_text(value: str) -> str:
     )
 
 
+def _tokenize_query(value: str) -> list[str]:
+    norm = _norm_filter_text(value)
+    return [p for p in norm.split(" ") if p]
+
+
+TARGET_ALIASES: dict[str, tuple[str, ...]] = {
+    "brust": ("brust", "chest", "pector", "pec", "butterfly", "press"),
+    "rucken": ("rucken", "ruecken", "back", "lat", "row", "pull"),
+    "beine": ("beine", "bein", "legs", "leg", "quad", "ham", "calf"),
+    "glutes": ("glutes", "glute", "gesass", "gess", "gesa"),
+    "schulter": ("schulter", "shoulder", "delt"),
+    "arme": ("arme", "arm", "bizeps", "biceps", "trizeps", "triceps", "curl"),
+    "core": ("core", "bauch", "abs", "abdominal", "oblique", "rumpf"),
+    "cardio": ("cardio", "laufband", "treadmill", "bike", "cycle", "rower", "climbmill"),
+}
+
+
+def _target_tokens(target: str) -> list[str]:
+    norm = _norm_filter_text(target)
+    if not norm:
+        return []
+    return list(TARGET_ALIASES.get(norm, (norm,)))
+
+
 def _redirect(path: str, msg: str) -> RedirectResponse:
     return RedirectResponse(f"{path}?msg={quote(msg)}", status_code=303)
 
@@ -528,8 +552,10 @@ async def catalog_search_api(
     offset = max(0, offset)
     b = (brand or "").strip().lower()
     t = (target or "").strip().lower()
+    t_tokens = _target_tokens(t)
     st = (session_type or "").strip().lower()
     qq = (q or "").strip().lower()
+    q_tokens = _tokenize_query(qq)
 
     conn = sqlite3.connect(str(DB_PATH))
     conn.row_factory = sqlite3.Row
@@ -577,15 +603,21 @@ async def catalog_search_api(
             target_name, group_resolved = resolve_catalog_row_targets(
                 brand_name, model, serie, mg, category_raw, rules, infer_target_fn=infer_target
             )
-            full_text = f"{model} {serie} {mg} {category} {(r['notes'] or '')}".lower()
+            full_text = _norm_filter_text(
+                f"{model} {serie} {mg} {category} {(r['notes'] or '')}"
+            )
             s_type = infer_stype(target_name, is_matrix_cardio_row=(src == "matrix_cardio"))
 
             if b and b not in brand_name.lower():
                 continue
-            if qq and qq not in full_text:
+            if qq and qq not in full_text and not all(tok in full_text for tok in q_tokens):
                 continue
-            if t and _norm_filter_text(t) != _norm_filter_text(target_name):
-                continue
+            if t_tokens:
+                target_blob = _norm_filter_text(
+                    f"{target_name} {group_resolved} {mg} {category_raw} {model}"
+                )
+                if not any(tok in target_blob for tok in t_tokens):
+                    continue
             if st and st != s_type:
                 continue
 
@@ -611,7 +643,33 @@ async def catalog_search_api(
             k = f"{item['brand'].lower()}|{item['name'].lower()}"
             if k not in dedup or (not dedup[k]["img"] and item["img"]):
                 dedup[k] = item
-        items = sorted(dedup.values(), key=lambda x: x["name"])
+        def _query_score(item: dict) -> int:
+            if not q_tokens and not qq:
+                return 0
+            hay = _norm_filter_text(
+                f"{item.get('name', '')} {item.get('brand', '')} {item.get('target', '')} {item.get('group', '')}"
+            )
+            name_hay = _norm_filter_text(item.get("name", ""))
+            target_hay = _norm_filter_text(item.get("target", ""))
+            score = 0
+            for tok in q_tokens:
+                if tok and tok in hay:
+                    score += 8
+                    if tok in name_hay:
+                        score += 12
+                    if tok in target_hay:
+                        score += 4
+            if qq:
+                if qq in name_hay:
+                    score += 25
+                elif qq in hay:
+                    score += 10
+            return score
+
+        items = sorted(
+            dedup.values(),
+            key=lambda x: (-_query_score(x), x["name"].lower()),
+        )
 
         total = len(items)
         sliced = items[offset: offset + limit]
