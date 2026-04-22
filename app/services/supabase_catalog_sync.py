@@ -4,6 +4,7 @@ from __future__ import annotations
 import os
 import sqlite3
 import re
+import base64
 from pathlib import Path
 from typing import Any
 
@@ -43,6 +44,16 @@ def _model_to_local_asset(model: str | None) -> str | None:
     return f"assets/gym80/{code}.webp"
 
 
+def _blob_to_data_url(blob_value: Any) -> str | None:
+    if not blob_value:
+        return None
+    try:
+        payload = base64.b64encode(bytes(blob_value)).decode("ascii")
+    except Exception:
+        return None
+    return f"data:image/webp;base64,{payload}"
+
+
 def _chunked(rows: list[dict[str, Any]], size: int):
     for i in range(0, len(rows), size):
         yield rows[i : i + size]
@@ -58,8 +69,9 @@ def read_sqlite_device_catalog_rows(db_path: Path) -> list[dict[str, Any]]:
         if _table_exists(conn, "gym80_devices"):
             gym80_cols = _table_columns(conn, "gym80_devices")
             img_expr = "image_url AS image_url" if "image_url" in gym80_cols else "NULL AS image_url"
+            blob_expr = "image_blob AS image_blob" if "image_blob" in gym80_cols else "NULL AS image_blob"
             gym80 = conn.execute(
-                f"SELECT model, serie, {img_expr}, muscle_groups, category FROM gym80_devices"
+                f"SELECT model, serie, {img_expr}, {blob_expr}, muscle_groups, category FROM gym80_devices"
             ).fetchall()
             for r in gym80:
                 model = (r["model"] or "").strip()
@@ -71,6 +83,7 @@ def read_sqlite_device_catalog_rows(db_path: Path) -> list[dict[str, Any]]:
                 )
                 st = infer_stype(target)
                 img_value = (r["image_url"] or "").strip() if "image_url" in r.keys() else ""
+                blob_img = _blob_to_data_url(r["image_blob"] if "image_blob" in r.keys() else None)
                 rows.append(
                     {
                         "brand": "gym80",
@@ -83,7 +96,7 @@ def read_sqlite_device_catalog_rows(db_path: Path) -> list[dict[str, Any]]:
                         "target_key": target_to_key(target),
                         "movement_group": movement,
                         "art": None,
-                        "img": img_value or _model_to_local_asset(model),
+                        "img": img_value or blob_img or _model_to_local_asset(model),
                     }
                 )
 
@@ -204,16 +217,16 @@ def sync_catalog_to_supabase(
 
     base = supabase_url.rstrip("/")
     endpoint = f"{base}/rest/v1/ifl_device_catalog"
-    headers = {
+    # Leeren braucht meist Bypass von RLS → Service Role, falls in .env
+    service_key = (os.getenv("SUPABASE_SERVICE_ROLE_KEY") or "").strip()
+    read_headers = {
         "apikey": supabase_anon_key,
         "Authorization": f"Bearer {supabase_anon_key}",
     }
-    # Leeren braucht meist Bypass von RLS → Service Role, falls in .env
-    service_key = (os.getenv("SUPABASE_SERVICE_ROLE_KEY") or "").strip()
-    delete_key = service_key if service_key else supabase_anon_key
-    delete_headers = {
-        "apikey": delete_key,
-        "Authorization": f"Bearer {delete_key}",
+    write_key = service_key if service_key else supabase_anon_key
+    write_headers = {
+        "apikey": write_key,
+        "Authorization": f"Bearer {write_key}",
     }
 
     rows = read_sqlite_device_catalog_rows(db_path)
@@ -221,7 +234,7 @@ def sync_catalog_to_supabase(
         return {"ok": False, "error": "Keine lokalen Katalogdaten gefunden."}
 
     # Table smoke test (read)
-    smoke = requests.get(f"{endpoint}?select=name&limit=1", headers=headers, timeout=30)
+    smoke = requests.get(f"{endpoint}?select=name&limit=1", headers=read_headers, timeout=30)
     if smoke.status_code >= 300:
         return {
             "ok": False,
@@ -231,7 +244,7 @@ def sync_catalog_to_supabase(
     # Tabelle leeren (id ist BIGSERIAL → alle Zeilen; zuverlässiger als nur name)
     delete_res = requests.delete(
         f"{endpoint}?id=not.is.null",
-        headers={**delete_headers, "Prefer": "return=minimal"},
+        headers={**write_headers, "Prefer": "return=minimal"},
         timeout=120,
     )
     if delete_res.status_code >= 300:
@@ -249,7 +262,7 @@ def sync_catalog_to_supabase(
             ins = requests.post(
                 endpoint,
                 headers={
-                    **headers,
+                    **write_headers,
                     "Content-Type": "application/json",
                     "Prefer": "return=minimal",
                 },
@@ -267,7 +280,7 @@ def sync_catalog_to_supabase(
     if not ok_ins:
         requests.delete(
             f"{endpoint}?id=not.is.null",
-            headers={**delete_headers, "Prefer": "return=minimal"},
+            headers={**write_headers, "Prefer": "return=minimal"},
             timeout=120,
         )
         slim = _rows_without_extended_cols(rows)
@@ -281,7 +294,7 @@ def sync_catalog_to_supabase(
 
     verify = requests.get(
         f"{endpoint}?select=id",
-        headers={**headers, "Prefer": "count=exact"},
+        headers={**read_headers, "Prefer": "count=exact"},
         timeout=60,
     )
     if verify.status_code >= 300:
