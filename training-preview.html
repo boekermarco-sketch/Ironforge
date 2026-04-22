@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Letzte inhaltliche Änderung: 2026-04-22 19:10 MEZ (GitHub Preview: Supabase-first Katalogsuche, lokale DB nicht mehr primär) -->
+<!-- Letzte inhaltliche Änderung: 2026-04-22 19:17 MEZ (Katalog öffnet jetzt mit automatischer Supabase-Cloudsuche) -->
 <html lang="de" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -1744,6 +1744,7 @@ let iftttEvents = JSON.parse(localStorage.getItem('ifl_ifttt_events') || '[]');
 let catalogSource = 'local';
 let autoSyncTimer = null;
 let catalogStatusText = '';
+let catalogCloudAutoloadInFlight = false;
 let gym80CategoryMap = null;
 /** Häufig zur Session hinzugefügte Übungen (Gerät/Name) — Pool & Schnellsuche */
 const IFL_FREQ_EX = 'ifl_frequent_exercises_v1';
@@ -1776,7 +1777,7 @@ function togglePoolFavOnly(checked){
   localStorage.setItem('ifl_pool_fav_only', checked ? '1' : '0');
   renderMobilePoolSheet();
 }
-const BUILD_STAMP = '2026-04-22 19:10 MEZ';
+const BUILD_STAMP = '2026-04-22 19:17 MEZ';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -3306,6 +3307,16 @@ async function catalogSearchCloud(reset){
   return catalogSearchDb(reset);
 }
 
+async function triggerCatalogAutoCloudSearch(){
+  if(catalogCloudAutoloadInFlight) return;
+  catalogCloudAutoloadInFlight = true;
+  try{
+    await catalogSearchDb(true);
+  }finally{
+    catalogCloudAutoloadInFlight = false;
+  }
+}
+
 function catalogLoadMore(){
   catalogOffset += CATALOG_PAGE_SIZE;
   renderCatalogResults(false);
@@ -4242,6 +4253,7 @@ function changeTab(tab){
     closeAnalyseForgeFoldForMobile();
   }
   if(tab==='kalender') renderKalender();
+  if(tab==='uebungen') triggerCatalogAutoCloudSearch();
 }
 
 function _setMobileMainActive(view){
