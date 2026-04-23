@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Letzte inhaltliche Änderung: 2026-04-22 19:17 MEZ (Katalog öffnet jetzt mit automatischer Supabase-Cloudsuche) -->
+<!-- Letzte inhaltliche Änderung: 2026-04-23 18:07 MEZ (V1 Block: Undo 5s, Logger-Autosave, Sync-Status pending/ok/error, größere Touch-Targets) -->
 <html lang="de" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -254,9 +254,16 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
 .set-input:focus{border-color:rgba(208,163,90,.4);background:rgba(208,163,90,.04)}
 .set-del{background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;opacity:.5;transition:.15s;text-align:center;line-height:1}
 .set-del:hover{opacity:1}
+.set-del{min-width:36px;min-height:36px;border-radius:8px}
 .set-hdr{display:grid;grid-template-columns:26px 1fr 1fr 26px;gap:7px;margin-bottom:6px}
 .set-hdr span{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--soft);text-align:center;font-weight:800}
 [data-theme="light"] .set-input{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.12)}
+.logger-action-btn{min-height:46px;font-size:14px}
+.sync-status.pending{color:var(--warn)}
+.sync-status.ok{color:var(--teal)}
+.sync-status.error{color:var(--red)}
+#undo-log-bar{display:none;position:fixed;left:12px;right:12px;bottom:112px;z-index:120;background:rgba(16,19,23,.98);border:1px solid rgba(208,163,90,.28);border-radius:14px;padding:10px 12px;align-items:center;justify-content:space-between;gap:10px}
+#undo-log-text{font-size:12px;color:var(--text)}
 
 .prev-wrap{background:rgba(255,255,255,.02);border-radius:9px;padding:9px 11px;margin-bottom:12px}
 .prev-label{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--soft);font-weight:800;margin-bottom:5px}
@@ -1645,10 +1652,14 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
       <summary style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--soft);cursor:pointer">Kommentar (optional)</summary>
       <textarea id="ex-notes" rows="3" placeholder="Optionaler Kommentar zur Übung..." style="margin-top:8px"></textarea>
     </details>
-    <button onclick="finalizeLog(false)" class="btn btn-primary btn-full" style="margin-bottom:7px">Speichern &amp; Timer starten</button>
-    <button onclick="finalizeLog(true)" class="btn btn-teal btn-full" style="margin-bottom:7px">Speichern &amp; nächste Übung</button>
-    <button onclick="closeModal()" class="btn btn-secondary btn-full">Abbrechen</button>
+    <button onclick="finalizeLog(false)" class="btn btn-primary btn-full logger-action-btn" style="margin-bottom:7px">Speichern &amp; Timer starten</button>
+    <button onclick="finalizeLog(true)" class="btn btn-teal btn-full logger-action-btn" style="margin-bottom:7px">Speichern &amp; nächste Übung</button>
+    <button onclick="closeModal()" class="btn btn-secondary btn-full logger-action-btn">Abbrechen</button>
   </div>
+</div>
+<div id="undo-log-bar">
+  <div id="undo-log-text">Satz gespeichert</div>
+  <button class="btn btn-secondary btn-sm" onclick="undoLastLog()">Rückgängig</button>
 </div>
 
 <script>
@@ -1746,6 +1757,10 @@ let autoSyncTimer = null;
 let catalogStatusText = '';
 let catalogCloudAutoloadInFlight = false;
 let gym80CategoryMap = null;
+let lastLogUndoPayload = null;
+let lastLogUndoTimer = null;
+let syncStateTone = 'ok';
+const LOG_DRAFTS_KEY = 'ifl_logger_drafts_v1';
 /** Häufig zur Session hinzugefügte Übungen (Gerät/Name) — Pool & Schnellsuche */
 const IFL_FREQ_EX = 'ifl_frequent_exercises_v1';
 const IFL_FREQ_EX_MAX = 24;
@@ -1777,7 +1792,7 @@ function togglePoolFavOnly(checked){
   localStorage.setItem('ifl_pool_fav_only', checked ? '1' : '0');
   renderMobilePoolSheet();
 }
-const BUILD_STAMP = '2026-04-22 19:17 MEZ';
+const BUILD_STAMP = '2026-04-23 18:07 MEZ';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -2310,6 +2325,7 @@ function attrUrl(s){
 let nextId = Math.max(...db.map(x=>x.id)) + 1;
 function saveDB(){
   localStorage.setItem('ifl_training_db', JSON.stringify(db));
+  markSyncPending();
   scheduleAutoSync();
 }
 
@@ -2317,6 +2333,7 @@ function saveDB(){
 function loadSessionLog(){ return JSON.parse(localStorage.getItem('ifl_session_log')||'[]'); }
 function saveSessionLog(){
   localStorage.setItem('ifl_session_log', JSON.stringify(sessionLog));
+  markSyncPending();
   scheduleAutoSync();
 }
 let sessionLog = loadSessionLog();
@@ -4089,11 +4106,15 @@ function openLogger(ex){
   } else pw.style.display='none';
   const rows = document.getElementById('set-rows');
   rows.innerHTML='';
-  (prev.length?prev:[{w:'',r:''}]).forEach(s=>addSetRow(s.w||'',s.r||''));
+  const draft = getLogDraftForActive();
+  const seedSets = (draft?.sets && draft.sets.length) ? draft.sets : (prev.length ? prev : [{w:'',r:''}]);
+  seedSets.forEach(s=>addSetRow(s.w||'',s.r||''));
   const notesInput = document.getElementById('ex-notes');
   if(notesInput){
-    notesInput.value = ex.notes?.[currentStudio] || '';
+    notesInput.value = draft?.notes ?? (ex.notes?.[currentStudio] || '');
+    notesInput.oninput = () => saveActiveLogDraft();
   }
+  renderLoggerAutosaveState();
   syncModalTimer();
   document.getElementById('logger-modal').classList.add('open');
 }
@@ -4104,8 +4125,9 @@ function addSetRow(w='',r=''){
   div.innerHTML=`<span class="set-num">S${i}</span>
     <input class="set-input w-val" type="number" value="${w}" placeholder="kg" inputmode="decimal">
     <input class="set-input r-val" type="number" value="${r}" placeholder="Wdh" inputmode="numeric">
-    <button class="set-del" onclick="this.parentElement.remove();renumberRows()">×</button>`;
+    <button class="set-del" onclick="this.parentElement.remove();renumberRows();saveActiveLogDraft()">×</button>`;
   rows.appendChild(div);
+  div.querySelectorAll('.set-input').forEach(inp => inp.addEventListener('input', saveActiveLogDraft));
   // Auto-focus first empty kg field
   if(!w) setTimeout(()=>div.querySelector('.w-val').focus(),50);
 }
@@ -4121,6 +4143,10 @@ function finalizeLog(goNext){
   const sets=[]; ws.forEach((v,i)=>{ if(v.value) sets.push({w:+v.value,r:+rs[i].value||0}); });
   if(sets.length && activeEx){
     const loggedId = activeEx.id;
+    const beforeHistory = [...(activeEx.history[currentStudio]||[])];
+    const beforePrev = [...(activeEx.prev[currentStudio]||[])];
+    const beforeNotes = activeEx.notes?.[currentStudio] || '';
+    const beforeLoggedDate = activeEx.loggedDate?.[currentStudio] || '';
     activeEx.prev[currentStudio]=[...(activeEx.history[currentStudio]||[])];
     activeEx.history[currentStudio]=sets;
     // Datum des letzten Logs merken (für Focus-Bar)
@@ -4129,6 +4155,15 @@ function finalizeLog(goNext){
     const notes = (document.getElementById('ex-notes')?.value || '').trim();
     activeEx.notes = activeEx.notes || {};
     activeEx.notes[currentStudio] = notes;
+    clearActiveLogDraft();
+    queueLogUndo({
+      id: activeEx.id,
+      studio: currentStudio,
+      beforeHistory,
+      beforePrev,
+      beforeNotes,
+      beforeLoggedDate
+    });
     saveDB(); startTimer(); closeModal(); render();
     if(goNext){
       openNextExerciseAfter(loggedId);
@@ -4145,6 +4180,115 @@ function openNextExerciseAfter(id){
 }
 function closeModal(){ document.getElementById('logger-modal').classList.remove('open'); }
 function closeModalOutside(e){ if(e.target.id==='logger-modal') closeModal(); }
+
+function loadLogDrafts(){
+  try{ return JSON.parse(localStorage.getItem(LOG_DRAFTS_KEY) || '{}'); }
+  catch{ return {}; }
+}
+
+function saveLogDrafts(map){
+  localStorage.setItem(LOG_DRAFTS_KEY, JSON.stringify(map));
+}
+
+function activeLogDraftKey(){
+  if(!activeEx?.id) return '';
+  return `${currentStudio}::${activeEx.id}`;
+}
+
+function getLogDraftForActive(){
+  const key = activeLogDraftKey();
+  if(!key) return null;
+  return loadLogDrafts()[key] || null;
+}
+
+function collectModalSets(){
+  const ws=document.querySelectorAll('#set-rows .w-val');
+  const rs=document.querySelectorAll('#set-rows .r-val');
+  const sets = [];
+  ws.forEach((wEl,i)=>{
+    const w = String(wEl.value || '').trim();
+    const r = String(rs[i]?.value || '').trim();
+    if(!w && !r) return;
+    sets.push({ w, r });
+  });
+  return sets;
+}
+
+function saveActiveLogDraft(){
+  if(!activeEx?.id) return;
+  const key = activeLogDraftKey();
+  if(!key) return;
+  const notes = (document.getElementById('ex-notes')?.value || '').trim();
+  const sets = collectModalSets();
+  const map = loadLogDrafts();
+  map[key] = { sets, notes, ts: Date.now() };
+  saveLogDrafts(map);
+  renderLoggerAutosaveState();
+}
+
+function clearActiveLogDraft(){
+  const key = activeLogDraftKey();
+  if(!key) return;
+  const map = loadLogDrafts();
+  if(map[key]){
+    delete map[key];
+    saveLogDrafts(map);
+  }
+  renderLoggerAutosaveState();
+}
+
+function renderLoggerAutosaveState(){
+  if(!activeEx) return;
+  const key = activeLogDraftKey();
+  const draft = key ? (loadLogDrafts()[key] || null) : null;
+  const info = document.getElementById('modal-info');
+  if(!info) return;
+  const base = [activeEx.cat, activeEx.group].filter(Boolean).join(' · ');
+  const artInfo = activeEx.art ? ` · ${activeEx.brand||'gym80'} ${activeEx.art}` : '';
+  const autosave = draft?.ts
+    ? ` · Autosave ${new Date(draft.ts).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}`
+    : '';
+  info.textContent = `${base}${artInfo}${autosave}`;
+}
+
+function queueLogUndo(payload){
+  lastLogUndoPayload = payload;
+  if(lastLogUndoTimer) clearTimeout(lastLogUndoTimer);
+  const bar = document.getElementById('undo-log-bar');
+  const text = document.getElementById('undo-log-text');
+  if(!bar || !text) return;
+  text.textContent = 'Satz gespeichert · 5s Rückgängig möglich';
+  bar.style.display = 'flex';
+  lastLogUndoTimer = setTimeout(()=>dismissLogUndo(), 5000);
+}
+
+function dismissLogUndo(){
+  const bar = document.getElementById('undo-log-bar');
+  if(bar) bar.style.display = 'none';
+  if(lastLogUndoTimer) clearTimeout(lastLogUndoTimer);
+  lastLogUndoTimer = null;
+  lastLogUndoPayload = null;
+}
+
+function undoLastLog(){
+  if(!lastLogUndoPayload) return;
+  const p = lastLogUndoPayload;
+  const ex = db.find(x=>x.id===p.id);
+  if(!ex) return dismissLogUndo();
+  ex.history = ex.history || {};
+  ex.prev = ex.prev || {};
+  ex.notes = ex.notes || {};
+  ex.loggedDate = ex.loggedDate || {};
+  ex.history[p.studio] = [...p.beforeHistory];
+  ex.prev[p.studio] = [...p.beforePrev];
+  ex.notes[p.studio] = p.beforeNotes || '';
+  if(p.beforeLoggedDate) ex.loggedDate[p.studio] = p.beforeLoggedDate;
+  else delete ex.loggedDate[p.studio];
+  saveDB();
+  render();
+  showToast('Letzten Satz-Log rückgängig gemacht', 'warn', 1800);
+  dismissLogUndo();
+}
 
 // ═══ TIMER ═══════════════════════════════════════════════════
 function startTimer(){
@@ -4442,7 +4586,13 @@ function updateSyncStatus(text){
   const cfg = getSyncConfig();
   const el = document.getElementById('sync-status');
   if(!el) return;
-  if(text){ el.textContent = text; return; }
+  if(text){
+    el.textContent = text;
+    el.classList.remove('pending','ok','error');
+    el.classList.add(syncStateTone);
+    if(typeof _syncMStudioOverlay === 'function') _syncMStudioOverlay();
+    return;
+  }
   const raw = JSON.parse(localStorage.getItem('ifl_sync_config') || '{}');
   const hasSavedCreds = !!(raw.supabaseUrl && raw.anonKey);
   el.textContent = (cfg.supabaseUrl && cfg.anonKey)
@@ -4450,6 +4600,9 @@ function updateSyncStatus(text){
       ? `Sync aktiv · ${cfg.profile || 'Profil'} · ${cfg.supabaseUrl}`
       : `Katalog online (öffentliche Defaults) · Sync-Setup für Profil/Cloud: optional · ${cfg.supabaseUrl}`)
     : 'Sync: noch nicht eingerichtet';
+  el.classList.remove('pending','ok','error');
+  el.classList.add(syncStateTone);
+  if(typeof _syncMStudioOverlay === 'function') _syncMStudioOverlay();
 }
 
 function openSetupWizard(force){
@@ -4722,6 +4875,7 @@ function scheduleAutoSync(){
   const cfg = getSyncConfig();
   if(!cfg.supabaseUrl || !cfg.anonKey) return;
   if(!canRunCloudSync()) return;
+  markSyncPending();
   clearTimeout(autoSyncTimer);
   autoSyncTimer = setTimeout(()=>{ syncToCloud({ silent: true }); }, 1200);
 }
@@ -4734,12 +4888,15 @@ async function syncToCloud(options = {}){
     if(!silent) openSetupWizard(true);
     return;
   }
+  syncStateTone = 'pending';
   updateSyncStatus(silent ? 'Sync: automatische Sicherung...' : 'Sync: lade in Cloud hoch...');
   try{
     if(cfg.syncMode === 'structured_v1') await syncToCloudStructured(cfg);
     else await syncToCloudState(cfg);
+    syncStateTone = 'ok';
     updateSyncStatus(silent ? 'Sync: automatische Sicherung erfolgreich' : 'Sync: Cloud-Upload erfolgreich');
   }catch(err){
+    syncStateTone = 'error';
     updateSyncStatus('Sync-Fehler beim Upload');
     if(!silent){
       alert(`Upload fehlgeschlagen: ${err.message}\nBitte Tabellen/Policies für den gewählten Sync-Modus prüfen.`);
@@ -4819,6 +4976,7 @@ async function syncFromCloud(){
   const cfg = getSyncConfig();
   if(!cfg.supabaseUrl || !cfg.anonKey){ openSetupWizard(true); return; }
   if(!canRunCloudSync()){ openSetupWizard(true); return; }
+  syncStateTone = 'pending';
   updateSyncStatus('Sync: lade Cloud-Daten...');
   try{
     const payload = cfg.syncMode === 'structured_v1'
@@ -4827,11 +4985,18 @@ async function syncFromCloud(){
     if(!confirm('Cloud-Daten laden? Lokale Daten werden ersetzt.')) return;
     applyAppState(payload);
     render();
+    syncStateTone = 'ok';
     updateSyncStatus('Sync: Cloud-Daten geladen');
   }catch(err){
+    syncStateTone = 'error';
     updateSyncStatus('Sync-Fehler beim Laden');
     alert(`Download fehlgeschlagen: ${err.message}`);
   }
+}
+
+function markSyncPending(){
+  syncStateTone = 'pending';
+  updateSyncStatus('Sync: lokale Änderungen ausstehend...');
 }
 
 // ════════════════════════════════════════════════════════════
@@ -5233,7 +5398,13 @@ function _syncMStudioOverlay(){
   if(sel) sel.innerHTML = studios.map(s=>`<option value="${s}"${s===currentStudio?' selected':''}>${s}</option>`).join('');
   const syncEl = document.getElementById('m-sync-status');
   const mainSync = document.getElementById('sync-status');
-  if(syncEl && mainSync) syncEl.textContent = mainSync.textContent;
+  if(syncEl && mainSync){
+    syncEl.textContent = mainSync.textContent;
+    syncEl.classList.remove('pending','ok','error');
+    if(mainSync.classList.contains('pending')) syncEl.classList.add('pending');
+    else if(mainSync.classList.contains('error')) syncEl.classList.add('error');
+    else syncEl.classList.add('ok');
+  }
   // Stats
   const setEl = (id,val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
   setEl('m-stat-sessions', document.getElementById('stat-sessions')?.textContent || '–');
