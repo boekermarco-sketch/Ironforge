@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Letzte inhaltliche Änderung: 2026-04-24 14:15 MEZ (V1 Block 3: Studio Context Header, Plan Day Card, Session Progress Rail, kein Pflicht-Setup-Modal im Session-Flow) -->
+<!-- Letzte inhaltliche Änderung: 2026-04-22 19:05 MEZ (Mobile Block: DB-Suche Bottom Sheet, Filter-Chips, Swap-Flow) -->
 <html lang="de" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -1567,6 +1567,7 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
     <button onclick="closeMobilePool()" class="btn btn-secondary btn-sm" style="padding:3px 10px">✕</button>
   </div>
   <input type="search" id="m-pool-search" class="m-pool-search" placeholder="Übungen &amp; Gerätekatalog (Name, Muskel, Hersteller)…" autocomplete="off" oninput="renderMobilePoolSheet()">
+  <div id="m-catalog-filter-chips" class="cat-filters" style="margin-bottom:8px"></div>
   <div class="cat-filters" id="m-pool-cat-filters"></div>
   <div id="m-pool-sheet-list" style="overflow-y:auto;max-height:55dvh;padding-bottom:8px"></div>
 </div>
@@ -1666,6 +1667,7 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
     </details>
     <button onclick="finalizeLog(false)" class="btn btn-primary btn-full logger-action-btn" style="margin-bottom:7px">Speichern &amp; Timer starten</button>
     <button onclick="finalizeLog(true)" class="btn btn-teal btn-full logger-action-btn" style="margin-bottom:7px">Speichern &amp; nächste Übung</button>
+    <button onclick="openMobilePoolForSwap(activeEx?.id)" class="btn btn-secondary btn-full logger-action-btn" style="margin-bottom:7px">Übung aus DB ersetzen</button>
     <button onclick="skipCurrentExerciseFromLogger()" class="btn btn-secondary btn-full logger-action-btn" style="margin-bottom:7px">Übung überspringen (pausieren)</button>
     <button onclick="closeModal()" class="btn btn-secondary btn-full logger-action-btn">Abbrechen</button>
   </div>
@@ -1805,7 +1807,7 @@ function togglePoolFavOnly(checked){
   localStorage.setItem('ifl_pool_fav_only', checked ? '1' : '0');
   renderMobilePoolSheet();
 }
-const BUILD_STAMP = '2026-04-24 14:15 MEZ';
+const BUILD_STAMP = '2026-04-22 19:05 MEZ';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -4146,6 +4148,26 @@ function mAddSessionCatalogIdx(i){
   renderMobileSession();
 }
 
+function mSwapSessionCatalogIdx(i){
+  const row = (window.__iflCatHits || [])[i];
+  if(!row || !mobileSwapTargetId) return;
+  const ex = db.find(x=>x.id===mobileSwapTargetId);
+  if(!ex) return;
+  const name = String(row.name || '').trim();
+  if(!name) return;
+  ex.name = name;
+  ex.brand = row.brand || null;
+  ex.art = row.art || null;
+  ex.img = row.img || null;
+  ex.cat = row.cat || ex.cat || 'Brust';
+  ex.group = row.group || ex.group || null;
+  showToast(`✓ Übung ersetzt: ${name}`, 'ok');
+  saveDB();
+  render();
+  renderMobileSession();
+  closeMobilePool();
+}
+
 function resetDB(){
   if(!confirm('Alle Trainingseinträge löschen und auf die gym80-Geräteliste zurücksetzen?')) return;
   localStorage.removeItem('ifl_training_db');
@@ -5284,6 +5306,10 @@ function renderMobileSession(){
         ${ex.brand||ex.art ? `<div style="font-size:10px;color:var(--soft);font-family:'JetBrains Mono',monospace">${[ex.brand,ex.art].filter(Boolean).join(' · ')}</div>` : ''}
       </div>
     </div>
+    <div style="display:flex;gap:8px;margin:2px 0 4px">
+      <button type="button" class="btn btn-secondary btn-sm" style="flex:1" onclick="openMobilePoolForSwap(${ex.id})">Übung tauschen</button>
+      <button type="button" class="btn btn-secondary btn-sm" style="flex:1" onclick="openMobilePool()">Pool/Katalog</button>
+    </div>
     <div>
       <div class="m-ex-hist-label">Letztes Mal</div>
       <div class="m-ex-hist-sets">${histHTML}</div>
@@ -5312,6 +5338,8 @@ function mOpenLogger(){
 // ── Pool Bottom Sheet ─────────────────────────────────────
 
 let mobilePoolCat = 'Alle';
+let mobileCatalogFilters = { brand: 'all', target: 'all', sType: 'all' };
+let mobileSwapTargetId = null;
 
 function openMobilePool(){
   const backdrop = document.getElementById('m-pool-backdrop');
@@ -5320,7 +5348,9 @@ function openMobilePool(){
   if(backdrop) backdrop.classList.add('open');
   if(sheet)    sheet.classList.add('open');
   if(tabLabel) tabLabel.textContent = (currentTab||'Push').toUpperCase();
+  mobileSwapTargetId = null;
   renderMobilePoolCatFilters();
+  renderMobileCatalogFilterChips();
   renderMobilePoolSheet();
   if(!deviceCatalogSnapRows.length){
     refreshDeviceCatalogImageCache().then(()=>{ renderMobilePoolSheet(); }).catch(()=>{});
@@ -5329,9 +5359,27 @@ function openMobilePool(){
   if(inp) setTimeout(()=>{ try{ inp.focus(); inp.select(); }catch(_){} }, 140);
 }
 
+function openMobilePoolForSwap(exId){
+  if(!exId) return openMobilePool();
+  mobileSwapTargetId = exId;
+  const ex = db.find(x=>x.id===exId);
+  const qInput = document.getElementById('m-pool-search');
+  if(qInput && ex?.name) qInput.value = ex.name;
+  const backdrop = document.getElementById('m-pool-backdrop');
+  const sheet    = document.getElementById('m-pool-sheet');
+  const tabLabel = document.getElementById('m-pool-sheet-tab');
+  if(backdrop) backdrop.classList.add('open');
+  if(sheet) sheet.classList.add('open');
+  if(tabLabel) tabLabel.textContent = (currentTab||'Push').toUpperCase();
+  renderMobilePoolCatFilters();
+  renderMobileCatalogFilterChips();
+  renderMobilePoolSheet();
+}
+
 function closeMobilePool(){
   document.getElementById('m-pool-backdrop')?.classList.remove('open');
   document.getElementById('m-pool-sheet')?.classList.remove('open');
+  mobileSwapTargetId = null;
 }
 
 function renderMobilePoolCatFilters(){
@@ -5344,6 +5392,50 @@ function renderMobilePoolCatFilters(){
 function mFilterPoolCat(cat){
   mobilePoolCat = cat;
   renderMobilePoolCatFilters();
+  renderMobilePoolSheet();
+}
+
+function renderMobileCatalogFilterChips(){
+  const wrap = document.getElementById('m-catalog-filter-chips');
+  if(!wrap) return;
+  const b = mobileCatalogFilters.brand;
+  const t = mobileCatalogFilters.target;
+  const s = mobileCatalogFilters.sType;
+  const chip = (label, active, onclick) => `<button class="pill${active?' active':''}" onclick="${onclick}">${label}</button>`;
+  wrap.innerHTML =
+    chip(`Marke: ${b==='all'?'Alle':b}`, b!=='all', "cycleMobileCatalogBrand()") +
+    chip(`Ziel: ${t==='all'?'Alle':t}`, t!=='all', "cycleMobileCatalogTarget()") +
+    chip(`Typ: ${s==='all'?'Alle':s}`, s!=='all', "cycleMobileCatalogSType()") +
+    chip("Filter reset", false, "resetMobileCatalogFilters()");
+}
+
+function cycleMobileCatalogBrand(){
+  const order = ['all','gym80','matrix','egym','freihantel'];
+  const idx = order.indexOf(mobileCatalogFilters.brand);
+  mobileCatalogFilters.brand = order[(idx + 1) % order.length];
+  renderMobileCatalogFilterChips();
+  renderMobilePoolSheet();
+}
+
+function cycleMobileCatalogTarget(){
+  const order = ['all','brust','rucken','beine','glutes','schulter','arme','core'];
+  const idx = order.indexOf(mobileCatalogFilters.target);
+  mobileCatalogFilters.target = order[(idx + 1) % order.length];
+  renderMobileCatalogFilterChips();
+  renderMobilePoolSheet();
+}
+
+function cycleMobileCatalogSType(){
+  const order = ['all','push','pull','legs','cardio','free'];
+  const idx = order.indexOf(mobileCatalogFilters.sType);
+  mobileCatalogFilters.sType = order[(idx + 1) % order.length];
+  renderMobileCatalogFilterChips();
+  renderMobilePoolSheet();
+}
+
+function resetMobileCatalogFilters(){
+  mobileCatalogFilters = { brand: 'all', target: 'all', sType: 'all' };
+  renderMobileCatalogFilterChips();
   renderMobilePoolSheet();
 }
 
@@ -5383,6 +5475,33 @@ function mPoolThumbHTML(ex){
   return cell(
     `<img src="${attrUrl(u)}" class="m-pool-thumb" alt="" loading="lazy" draggable="false" onerror="this.onerror=null;this.src='${attrUrl(fb)}'">`
   );
+}
+
+function mobileCatalogHasActiveFilter(){
+  return mobileCatalogFilters.brand !== 'all' || mobileCatalogFilters.target !== 'all' || mobileCatalogFilters.sType !== 'all';
+}
+
+function rowMatchesMobileCatalogFilters(row){
+  if(!row) return false;
+  const brandF = mobileCatalogFilters.brand;
+  const targetF = mobileCatalogFilters.target;
+  const sTypeF = mobileCatalogFilters.sType;
+  const b = normalizeSearchText(String(row.brand || ''));
+  const tBlob = normalizeSearchText([row.target, row.targetKey, row.group, row.cat].filter(Boolean).join(' '));
+  const sBlob = normalizeSearchText([row.sType, row.sessionType, row.type].filter(Boolean).join(' '));
+  if(brandF !== 'all' && !catalogTokenMatchesNormalizedBlob(b, brandF)) return false;
+  if(targetF !== 'all' && !catalogTokenMatchesNormalizedBlob(tBlob, targetF)) return false;
+  if(sTypeF !== 'all' && !catalogTokenMatchesNormalizedBlob(sBlob, sTypeF)) return false;
+  return true;
+}
+
+function getMobileCatalogHits(qPoolRaw){
+  const qActive = !!String(qPoolRaw || '').trim();
+  if(!deviceCatalogSnapRows.length) return [];
+  let rows = qActive ? deviceCatalogMatchesQuery(qPoolRaw, 800) : deviceCatalogSnapRows.slice(0, 800);
+  rows = rows.filter(rowMatchesMobileCatalogFilters);
+  rows = rankCatalogItemsByUsage(rows);
+  return rows.slice(0, 80);
 }
 
 function renderMobilePoolSheet(){
@@ -5463,15 +5582,20 @@ function renderMobilePoolSheet(){
   const rest = items.filter(ex => !freqIds.has(ex.id));
 
   let catalogPoolHtml = '';
-  if(qPoolActive){
-    const rawCat = deviceCatalogMatchesQuery(qPoolRaw, 800);
+  const showCatalogBlock = qPoolActive || mobileCatalogHasActiveFilter() || !!mobileSwapTargetId;
+  if(showCatalogBlock){
+    const rawCat = getMobileCatalogHits(qPoolRaw);
     const catHits = rawCat.filter(r => String(r.name || '').trim());
     window.__iflCatHits = catHits;
     if(catHits.length){
-      catalogPoolHtml = `<div class="m-tools-h" style="margin:14px 0 8px">Gerätekatalog (Supabase, noch nicht als Übung)</div>` +
+      catalogPoolHtml = `<div class="m-tools-h" style="margin:14px 0 8px">Cloud/DB Suche (Supabase)</div>` +
         catHits.map((row, i)=>{
           const meta = [row.brand, row.cat, row.group].filter(Boolean).join(' · ') || '–';
           const ph = { name: row.name, brand: row.brand, art: row.art, img: row.img, cat: row.cat || 'Brust' };
+          const actionButtons = mobileSwapTargetId
+            ? `<button type="button" class="btn btn-primary btn-sm" style="padding:6px 8px;font-size:10px;white-space:nowrap" onclick="mSwapSessionCatalogIdx(${i})">Swap</button>`
+            : `<button type="button" class="btn btn-teal btn-sm" style="padding:6px 8px;font-size:10px;white-space:nowrap" onclick="mAddSessionCatalogIdx(${i})">Session</button>
+               <button type="button" class="btn btn-secondary btn-sm" style="padding:6px 8px;font-size:10px;white-space:nowrap" onclick="mAddPoolCatalogIdx(${i})">+ Pool</button>`;
           return `<div class="m-pool-item m-pool-item--catalog">
             ${mPoolThumbHTML(ph)}
             <div class="m-pool-item-text">
@@ -5479,8 +5603,7 @@ function renderMobilePoolSheet(){
               <div class="m-pool-item-meta">${mEsc(meta)}</div>
             </div>
             <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;align-items:stretch">
-              <button type="button" class="btn btn-teal btn-sm" style="padding:6px 8px;font-size:10px;white-space:nowrap" onclick="mAddSessionCatalogIdx(${i})">Session</button>
-              <button type="button" class="btn btn-secondary btn-sm" style="padding:6px 8px;font-size:10px;white-space:nowrap" onclick="mAddPoolCatalogIdx(${i})">+ Pool</button>
+              ${actionButtons}
             </div>
           </div>`;
         }).join('');
