@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Letzte inhaltliche Änderung: 2026-04-22 19:05 MEZ (Mobile Block: DB-Suche Bottom Sheet, Filter-Chips, Swap-Flow) -->
+<!-- Letzte inhaltliche Änderung: 2026-04-22 19:24 MEZ (Mobile Block: 2-Tap Start, One-Tap Repeat, Ghost-Satz-Hints) -->
 <html lang="de" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -259,8 +259,10 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
 .set-rows{max-height:300px;overflow-y:auto;margin-bottom:10px}
 .set-row{display:grid;grid-template-columns:26px 1fr 1fr 26px;gap:7px;margin-bottom:8px;align-items:center}
 .set-num{font-size:10px;font-weight:800;color:var(--soft);text-align:center}
+.set-cell{display:flex;flex-direction:column;gap:3px}
 .set-input{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:9px;color:var(--text);padding:10px 6px;font-family:'JetBrains Mono',monospace;font-size:16px;text-align:center;outline:none;transition:.2s;width:100%}
 .set-input:focus{border-color:rgba(208,163,90,.4);background:rgba(208,163,90,.04)}
+.set-ghost{font-size:9px;line-height:1.2;text-align:center;color:var(--soft);min-height:12px}
 .set-del{background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;opacity:.5;transition:.15s;text-align:center;line-height:1}
 .set-del:hover{opacity:1}
 .set-del{min-width:36px;min-height:36px;border-radius:8px}
@@ -1487,7 +1489,7 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
   </button>
   <div id="m-header-title" class="m-header-title">Iron Forge</div>
   <div id="m-header-right" class="m-header-right">
-    <span id="m-header-studio" class="m-header-studio"></span>
+    <span id="m-header-studio" class="m-header-studio" onclick="openMobileStudioOverlay()" style="cursor:pointer" title="Studio wählen"></span>
   </div>
 </div>
 
@@ -1510,8 +1512,11 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
     <button class="m-subtab"        id="mst-cardio" onclick="mChangeTab('cardio')">Cardio</button>
   </div>
   <div class="m-session-actions">
+    <button type="button" class="btn btn-secondary btn-sm" style="padding:10px" onclick="openMobileStudioOverlay()">Studio wählen</button>
+    <button type="button" class="btn btn-teal btn-sm" style="padding:10px" onclick="startTrainingFromMobile()">Training starten</button>
     <button type="button" class="btn btn-primary btn-sm" style="padding:10px" onclick="openMobilePool()">Pool &amp; Katalog</button>
   </div>
+  <div id="m-start-flow-hint" class="m-tools-muted" style="text-align:center;margin:-2px 0 4px">Start-Flow: 1) Studio wählen 2) Training starten</div>
   <div class="m-tools-muted" style="text-align:center;margin:-2px 0 4px">Rand wischen: Training ↔ Rechner · Subtabs: Session-Typ</div>
 
   <!-- Exercise focus card (only this block scrolls) -->
@@ -1555,6 +1560,7 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
     <button onclick="syncFromCloud()" class="btn btn-secondary btn-sm" style="flex:1">↓ Cloud Laden</button>
   </div>
   <div id="m-sync-status" class="sync-status" style="margin-top:8px;text-align:center"></div>
+    <button onclick="closeMobileStudioOverlay()" class="btn btn-primary btn-sm" style="margin-top:8px;width:100%">Studio übernehmen &amp; zurück</button>
 </div>
 </div><!-- /ifl-shell-root -->
 
@@ -1659,6 +1665,7 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
     <div class="set-hdr">
       <span></span><span>kg</span><span>Wdh</span><span></span>
     </div>
+    <button onclick="applyOneTapRepeat()" class="btn btn-secondary btn-full btn-sm" style="margin-bottom:8px">Letzten Satz übernehmen</button>
     <div class="set-rows" id="set-rows"></div>
     <button onclick="addSetRow()" class="btn btn-secondary btn-full btn-sm" style="margin-bottom:12px">+ Satz</button>
     <details style="margin-bottom:10px">
@@ -1754,6 +1761,7 @@ let dropTargetId = null;
 let timerInterval = null;
 let timerSec = 0;
 let activeEx = null;
+let activePrevSets = [];
 let timerRunning = false;
 let longPressTimer = null;
 let suppressNextClick = false;
@@ -1807,7 +1815,7 @@ function togglePoolFavOnly(checked){
   localStorage.setItem('ifl_pool_fav_only', checked ? '1' : '0');
   renderMobilePoolSheet();
 }
-const BUILD_STAMP = '2026-04-22 19:05 MEZ';
+const BUILD_STAMP = '2026-04-22 19:24 MEZ';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -4222,6 +4230,7 @@ function openLogger(ex){
     modalImg.style.display = 'block';
   }
   const prev = ex.history[currentStudio]||[];
+  activePrevSets = [...prev];
   const pw = document.getElementById('prev-wrap');
   const pr = document.getElementById('prev-row');
   if(prev.length){
@@ -4247,10 +4256,19 @@ function openLogger(ex){
 
 function addSetRow(w='',r=''){
   const rows=document.getElementById('set-rows'), i=rows.children.length+1;
+  const prevSet = activePrevSets[i-1] || activePrevSets[activePrevSets.length-1] || null;
+  const ghostW = prevSet?.w ? `letztes: ${prevSet.w}kg` : '';
+  const ghostR = prevSet?.r ? `letztes: ${prevSet.r} Wdh` : '';
   const div=document.createElement('div'); div.className='set-row';
   div.innerHTML=`<span class="set-num">S${i}</span>
-    <input class="set-input w-val" type="number" value="${w}" placeholder="kg" inputmode="decimal">
-    <input class="set-input r-val" type="number" value="${r}" placeholder="Wdh" inputmode="numeric">
+    <div class="set-cell">
+      <input class="set-input w-val" type="number" value="${w}" placeholder="kg" inputmode="decimal">
+      <div class="set-ghost">${ghostW}</div>
+    </div>
+    <div class="set-cell">
+      <input class="set-input r-val" type="number" value="${r}" placeholder="Wdh" inputmode="numeric">
+      <div class="set-ghost">${ghostR}</div>
+    </div>
     <button class="set-del" onclick="this.parentElement.remove();renumberRows();saveActiveLogDraft()">×</button>`;
   rows.appendChild(div);
   div.querySelectorAll('.set-input').forEach(inp => inp.addEventListener('input', saveActiveLogDraft));
@@ -4262,6 +4280,42 @@ function renumberRows(){
   document.querySelectorAll('#set-rows .set-row').forEach((r,i)=>{
     const n=r.querySelector('.set-num'); if(n) n.textContent=`S${i+1}`;
   });
+}
+
+function applyOneTapRepeat(){
+  if(!activeEx || !activePrevSets.length){
+    showToast('Kein letzter Satz verfügbar', 'warn');
+    return;
+  }
+  const rows = [...document.querySelectorAll('#set-rows .set-row')];
+  if(!rows.length){
+    activePrevSets.forEach(s=>addSetRow(s.w||'', s.r||''));
+    saveActiveLogDraft();
+    showToast('Letzte Sätze übernommen', 'ok');
+    return;
+  }
+  const firstEmpty = rows.find((row)=>{
+    const w = row.querySelector('.w-val')?.value;
+    const r = row.querySelector('.r-val')?.value;
+    return !w && !r;
+  });
+  if(firstEmpty){
+    const idx = rows.indexOf(firstEmpty);
+    const prev = activePrevSets[idx] || activePrevSets[activePrevSets.length-1];
+    if(prev){
+      const wEl = firstEmpty.querySelector('.w-val');
+      const rEl = firstEmpty.querySelector('.r-val');
+      if(wEl) wEl.value = prev.w ?? '';
+      if(rEl) rEl.value = prev.r ?? '';
+      saveActiveLogDraft();
+      showToast('Satz übernommen', 'ok');
+      return;
+    }
+  }
+  const prev = activePrevSets[activePrevSets.length-1];
+  addSetRow(prev.w||'', prev.r||'');
+  saveActiveLogDraft();
+  showToast('Letzten Satz ergänzt', 'ok');
 }
 
 function finalizeLog(goNext){
@@ -4315,7 +4369,11 @@ function openNextExerciseAfter(id){
   const next = idx >= 0 && idx < actives.length - 1 ? actives[idx+1] : actives[0];
   if(next) setTimeout(()=>openLogger(next), 120);
 }
-function closeModal(){ document.getElementById('logger-modal').classList.remove('open'); }
+function closeModal(){
+  document.getElementById('logger-modal').classList.remove('open');
+  activeEx = null;
+  activePrevSets = [];
+}
 function closeModalOutside(e){ if(e.target.id==='logger-modal') closeModal(); }
 
 function loadLogDrafts(){
@@ -5667,6 +5725,32 @@ function _syncMStudioOverlay(){
   setEl('m-stat-prs',      document.getElementById('stat-prs')?.textContent      || '–');
 }
 
+function openMobileStudioOverlay(){
+  const ov = document.getElementById('m-studio-overlay');
+  if(!ov) return;
+  _syncMStudioOverlay();
+  ov.classList.add('active');
+}
+
+function closeMobileStudioOverlay(){
+  document.getElementById('m-studio-overlay')?.classList.remove('active');
+}
+
+function startTrainingFromMobile(){
+  if(!currentStudio){
+    openMobileStudioOverlay();
+    showToast('Bitte zuerst Studio wählen', 'warn');
+    return;
+  }
+  closeMobileStudioOverlay();
+  if(!TRAIN_TABS.includes(currentTab)) changeTab('push');
+  switchMobileView('session');
+  renderMobileSession();
+  const hint = document.getElementById('m-start-flow-hint');
+  if(hint) hint.textContent = `Aktiv: ${currentStudio} · ${SESSION_LABELS[currentTab] || currentTab}`;
+  showToast(`Training gestartet (${currentStudio})`, 'ok');
+}
+
 function mStudioChange(){
   const sel = document.getElementById('m-studio-select');
   if(sel){
@@ -5675,6 +5759,8 @@ function mStudioChange(){
     document.getElementById('studio-select').value = currentStudio;
     render();
     _syncMStudioOverlay();
+    const hint = document.getElementById('m-start-flow-hint');
+    if(hint) hint.textContent = `Studio gesetzt: ${currentStudio} · jetzt "Training starten"`;
   }
 }
 
