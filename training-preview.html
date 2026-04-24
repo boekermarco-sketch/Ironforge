@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- Letzte inhaltliche Änderung: 2026-04-22 20:36 MEZ (Offline Queue fuer Session-Logs + Auto-Retry) -->
+<!-- Letzte inhaltliche Änderung: 2026-04-24 18:12 MEZ (Pool vereinfacht + Preset letztes komplettes Training) -->
 <html lang="de" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#050608">
+<meta name="theme-color" content="#060b14">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
@@ -15,19 +15,19 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 :root {
-  --bg:#050608; --panel:#101317; --panel2:#13171c; --line:rgba(214,198,169,.08);
-  --text:#fbf7ef; --muted:#b9b1a2; --soft:#898174;
-  --gold:#d0a35a; --goldSoft:rgba(208,163,90,.08);
-  --teal:#58b9b0; --red:#de7171; --warn:#e8a64a;
-  --shadow:0 30px 90px rgba(0,0,0,.38);
-  --shine:linear-gradient(90deg,transparent,var(--gold),transparent);
+  --bg:#060b14; --panel:#0f1828; --panel2:#162338; --line:rgba(143,181,242,.16);
+  --text:#eef4ff; --muted:#b6c4dc; --soft:#8fa6ca;
+  --gold:#6ea8ff; --goldSoft:rgba(110,168,255,.14);
+  --teal:#7de9ff; --red:#ff7f95; --warn:#f2b66f;
+  --shadow:0 30px 90px rgba(0,4,14,.48);
+  --shine:linear-gradient(90deg,transparent,rgba(174,210,255,.70),transparent);
 }
 [data-theme="light"] {
-  --bg:#f0ede8; --panel:#f8f6f2; --panel2:#ede9e3; --line:rgba(60,45,25,.1);
-  --text:#1c1814; --muted:#5c5448; --soft:#8a8070; --gold:#b07d20;
-  --goldSoft:rgba(176,125,32,.10); --teal:#2a9090; --red:#c44040; --warn:#c87020;
-  --shadow:0 4px 30px rgba(30,20,10,.12);
-  --shine:linear-gradient(90deg,transparent,rgba(176,125,32,.35),transparent);
+  --bg:#eff4fb; --panel:#fbfdff; --panel2:#e9f0fb; --line:rgba(54,98,162,.14);
+  --text:#0f1a2a; --muted:#4e6280; --soft:#7087a8; --gold:#2f6fce;
+  --goldSoft:rgba(47,111,206,.11); --teal:#0f8ea8; --red:#c44040; --warn:#ba6d16;
+  --shadow:0 4px 30px rgba(24,50,92,.12);
+  --shine:linear-gradient(90deg,transparent,rgba(47,111,206,.35),transparent);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-size:15px;scroll-behavior:smooth}
@@ -584,11 +584,11 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
   }
   #m-pool-sheet.open{transform:translateY(0)}
   .m-sheet-handle{width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,.12);margin:0 auto 12px}
-  .m-pool-item{display:grid;grid-template-columns:44px 1fr auto auto;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);margin-bottom:6px}
+  .m-pool-item{display:grid;grid-template-columns:52px 1fr auto auto;align-items:center;gap:9px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);margin-bottom:6px}
   .m-pool-item-text{min-width:0}
-  .m-pool-thumb-cell{display:flex;align-items:center;justify-content:center;width:44px;height:44px;flex-shrink:0}
-  .m-pool-thumb{width:44px;height:44px;border-radius:10px;object-fit:cover;border:1px solid var(--line);background:rgba(255,255,255,.04)}
-  .m-pool-thumb-empty{width:44px;height:44px;border-radius:10px;border:1px dashed var(--line);background:rgba(255,255,255,.03)}
+  .m-pool-thumb-cell{display:flex;align-items:center;justify-content:center;width:52px;height:52px;flex-shrink:0}
+  .m-pool-thumb{width:52px;height:52px;border-radius:11px;object-fit:cover;border:1px solid var(--line);background:rgba(255,255,255,.04)}
+  .m-pool-thumb-empty{width:52px;height:52px;border-radius:11px;border:1px dashed var(--line);background:rgba(255,255,255,.03)}
   .m-pool-star{background:transparent;border:none;color:var(--gold);font-size:17px;line-height:1;cursor:pointer;padding:4px 6px;flex-shrink:0;opacity:.85}
   .m-pool-star:active{opacity:1;transform:scale(0.92)}
   .m-pool-search{width:100%;box-sizing:border-box;margin:0 0 10px;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.22);color:var(--text);font-size:15px;font-family:'Manrope',sans-serif}
@@ -596,7 +596,7 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
   .m-pool-item-name{font-size:13px;font-weight:700;color:var(--text)}
   .m-pool-item-meta{font-size:10px;color:var(--soft);margin-top:2px}
   .m-pool-add-btn{background:rgba(208,163,90,.12);color:var(--gold);border:1px solid rgba(208,163,90,.3);border-radius:9px;padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap}
-  .m-pool-item--catalog{grid-template-columns:44px 1fr auto !important;align-items:center}
+  .m-pool-item--catalog{grid-template-columns:52px 1fr auto !important;align-items:center}
   .m-pool-item--catalog .m-pool-add-btn{align-self:center}
 
   /* ── STUDIO OVERLAY ────────────────────────────────── */
@@ -948,7 +948,7 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
 
   /* Pool list items */
   .m-pool-item{
-    grid-template-columns:48px 1fr auto auto !important;
+    grid-template-columns:52px 1fr auto auto !important;
     border-radius:16px !important;
     background:rgba(255,255,255,.04) !important;
     border:1px solid rgba(255,255,255,.09) !important;
@@ -956,7 +956,7 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
     transition:background .12s,transform .08s !important;
   }
   .m-pool-item:active{background:rgba(208,163,90,.07)!important;transform:scale(0.98)!important}
-  .m-pool-item--catalog{grid-template-columns:48px 1fr auto !important}
+  .m-pool-item--catalog{grid-template-columns:52px 1fr auto !important}
   .m-pool-add-btn{
     border-radius:12px !important;
     padding:8px 14px !important;
@@ -1140,7 +1140,7 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
     <button class="session-tab"        id="tab-cardio" onclick="changeTab('cardio')">Cardio</button>
     <button class="session-tab analyse-tab"  id="tab-analyse"  onclick="changeTab('analyse')">Analyse</button>
     <button class="session-tab kalender-tab" id="tab-kalender" onclick="changeTab('kalender')">Kalender</button>
-    <button class="session-tab uebungen-tab" id="tab-uebungen" onclick="changeTab('uebungen')">Übungen</button>
+    <button class="session-tab uebungen-tab" id="tab-uebungen" onclick="changeTab('uebungen')" style="display:none">Übungen</button>
   </div>
   <div id="tab-state" class="tab-state"></div>
 
@@ -1190,7 +1190,7 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
           <div style="display:flex;gap:5px;flex-wrap:wrap">
             <button onclick="setMobilePhase('plan')" class="btn btn-secondary btn-sm" id="btn-back-pool" style="display:none">Pool</button>
             <button onclick="toggleEditMode()" class="btn btn-secondary btn-sm" id="btn-sort-mode">Sortieren</button>
-            <button onclick="loadTemplate()" class="btn btn-secondary btn-sm" id="btn-load-tpl" style="display:none">↺ Standard</button>
+            <button onclick="loadTemplate()" class="btn btn-secondary btn-sm" id="btn-load-tpl" style="display:none">↺ Letztes Training</button>
             <button onclick="clearSession()" class="btn btn-secondary btn-sm">Leeren</button>
             <button onclick="finishSession()" class="btn btn-primary btn-sm">Beenden ✓</button>
           </div>
@@ -1425,10 +1425,9 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
             </select>
           </div>
           <div class="form-group" style="margin:0;grid-column:span 2">
-            <label>Pool-Zuordnung</label>
+            <label>Pool</label>
             <select id="new-ex-scope">
-              <option value="global">Standard-Pool (alle Studios)</option>
-              <option value="studio">Studio-Pool (nur aktuelles Studio)</option>
+              <option value="global">Pool (einheitlich)</option>
             </select>
           </div>
           <div class="form-group" style="margin:0;grid-column:span 2">
@@ -1815,7 +1814,7 @@ function exerciseMatchesStudioList(ex, lines){
 }
 let currentTab = 'push';
 let activePoolCat = 'Brust';
-let poolMode = localStorage.getItem('ifl_pool_mode') || 'global';
+let poolMode = 'single';
 let draggedId = null;
 let dropTargetId = null;
 let timerInterval = null;
@@ -1848,6 +1847,7 @@ const LOG_DRAFTS_KEY = 'ifl_logger_drafts_v1';
 const IFL_FREQ_EX = 'ifl_frequent_exercises_v1';
 const IFL_FREQ_EX_MAX = 24;
 const IFL_POOL_FAV = 'ifl_pool_favorites_v1';
+const IFL_POOL_RANK_MODE = 'ifl_pool_rank_mode_v1'; // frequent | recent | split
 
 function loadPoolFavoriteSet(){
   try{
@@ -1875,7 +1875,7 @@ function togglePoolFavOnly(checked){
   localStorage.setItem('ifl_pool_fav_only', checked ? '1' : '0');
   renderMobilePoolSheet();
 }
-const BUILD_STAMP = '2026-04-22 20:36 MEZ';
+const BUILD_STAMP = '2026-04-24 18:12 MEZ';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -2483,7 +2483,7 @@ function render(){
   const buildPill = document.getElementById('build-pill');
   if(buildPill) buildPill.textContent = `Build ${BUILD_STAMP}`;
   const tplBtn = document.getElementById('btn-load-tpl');
-  if(tplBtn) tplBtn.style.display = SESSION_TEMPLATES[currentTab] ? '' : 'none';
+  if(tplBtn) tplBtn.style.display = hasPresetSource(currentTab) ? '' : 'none';
   syncThemeBtn();
   syncAppShellBtn();
 }
@@ -2563,14 +2563,14 @@ function renderTabState(){
   }
   box.style.display = 'flex';
   const activeCount = db.filter(x=>x.status==='active'&&x.sType===currentTab).length;
-  const hasTpl = !!SESSION_TEMPLATES[currentTab];
+  const hasTpl = hasPresetSource(currentTab);
   box.innerHTML = `
     <div>
       <div class="tab-state-title">${SESSION_LABELS[currentTab] || 'Session aktiv'}</div>
       <div style="font-size:12px;color:var(--muted)">${activeCount} aktive Übungen · Studio: ${currentStudio}</div>
     </div>
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-      ${hasTpl?'<span class="pill pill-gold" style="cursor:default">Standard verfügbar</span>':''}
+      ${hasTpl?'<span class="pill pill-gold" style="cursor:default">Preset verfügbar</span>':''}
       <span class="pill" style="cursor:default">Tab aktiv: ${currentTab.toUpperCase()}</span>
     </div>
   `;
@@ -2595,11 +2595,9 @@ function renderCatFilters(){
 
 function renderPool(){
   const zone = document.getElementById('pool-zone');
-  renderPoolMode();
   const freqOrderMap = buildPoolFreqOrderMap();
   let items = db
     .filter(x=>x.status==='pool'&&x.cat===activePoolCat)
-    .filter(x=>poolMode==='global' ? (x.poolScope||'global')==='global' : (x.poolScope||'global')==='studio' && x.gym===currentStudio)
     .sort((a,b)=>a.order-b.order);
   if(items.length){
     items = sortPoolItemsByFrequencyThenOrder(items, freqOrderMap);
@@ -2614,16 +2612,16 @@ function renderPool(){
 function renderPoolMode(){
   const wrap = document.getElementById('pool-mode');
   if(!wrap) return;
-  wrap.innerHTML = `
-    <button class="pill${poolMode==='global'?' active':''}" onclick="setPoolMode('global')">Standard-Pool</button>
-    <button class="pill${poolMode==='studio'?' active':''}" onclick="setPoolMode('studio')">Studio-Pool</button>
-  `;
+  wrap.innerHTML = `<span class="pill active" style="cursor:default">Pool</span>`;
 }
 
 function setPoolMode(mode){
-  poolMode = mode;
-  localStorage.setItem('ifl_pool_mode', mode);
+  poolMode = 'single';
   renderPool();
+}
+function hasPresetSource(tab){
+  const hasLast = (sessionLog || []).some(s => s?.type === tab && s?.studio === currentStudio);
+  return hasLast || !!SESSION_TEMPLATES[tab];
 }
 
 function renderActive(){
@@ -2726,9 +2724,7 @@ function tileHTML(ex, inActive){
   const optBadge = ex.optional ? `<span style="font-size:8px;color:var(--warn);background:rgba(232,166,74,.1);border:1px solid rgba(232,166,74,.25);border-radius:4px;padding:1px 5px;margin-left:5px">noch nachzulegen</span>` : '';
   const artLabel = ex.art ? `${ex.brand||'gym80'} · ${ex.art}` : (ex.brand ? ex.brand : null);
   const artHTML = artLabel ? `<div style="font-size:9px;color:var(--soft);font-family:'JetBrains Mono',monospace;margin-top:2px">${artLabel}${optBadge}</div>` : '';
-  const scopeBadge = (ex.poolScope||'global')==='studio'
-    ? `<span class="pill pill-teal" style="font-size:8px;padding:2px 7px;cursor:default">${ex.gym||'Studio'}</span>`
-    : `<span class="pill" style="font-size:8px;padding:2px 7px;cursor:default">Standard</span>`;
+  const scopeBadge = `<span class="pill" style="font-size:8px;padding:2px 7px;cursor:default">Pool</span>`;
   const quickAddBtn = !inActive
     ? `<button class="ex-quick-add" onclick="event.stopPropagation();addToCurrentSession(${ex.id})">+ Session</button>`
     : '';
@@ -4057,8 +4053,7 @@ function openDeviceDetail(idx){
   document.getElementById('device-detail-meta').textContent =
     [item.brand, item.type, item.target, item.group].filter(Boolean).join(' · ');
   document.getElementById('device-detail-actions').innerHTML = `
-    <button class="btn btn-secondary btn-sm" onclick="addCatalogExerciseByIndex(${idx},'global');closeDeviceDetail()">+ Standard-Pool</button>
-    <button class="btn btn-secondary btn-sm" onclick="addCatalogExerciseByIndex(${idx},'studio');closeDeviceDetail()">+ Studio-Pool (${currentStudio||'aktuell'})</button>
+    <button class="btn btn-secondary btn-sm" onclick="addCatalogExerciseByIndex(${idx},'global');closeDeviceDetail()">+ Pool</button>
     <button class="btn btn-teal btn-sm" onclick="addCatalogExerciseByIndex(${idx},true);closeDeviceDetail()">+ Session</button>
     <button class="btn btn-secondary btn-sm" style="margin-top:4px;color:var(--soft)" onclick="closeDeviceDetail()">Schließen</button>
   `;
@@ -4095,8 +4090,7 @@ function renderCatalogResults(resetOffset){
         <div class="catalog-meta">${item.brand} · ${item.type} · ${item.target}</div>
       </div>
       <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">
-        <button onclick="addCatalogExerciseByIndex(${idx}, 'global')" class="btn btn-secondary btn-sm">+ Standard-Pool</button>
-        <button onclick="addCatalogExerciseByIndex(${idx}, 'studio')" class="btn btn-secondary btn-sm">+ Studio-Pool</button>
+        <button onclick="addCatalogExerciseByIndex(${idx}, 'global')" class="btn btn-secondary btn-sm">+ Pool</button>
         <button onclick="addCatalogExerciseByIndex(${idx}, true)" class="btn btn-teal btn-sm">+ Session</button>
       </div>
     </div>
@@ -4110,11 +4104,18 @@ function addCatalogExerciseByIndex(idx, target){
   const name = item.name?.trim();
   if(!name) return;
   const toSession = target === true;
-  const scope = target === 'studio' ? 'studio' : 'global';
+  const scope = 'global';
   // Globale Namens-Prüfung — verhindert Duplikate quer über alle Studios/Scopes
   const exists = db.some(ex => ex.name.toLowerCase() === name.toLowerCase());
   if(exists){
-    showToast('Bereits vorhanden: ' + name, 'warn');
+    if(toSession){
+      const ex = db.find(x => x.name.toLowerCase() === name.toLowerCase());
+      if(ex){
+        addToCurrentSession(ex.id);
+        return;
+      }
+    }
+    showToast('Bereits im Pool: ' + name, 'warn');
     return;
   }
   const newEx = {
@@ -4125,7 +4126,7 @@ function addCatalogExerciseByIndex(idx, target){
     cat: item.cat || 'Brust',
     sType: item.sType || 'push',
     group: item.group || null,
-    gym: scope === 'studio' ? currentStudio : null,
+    gym: null,
     poolScope: scope,
     status: 'pool',
     order: nextId,
@@ -4143,8 +4144,7 @@ function addCatalogExerciseByIndex(idx, target){
     newEx.order = maxOrder + 1;
     showToast(`✓ ${name} → Session`, 'ok');
   } else {
-    const label = scope === 'studio' ? 'Studio-Pool' : 'Standard-Pool';
-    showToast(`✓ ${name} → ${label}`, 'ok');
+    showToast(`✓ ${name} → Pool`, 'ok');
   }
   db.push(newEx);
   saveDB();
@@ -4166,10 +4166,17 @@ function addCatalogExerciseFromDeviceRow(row, target){
     group: row.group || null
   };
   const toSession = target === true;
-  const scope = target === 'studio' ? 'studio' : 'global';
+  const scope = 'global';
   const exists = db.some(ex => ex.name.toLowerCase() === name.toLowerCase());
   if(exists){
-    showToast('Bereits vorhanden: ' + name, 'warn');
+    if(toSession){
+      const ex = db.find(x => x.name.toLowerCase() === name.toLowerCase());
+      if(ex){
+        addToCurrentSession(ex.id);
+        return;
+      }
+    }
+    showToast('Bereits im Pool: ' + name, 'warn');
     return;
   }
   const newEx = {
@@ -4180,7 +4187,7 @@ function addCatalogExerciseFromDeviceRow(row, target){
     cat: item.cat || 'Brust',
     sType: item.sType || 'push',
     group: item.group,
-    gym: scope === 'studio' ? currentStudio : null,
+    gym: null,
     poolScope: scope,
     status: 'pool',
     order: nextId,
@@ -4198,8 +4205,7 @@ function addCatalogExerciseFromDeviceRow(row, target){
     newEx.order = maxOrder + 1;
     showToast(`✓ ${name} → Session`, 'ok');
   } else {
-    const label = scope === 'studio' ? 'Studio-Pool' : 'Standard-Pool';
-    showToast(`✓ ${name} → ${label}`, 'ok');
+    showToast(`✓ ${name} → Pool`, 'ok');
   }
   db.push(newEx);
   saveDB();
@@ -4268,8 +4274,8 @@ function addExercise(){
     cat:   document.getElementById('new-ex-cat').value,
     sType: document.getElementById('new-ex-type').value,
     group: document.getElementById('new-ex-group').value.trim()||null,
-    poolScope: document.getElementById('new-ex-scope').value,
-    gym: document.getElementById('new-ex-scope').value === 'studio' ? currentStudio : null,
+    poolScope: 'global',
+    gym: null,
     status:'pool', order: nextId,
     history:{}, prev:{}
   });
@@ -4622,22 +4628,71 @@ function syncModalTimer(){
 
 // ═══ TEMPLATE LOAD ═══════════════════════════════════════════
 function loadTemplate(){
-  const tpl = SESSION_TEMPLATES[currentTab];
-  if(!tpl) return;
-  if(!confirm(`Standard-Session "${SESSION_LABELS[currentTab]}" laden?\nAktuelle Session wird geleert.`)) return;
-  // Return active exercises of this tab back to pool
+  const latest = [...sessionLog]
+    .filter(s => s?.type === currentTab && s?.studio === currentStudio)
+    .sort((a, b) => Number(b.id || 0) - Number(a.id || 0))[0];
+
+  if(!latest){
+    const tpl = SESSION_TEMPLATES[currentTab];
+    if(!tpl) return;
+    if(!confirm(`Kein letztes Training gefunden.\nStandard-Session "${SESSION_LABELS[currentTab]}" laden?\nAktuelle Session wird geleert.`)) return;
+    db.filter(x=>x.status==='active'&&x.sType===currentTab).forEach(x=>x.status='pool');
+    tpl.forEach((id, i)=>{
+      const ex = db.find(x=>x.id===id);
+      if(ex){ ex.status='active'; ex.sType=currentTab; ex.order=i+1; ex.trainState='active'; }
+    });
+    saveDB(); render();
+    return;
+  }
+
+  if(!confirm(`Letztes Training "${SESSION_LABELS[currentTab]}" vom ${latest.date} laden?\nAktuelle Session wird geleert, danach frei verschiebbar + erweiterbar.`)) return;
   db.filter(x=>x.status==='active'&&x.sType===currentTab).forEach(x=>x.status='pool');
-  // Activate template exercises in defined order
-  tpl.forEach((id, i)=>{
-    const ex = db.find(x=>x.id===id);
-    if(ex){ ex.status='active'; ex.sType=currentTab; ex.order=i+1; }
+  (latest.exercises || []).forEach((row, i)=>{
+    const byId = db.find(x => x.id === row.id);
+    const byName = db.find(x => String(x.name || '').toLowerCase() === String(row.name || '').toLowerCase());
+    const ex = byId || byName;
+    const sets = Array.isArray(row.sets) ? row.sets.map(s => ({ w:Number(s.w)||0, r:Number(s.r)||0 })) : [];
+    if(ex){
+      ex.status = 'active';
+      ex.sType = currentTab;
+      ex.order = i + 1;
+      ex.trainState = 'active';
+      ex.cat = row.cat || ex.cat;
+      ex.group = row.group || ex.group || null;
+      ex.history = ex.history || {};
+      ex.prev = ex.prev || {};
+      if(sets.length){
+        ex.history[currentStudio] = sets;
+        ex.prev[currentStudio] = sets;
+      }
+      return;
+    }
+    db.push({
+      id: nextId++,
+      name: row.name || `Übung ${i+1}`,
+      art: null,
+      brand: null,
+      cat: row.cat || 'Brust',
+      sType: currentTab,
+      group: row.group || null,
+      gym: null,
+      poolScope: 'global',
+      status: 'active',
+      order: i + 1,
+      img: null,
+      history: sets.length ? { [currentStudio]: sets } : {},
+      prev: sets.length ? { [currentStudio]: sets } : {}
+    });
   });
-  saveDB(); render();
+  saveDB();
+  render();
+  showToast('Letztes Training als Preset geladen', 'ok');
 }
 
 // ═══ NAVIGATION ══════════════════════════════════════════════
 function changeTab(tab){
   exitEditMode();
+  if(tab === 'uebungen') tab = 'push';
   currentTab = tab;
   document.querySelectorAll('.session-tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('tab-'+tab)?.classList.add('active');
@@ -4661,7 +4716,7 @@ function changeTab(tab){
   });
 
   const tplBtn = document.getElementById('btn-load-tpl');
-  if(tplBtn) tplBtn.style.display = SESSION_TEMPLATES[tab] ? '' : 'none';
+  if(tplBtn) tplBtn.style.display = hasPresetSource(tab) ? '' : 'none';
 
   // Mobile Training-Subtabs synchronisieren
   document.querySelectorAll('.mobile-train-tab').forEach(b=>{
@@ -5774,6 +5829,7 @@ function renderMobilePoolSheet(){
   const studioLines = getStudioEquipmentList(currentStudio);
   const studioOnly = localStorage.getItem('ifl_pool_studio_only') === '1';
   const favOnly = localStorage.getItem('ifl_pool_fav_only') === '1';
+  const rankMode = localStorage.getItem(IFL_POOL_RANK_MODE) || 'split';
   const favSet = loadPoolFavoriteSet();
   const qPoolRaw = (document.getElementById('m-pool-search')?.value || '').trim();
   const qPoolActive = qPoolRaw.length > 0;
@@ -5781,7 +5837,6 @@ function renderMobilePoolSheet(){
   let items = db
     .filter(x=>x.status==='pool')
     .filter(x=> qPoolActive ? true : (mobilePoolCat==='Alle' || x.cat===mobilePoolCat))
-    .filter(x=>poolMode==='global' ? (x.poolScope||'global')==='global' : (x.poolScope||'global')==='studio' && x.gym===currentStudio)
     .sort((a,b)=>a.order-b.order);
   if(studioOnly && studioLines.length){
     items = items.filter(ex => exerciseMatchesStudioList(ex, studioLines));
@@ -5811,12 +5866,19 @@ function renderMobilePoolSheet(){
       <input type="checkbox" ${favOnly ? 'checked' : ''} onchange="togglePoolFavOnly(this.checked)">
       Nur Favoriten (${favSet.size})
     </label>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <button type="button" class="pill ${rankMode==='frequent'?'active':''}" onclick="setPoolRankMode('frequent')">Haeufig</button>
+      <button type="button" class="pill ${rankMode==='recent'?'active':''}" onclick="setPoolRankMode('recent')">Zuletzt</button>
+      <button type="button" class="pill ${rankMode==='split'?'active':''}" onclick="setPoolRankMode('split')">Split</button>
+    </div>
   </div>`;
 
   const idInList = new Set(items.map(x => x.id));
   const freqRows = [];
+  const recentRows = [];
   const freqIds = new Set();
-  if(!qPoolActive) for(const rec of getFrequentExerciseRecords(16)){
+  const recentIds = new Set();
+  if(!qPoolActive && rankMode !== 'recent') for(const rec of getFrequentExerciseRecords(16)){
     const ex = db.find(x => x.id === rec.id);
     if(!ex || ex.status !== 'pool' || !idInList.has(ex.id)) continue;
     freqIds.add(ex.id);
@@ -5834,11 +5896,31 @@ function renderMobilePoolSheet(){
       <button class="m-pool-add-btn" onclick="mAddToSession(${ex.id})">+ Session</button>
     </div>`);
   }
+  if(!qPoolActive && rankMode !== 'frequent') for(const rec of getRecentExerciseRecords(16)){
+    const ex = db.find(x => x.id === rec.id);
+    if(!ex || ex.status !== 'pool' || !idInList.has(ex.id) || freqIds.has(ex.id)) continue;
+    recentIds.add(ex.id);
+    const hist = ex.history[currentStudio] || [];
+    const rm = maxRM(hist);
+    const lastSet = hist.length ? `${hist[hist.length - 1].w}×${hist[hist.length - 1].r}` : '–';
+    const starH = isPoolFavorite(ex.id) ? '★' : '☆';
+    recentRows.push(`<div class="m-pool-item" style="border-color:rgba(88,185,176,.34);background:rgba(88,185,176,.08)">
+      ${mPoolThumbHTML(ex)}
+      <div class="m-pool-item-text">
+        <div class="m-pool-item-name">${mEsc(ex.name)} <span class="pill pill-teal" style="font-size:8px;padding:1px 6px">zuletzt</span></div>
+        <div class="m-pool-item-meta">${mEsc(ex.group || ex.cat || '')} · Letztes Mal: ${lastSet}${rm > 0 ? ' · 1RM ~' + rm + 'kg' : ''}</div>
+      </div>
+      <button type="button" class="m-pool-star" onclick="togglePoolFavorite(${ex.id},event)" aria-label="Favorit">${starH}</button>
+      <button class="m-pool-add-btn" onclick="mAddToSession(${ex.id})">+ Session</button>
+    </div>`);
+  }
   const freqBlock = freqRows.length
     ? `<div class="m-tools-h" style="margin-bottom:6px">Häufig genutzt</div>${freqRows.join('')}`
     : '';
-
-  const rest = items.filter(ex => !freqIds.has(ex.id));
+  const recentBlock = recentRows.length
+    ? `<div class="m-tools-h" style="margin:${freqRows.length ? '10px' : '0'} 0 6px">Zuletzt trainiert</div>${recentRows.join('')}`
+    : '';
+  const rest = items.filter(ex => !freqIds.has(ex.id) && !recentIds.has(ex.id));
 
   let catalogPoolHtml = '';
   const showCatalogBlock = qPoolActive || mobileCatalogHasActiveFilter() || !!mobileSwapTargetId;
@@ -5892,7 +5974,7 @@ function renderMobilePoolSheet(){
       }).join('')
     : (qPoolActive ? '' : '<div style="padding:20px;text-align:center;color:var(--soft);font-size:13px">Kein Pool für diesen Tab</div>');
 
-  list.innerHTML = searchHint + toolbar + freqBlock + localBlock + catalogPoolHtml +
+  list.innerHTML = searchHint + toolbar + freqBlock + recentBlock + localBlock + catalogPoolHtml +
     (!items.length && !catalogPoolHtml && qPoolActive
       ? '<div style="padding:16px;text-align:center;color:var(--soft);font-size:13px">Keine lokalen Pool-Treffer</div>'
       : '');
@@ -5902,6 +5984,11 @@ function mAddToSession(id){
   addToCurrentSession(id);
   renderMobilePoolSheet();
   renderMobileSession();
+}
+function setPoolRankMode(mode){
+  const m = ['frequent', 'recent', 'split'].includes(mode) ? mode : 'split';
+  localStorage.setItem(IFL_POOL_RANK_MODE, m);
+  renderMobilePoolSheet();
 }
 
 // ── Studio Overlay ─────────────────────────────────────────
@@ -6149,6 +6236,25 @@ function getFrequentExerciseRecords(limit){
     const arr = JSON.parse(localStorage.getItem(IFL_FREQ_EX) || '[]');
     return Array.isArray(arr) ? arr.slice(0, limit) : [];
   } catch{ return []; }
+}
+function getRecentExerciseRecords(limit){
+  const out = [];
+  const seen = new Set();
+  const logs = Array.isArray(sessionLog) ? [...sessionLog] : [];
+  logs.sort((a, b) => Number(b.id || 0) - Number(a.id || 0));
+  for(const s of logs){
+    if(s?.studio !== currentStudio) continue;
+    if(TRAIN_TABS.includes(currentTab) && s?.type !== currentTab) continue;
+    const exs = Array.isArray(s?.exercises) ? s.exercises : [];
+    for(const ex of exs){
+      const id = Number(ex?.id || 0);
+      if(!id || seen.has(id)) continue;
+      seen.add(id);
+      out.push({ id, date: s.date || '' });
+      if(out.length >= limit) return out;
+    }
+  }
+  return out;
 }
 function mStudioShort(name){
   const n = (name || '').trim();

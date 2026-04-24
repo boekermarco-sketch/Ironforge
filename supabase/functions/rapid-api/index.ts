@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
       const date = String(entry.date).slice(0, 10)
       if (!byDate[date]) byDate[date] = {}
       let val = entry.qty ?? entry.value ?? 0
-      if (col === 'steps') val = Math.round(val * 1000)
+      if (col === 'steps') val = Math.round(val)
       byDate[date][col] = val
     }
   }

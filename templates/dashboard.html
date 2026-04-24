@@ -256,6 +256,22 @@
       <div class="sh-title">Heute · Apple Health</div>
       <span class="pill" style="font-size:10px">{{ apple_today.date }}</span>
     </div>
+    <div style="font-size:11px;color:var(--soft);margin:4px 0 10px">
+      Makro-Import:
+      {% if apple_macros_received_count == 4 %}
+        <span style="color:var(--teal);font-weight:700">vollständig (4/4)</span>
+      {% elif apple_macros_received_count > 0 %}
+        <span style="color:var(--gold);font-weight:700">teilweise ({{ apple_macros_received_count }}/4)</span>
+      {% else %}
+        <span style="color:var(--red);font-weight:700">keine Makros geliefert (0/4)</span>
+      {% endif %}
+      <span style="margin-left:6px;color:var(--muted)">
+        kcal:{% if apple_macro_present.calories %}✓{% else %}–{% endif %}
+        · P:{% if apple_macro_present.protein_g %}✓{% else %}–{% endif %}
+        · C:{% if apple_macro_present.carbs_g %}✓{% else %}–{% endif %}
+        · F:{% if apple_macro_present.fat_g %}✓{% else %}–{% endif %}
+      </span>
+    </div>
     <div class="mg mg-4" style="margin-top:4px">
       {% if apple_today.calories %}
       <div class="metric">
@@ -289,7 +305,7 @@
       <div class="metric">
         <div class="m-label">Schritte</div>
         <div class="m-val">{{ "{:,}".format(apple_today.steps | int).replace(",", ".") }}</div>
-        <div class="m-small">heute</div>
+        <div class="m-small">heute{% if apple_steps_suspect_scaled %} (x1000 korrigiert){% endif %}</div>
       </div>
       {% endif %}
       {% if apple_today.resting_hr %}

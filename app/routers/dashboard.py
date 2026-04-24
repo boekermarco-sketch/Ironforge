@@ -157,9 +157,25 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
     apple_today = latest_apple_health()
     apple_week  = fetch_apple_health(days=7)
     apple_local = get_last_local_apple_import(db)
+    apple_macro_keys = ("calories", "protein_g", "carbs_g", "fat_g")
+    apple_macro_present = {}
+    apple_macros_received_count = 0
+    apple_steps_suspect_scaled = False
 
     # Gewicht + KFA aus Supabase wenn lokal keine Daten
     if apple_today:
+        # Defensive display normalization for already persisted step values
+        # from earlier shortcut/function versions with wrong x1000 scaling.
+        steps_val = apple_today.get("steps")
+        if isinstance(steps_val, (int, float)) and steps_val >= 200_000:
+            apple_today["steps"] = int(round(steps_val / 1000))
+            apple_steps_suspect_scaled = True
+
+        apple_macro_present = {
+            k: (apple_today.get(k) is not None) for k in apple_macro_keys
+        }
+        apple_macros_received_count = sum(1 for v in apple_macro_present.values() if v)
+
         if (not last_log or not last_log.weight) and apple_today.get("body_mass_kg"):
             class _Stub: pass
             if not last_log:
@@ -207,6 +223,9 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
         "apple_today":        apple_today,
         "apple_week":         apple_week,
         "apple_local":        apple_local,
+        "apple_macro_present": apple_macro_present,
+        "apple_macros_received_count": apple_macros_received_count,
+        "apple_steps_suspect_scaled": apple_steps_suspect_scaled,
         # Garmin-Felder mit Fallback-Alter
         "hrv": hrv,                         "hrv_age": hrv_age,
         "body_battery": body_battery,       "bb_age": bb_age,

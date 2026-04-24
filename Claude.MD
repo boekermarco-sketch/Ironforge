@@ -644,3 +644,6 @@ Bei Anpassungen an **`training-preview.html`** (und vergleichbaren „Single-Fil
 
 So ist auf GitHub Pages und im UI sofort erkennbar, welche Version live ist.
 
+ "prüfe das Ergebnis bevor du antwortest" oder "zeig mir den
+  DB-Stand nach der Änderung"
+

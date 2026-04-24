@@ -27,14 +27,14 @@ Diese Liste ist die verbindliche Arbeitsgrundlage fuer die naechsten Schritte an
 - [x] Uebung austauschen direkt aus DB-Suche
 - [x] Filter-Presets (Marke/Zielmuskel/Sessiontyp)
 - [x] Session Progress Rail (z. B. Uebung 3/8, Satz 2/4)
-- [~] Sofortige lokale UI-Reaktion, dann Cloud-Sync
+- [x] Sofortige lokale UI-Reaktion, dann Cloud-Sync
 - [x] Kein Pflicht-Modal waehrend laufender Session
 
 ## V2+ - spaetere Ausbaustufe
 
-- [~] Recent/Frequent Split als zusaetzlicher Modus
+- [x] Recent/Frequent Split als zusaetzlicher Modus
 - [x] RPE Quick Chips
-- [~] Image-first Device Tiles weiter verfeinern
+- [x] Image-first Device Tiles weiter verfeinern
 - [x] In-Session Notes Micro
 - [x] Offline Queue fuer komplette Session-Logs
 - [x] Post-Workout Summary (Volumen, PRs, Bestsatz)

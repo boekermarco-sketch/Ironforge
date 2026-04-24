@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Übungsquellen Demo</title>
+  <style>
+    :root{
+      --bg:#0a0f18;
+      --panel:#121a28;
+      --panel2:#1a2538;
+      --line:rgba(126,166,228,.26);
+      --text:#edf4ff;
+      --muted:#a9bbd8;
+      --acc:#71a9ff;
+      --accSoft:rgba(113,169,255,.16);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Inter,system-ui,Segoe UI,Arial,sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(1000px 700px at 0% -20%, rgba(113,169,255,.10), transparent 55%),
+        radial-gradient(900px 700px at 100% -20%, rgba(119,228,255,.08), transparent 55%),
+        var(--bg);
+      min-height:100vh;
+      padding:20px;
+    }
+    h1{
+      margin:0 0 4px;
+      font-size:30px;
+      letter-spacing:-.02em;
+    }
+    .sub{color:var(--muted);font-size:13px;margin-bottom:16px}
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:12px;
+    }
+    .card{
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:linear-gradient(160deg,var(--panel),var(--panel2));
+      padding:14px;
+    }
+    .card h2{
+      margin:0 0 4px;
+      font-size:17px;
+    }
+    .meta{
+      font-size:11px;
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.12em;
+      margin-bottom:12px;
+    }
+    .list{display:grid;gap:8px}
+    a.ex{
+      display:block;
+      border:1px solid var(--line);
+      border-radius:10px;
+      padding:10px;
+      text-decoration:none;
+      color:var(--text);
+      background:rgba(255,255,255,.03);
+    }
+    a.ex:hover{
+      background:var(--accSoft);
+      border-color:rgba(113,169,255,.42);
+    }
+    a.ex b{display:block;font-size:14px}
+    a.ex span{font-size:12px;color:var(--muted)}
+    .top-link{
+      display:inline-block;
+      margin-top:10px;
+      color:var(--acc);
+      text-decoration:none;
+      font-size:12px;
+      font-weight:700;
+    }
+    @media (max-width:1000px){
+      .grid{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <h1>Übungsquellen Klick-Demo</h1>
+  <div class="sub">3 kostenlose Quellen · Kurzhantel-Beispiele direkt anklickbar</div>
+
+  <div class="grid">
+    <section class="card">
+      <h2>wger</h2>
+      <div class="meta">Open Source API</div>
+      <div class="list">
+        <a class="ex" target="_blank" rel="noopener noreferrer" href="https://wger.de/en/exercise/345/view">
+          <b>Dumbbell Curl</b>
+          <span>Bizeps · Kurzhantel</span>
+        </a>
+        <a class="ex" target="_blank" rel="noopener noreferrer" href="https://wger.de/en/exercise/81/view">
+          <b>Dumbbell Bench Press</b>
+          <span>Brust · Kurzhantel</span>
+        </a>
+        <a class="ex" target="_blank" rel="noopener noreferrer" href="https://wger.de/en/exercise/393/view">
+          <b>Dumbbell Shoulder Press</b>
+          <span>Schulter · Kurzhantel</span>
+        </a>
+      </div>
+      <a class="top-link" target="_blank" rel="noopener noreferrer" href="https://wger.de/en/software/api">Zur API</a>
+    </section>
+
+    <section class="card">
+      <h2>ExerciseDB</h2>
+      <div class="meta">RapidAPI / Community</div>
+      <div class="list">
+        <a class="ex" target="_blank" rel="noopener noreferrer" href="https://rapidapi.com/justin-WFnsXH_t6/api/exercisedb">
+          <b>API Hub öffnen</b>
+          <span>Filter nach „dumbbell“ möglich</span>
+        </a>
+        <a class="ex" target="_blank" rel="noopener noreferrer" href="https://rapidapi.com/search/exercisedb%20dumbbell">
+          <b>Dumbbell Suche</b>
+          <span>Beispiele + GIF/Assets je Endpoint</span>
+        </a>
+        <a class="ex" target="_blank" rel="noopener noreferrer" href="https://rapidapi.com/search/fitness%20exercise%20api">
+          <b>Alternative Mirrors</b>
+          <span>Kostenlose Quoten je Anbieter prüfen</span>
+        </a>
+      </div>
+      <a class="top-link" target="_blank" rel="noopener noreferrer" href="https://rapidapi.com/">Zu RapidAPI</a>
+    </section>
+
+    <section class="card">
+      <h2>MuscleWiki</h2>
+      <div class="meta">Visual Reference</div>
+      <div class="list">
+        <a class="ex" target="_blank" rel="noopener noreferrer" href="https://musclewiki.com/exercises/male/dumbbells">
+          <b>Dumbbell Übungen</b>
+          <span>Gesamtübersicht</span>
+        </a>
+        <a class="ex" target="_blank" rel="noopener noreferrer" href="https://musclewiki.com/exercises/male/dumbbells/chest">
+          <b>Chest / Kurzhantel</b>
+          <span>Brust-Übungen mit Visuals</span>
+        </a>
+        <a class="ex" target="_blank" rel="noopener noreferrer" href="https://musclewiki.com/exercises/male/dumbbells/back">
+          <b>Back / Kurzhantel</b>
+          <span>Rücken-Übungen mit Visuals</span>
+        </a>
+      </div>
+      <a class="top-link" target="_blank" rel="noopener noreferrer" href="https://musclewiki.com/">Zu MuscleWiki</a>
+    </section>
+  </div>
+</body>
+</html>
