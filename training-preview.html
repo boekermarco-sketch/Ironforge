@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Letzte inhaltliche Änderung: 2026-04-22 20:22 MEZ (RPE Chips, Micro-Notes, Post-Workout Summary) -->
+<!-- Letzte inhaltliche Änderung: 2026-04-22 20:36 MEZ (Offline Queue fuer Session-Logs + Auto-Retry) -->
 <html lang="de" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -1875,7 +1875,7 @@ function togglePoolFavOnly(checked){
   localStorage.setItem('ifl_pool_fav_only', checked ? '1' : '0');
   renderMobilePoolSheet();
 }
-const BUILD_STAMP = '2026-04-22 20:22 MEZ';
+const BUILD_STAMP = '2026-04-22 20:36 MEZ';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -4743,6 +4743,7 @@ function finishSession(){
     lastSnap = snap;
     sessionLog.push(snap);
     saveSessionLog();
+    queueOfflineSessionSnapshot(snap);
   }
   const cnt=(parseInt(localStorage.getItem('ifl_session_count')||'0')+1);
   localStorage.setItem('ifl_session_count',cnt);
@@ -4812,6 +4813,7 @@ function exportBackup(){
       currentStudio,
       db,
       sessionLog,
+      offlineSessionQueue: loadOfflineSessionQueue(),
       studioEquipment: loadStudioEquipment(),
       sessionCount: parseInt(localStorage.getItem('ifl_session_count') || '0'),
       theme: localStorage.getItem('ifl-theme') || 'dark'
@@ -4853,6 +4855,7 @@ function handleBackupFile(event){
       studios = data.studios.length ? data.studios : [...DEFAULT_STUDIOS];
       currentStudio = data.currentStudio && studios.includes(data.currentStudio) ? data.currentStudio : studios[0];
       sessionLog = Array.isArray(data.sessionLog) ? data.sessionLog : [];
+      if(Array.isArray(data.offlineSessionQueue)) saveOfflineSessionQueue(data.offlineSessionQueue);
       if(data.studioEquipment && typeof data.studioEquipment === 'object') saveStudioEquipment(data.studioEquipment);
       nextId = db.length ? Math.max(...db.map(x=>x.id||0)) + 1 : 1;
       localStorage.setItem('ifl_training_db', JSON.stringify(db));
@@ -4877,12 +4880,61 @@ function handleBackupFile(event){
 /** Öffentliches Iron-Forge-Projekt: Anon-Key ist für Client/API gedacht (Schutz via RLS). Eigene Werte in Sync-Setup überschreiben diese Defaults. */
 const IFL_PUBLIC_SUPABASE_URL = 'https://dbamakgjtrgqplufwlca.supabase.co';
 const IFL_PUBLIC_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRiYW1ha2dqdHJncXBsdWZ3bGNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwODY0MzMsImV4cCI6MjA5MTY2MjQzM30.nXRtfxvgqg0Ccgo2FRtFYGrBjx-voNfQOpDCAzK_EME';
+const OFFLINE_SESSION_QUEUE_KEY = 'ifl_offline_session_queue_v1';
 
 function getSyncConfig(){
   const stored = JSON.parse(localStorage.getItem('ifl_sync_config') || '{}');
   const url = (stored.supabaseUrl && String(stored.supabaseUrl).trim()) || IFL_PUBLIC_SUPABASE_URL;
   const key = (stored.anonKey && String(stored.anonKey).trim()) || IFL_PUBLIC_SUPABASE_ANON_KEY;
   return { ...stored, supabaseUrl: url, anonKey: key };
+}
+
+function loadOfflineSessionQueue(){
+  try{
+    const arr = JSON.parse(localStorage.getItem(OFFLINE_SESSION_QUEUE_KEY) || '[]');
+    return Array.isArray(arr) ? arr : [];
+  }catch{
+    return [];
+  }
+}
+
+function saveOfflineSessionQueue(queue){
+  localStorage.setItem(OFFLINE_SESSION_QUEUE_KEY, JSON.stringify(queue));
+}
+
+function getOfflineSessionQueueCount(){
+  return loadOfflineSessionQueue().length;
+}
+
+function queueOfflineSessionSnapshot(snap){
+  if(!snap?.id) return;
+  const queue = loadOfflineSessionQueue();
+  if(queue.some(x => String(x.id) === String(snap.id))) return;
+  queue.push({
+    id: snap.id,
+    date: snap.date,
+    studio: snap.studio,
+    type: snap.type,
+    exercises: snap.exercises || [],
+    queuedAt: new Date().toISOString()
+  });
+  // Keep queue bounded to avoid unbounded growth.
+  const trimmed = queue.slice(-60);
+  saveOfflineSessionQueue(trimmed);
+}
+
+function clearOfflineSessionQueueAfterSync(){
+  const queue = loadOfflineSessionQueue();
+  if(!queue.length) return;
+  const loggedIds = new Set((sessionLog || []).map(s => String(s.id)));
+  const left = queue.filter(entry => !loggedIds.has(String(entry.id)));
+  saveOfflineSessionQueue(left);
+}
+
+function withOfflineQueueHint(text){
+  const n = getOfflineSessionQueueCount();
+  if(!n) return text;
+  return `${text} · Offline-Queue: ${n}`;
 }
 
 /** Nur wenn Sync-Setup gespeichert wurde (Profil + Pages-URL); Katalog-Snapshot läuft dagegen mit öffentlichen Defaults. */
@@ -4902,7 +4954,7 @@ function updateSyncStatus(text){
   const el = document.getElementById('sync-status');
   if(!el) return;
   if(text){
-    el.textContent = text;
+    el.textContent = withOfflineQueueHint(text);
     el.classList.remove('pending','ok','error');
     el.classList.add(syncStateTone);
     if(typeof _syncMStudioOverlay === 'function') _syncMStudioOverlay();
@@ -4915,6 +4967,7 @@ function updateSyncStatus(text){
       ? `Sync aktiv · ${cfg.profile || 'Profil'} · ${cfg.supabaseUrl}`
       : `Katalog online (öffentliche Defaults) · Sync-Setup für Profil/Cloud: optional · ${cfg.supabaseUrl}`)
     : 'Sync: noch nicht eingerichtet';
+  el.textContent = withOfflineQueueHint(el.textContent);
   el.classList.remove('pending','ok','error');
   el.classList.add(syncStateTone);
   if(typeof _syncMStudioOverlay === 'function') _syncMStudioOverlay();
@@ -5224,11 +5277,12 @@ async function syncToCloud(options = {}){
   try{
     if(cfg.syncMode === 'structured_v1') await syncToCloudStructured(cfg);
     else await syncToCloudState(cfg);
+    clearOfflineSessionQueueAfterSync();
     syncStateTone = 'ok';
     updateSyncStatus(silent ? 'Sync: automatische Sicherung erfolgreich' : 'Sync: Cloud-Upload erfolgreich');
   }catch(err){
     syncStateTone = 'error';
-    updateSyncStatus('Sync-Fehler beim Upload');
+    updateSyncStatus('Sync-Fehler beim Upload (lokal in Queue gesichert)');
     if(!silent){
       alert(`Upload fehlgeschlagen: ${err.message}\nBitte Tabellen/Policies für den gewählten Sync-Modus prüfen.`);
     }
@@ -6516,6 +6570,11 @@ updateSyncStatus();
 initMobile();
 closeAnalyseForgeFoldForMobile();
 window.addEventListener('pageshow', () => closeAnalyseForgeFoldForMobile());
+window.addEventListener('online', ()=>{
+  if(getOfflineSessionQueueCount() > 0){
+    syncToCloud({ silent: true });
+  }
+});
 const _initSync = getSyncConfig();
 if(!_initSync.supabaseUrl || !_initSync.anonKey){
   openSetupWizard(false);

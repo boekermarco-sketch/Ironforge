@@ -36,7 +36,7 @@ Diese Liste ist die verbindliche Arbeitsgrundlage fuer die naechsten Schritte an
 - [x] RPE Quick Chips
 - [~] Image-first Device Tiles weiter verfeinern
 - [x] In-Session Notes Micro
-- [ ] Offline Queue fuer komplette Session-Logs
+- [x] Offline Queue fuer komplette Session-Logs
 - [x] Post-Workout Summary (Volumen, PRs, Bestsatz)
 - [x] Bilder lazy laden, Texte zuerst
 - [x] Bild-Fallback pro Karte (nie ganze Liste verlieren)
