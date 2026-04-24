@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Letzte inhaltliche Änderung: 2026-04-22 20:07 MEZ (Mobile Native-Feel: Sticky Quick Actions + Start Transition) -->
+<!-- Letzte inhaltliche Änderung: 2026-04-22 20:22 MEZ (RPE Chips, Micro-Notes, Post-Workout Summary) -->
 <html lang="de" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -263,6 +263,8 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
 .set-input{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:9px;color:var(--text);padding:10px 6px;font-family:'JetBrains Mono',monospace;font-size:16px;text-align:center;outline:none;transition:.2s;width:100%}
 .set-input:focus{border-color:rgba(208,163,90,.4);background:rgba(208,163,90,.04)}
 .set-ghost{font-size:9px;line-height:1.2;text-align:center;color:var(--soft);min-height:12px}
+.logger-chip-row{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 8px}
+.logger-chip{padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text);font-size:10px;font-weight:800;cursor:pointer}
 .set-del{background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;opacity:.5;transition:.15s;text-align:center;line-height:1}
 .set-del:hover{opacity:1}
 .set-del{min-width:36px;min-height:36px;border-radius:8px}
@@ -1703,11 +1705,23 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
     <div class="set-hdr">
       <span></span><span>kg</span><span>Wdh</span><span></span>
     </div>
+    <div class="logger-chip-row">
+      <button type="button" class="logger-chip" onclick="applyRpeChip(7)">RPE 7</button>
+      <button type="button" class="logger-chip" onclick="applyRpeChip(8)">RPE 8</button>
+      <button type="button" class="logger-chip" onclick="applyRpeChip(9)">RPE 9</button>
+      <button type="button" class="logger-chip" onclick="applyRpeChip(10)">RPE 10</button>
+    </div>
     <button onclick="applyOneTapRepeat()" class="btn btn-secondary btn-full btn-sm" style="margin-bottom:8px">Letzten Satz übernehmen</button>
     <div class="set-rows" id="set-rows"></div>
     <button onclick="addSetRow()" class="btn btn-secondary btn-full btn-sm" style="margin-bottom:12px">+ Satz</button>
     <details style="margin-bottom:10px">
       <summary style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--soft);cursor:pointer">Kommentar (optional)</summary>
+      <div class="logger-chip-row" style="margin-top:8px">
+        <button type="button" class="logger-chip" onclick="appendMicroNote('schwer')">schwer</button>
+        <button type="button" class="logger-chip" onclick="appendMicroNote('sauber')">sauber</button>
+        <button type="button" class="logger-chip" onclick="appendMicroNote('pump')">pump</button>
+        <button type="button" class="logger-chip" onclick="appendMicroNote('Tempo')">Tempo</button>
+      </div>
       <textarea id="ex-notes" rows="3" placeholder="Optionaler Kommentar zur Übung..." style="margin-top:8px"></textarea>
     </details>
     <button onclick="finalizeLog(false)" class="btn btn-primary btn-full logger-action-btn" style="margin-bottom:7px">Speichern &amp; Timer starten</button>
@@ -1715,6 +1729,14 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
     <button onclick="openMobilePoolForSwap(activeEx?.id)" class="btn btn-secondary btn-full logger-action-btn" style="margin-bottom:7px">Übung aus DB ersetzen</button>
     <button onclick="skipCurrentExerciseFromLogger()" class="btn btn-secondary btn-full logger-action-btn" style="margin-bottom:7px">Übung überspringen (pausieren)</button>
     <button onclick="closeModal()" class="btn btn-secondary btn-full logger-action-btn">Abbrechen</button>
+  </div>
+</div>
+<div id="post-summary-modal" class="modal-overlay" onclick="if(event.target.id==='post-summary-modal')closePostWorkoutSummary()">
+  <div class="modal-box" style="max-width:520px">
+    <div class="modal-title">Workout Summary</div>
+    <div class="modal-sub" id="post-summary-sub">—</div>
+    <div id="post-summary-body" style="margin-bottom:14px"></div>
+    <button onclick="closePostWorkoutSummary()" class="btn btn-primary btn-full">Weiter</button>
   </div>
 </div>
 <div id="undo-log-bar">
@@ -1853,7 +1875,7 @@ function togglePoolFavOnly(checked){
   localStorage.setItem('ifl_pool_fav_only', checked ? '1' : '0');
   renderMobilePoolSheet();
 }
-const BUILD_STAMP = '2026-04-22 20:07 MEZ';
+const BUILD_STAMP = '2026-04-22 20:22 MEZ';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -4360,6 +4382,28 @@ function applyOneTapRepeat(){
   showToast('Letzten Satz ergänzt', 'ok');
 }
 
+function appendMicroNote(token){
+  const area = document.getElementById('ex-notes');
+  if(!area || !token) return;
+  const now = area.value.trim();
+  const next = now ? `${now} · ${token}` : token;
+  area.value = next;
+  saveActiveLogDraft();
+}
+
+function applyRpeChip(rpe){
+  if(!activeEx) return;
+  const rows = [...document.querySelectorAll('#set-rows .set-row')];
+  const targetIdx = rows.findLastIndex((row)=>{
+    const w = row.querySelector('.w-val')?.value;
+    const r = row.querySelector('.r-val')?.value;
+    return !!(w || r);
+  });
+  const label = targetIdx >= 0 ? `S${targetIdx+1} RPE${rpe}` : `RPE${rpe}`;
+  appendMicroNote(label);
+  showToast(`${label} gesetzt`, 'ok', 1200);
+}
+
 function finalizeLog(goNext){
   const ws=document.querySelectorAll('#set-rows .w-val'), rs=document.querySelectorAll('#set-rows .r-val');
   const sets=[]; ws.forEach((v,i)=>{ if(v.value) sets.push({w:+v.value,r:+rs[i].value||0}); });
@@ -4679,6 +4723,7 @@ function clearSession(){
 }
 function finishSession(){
   const items = db.filter(x=>x.status==='active'&&x.sType===currentTab);
+  let lastSnap = null;
   if(items.length){
     const snap = {
       id: Date.now(),
@@ -4695,6 +4740,7 @@ function finishSession(){
         notes: ex.notes?.[currentStudio] || ''
       }))
     };
+    lastSnap = snap;
     sessionLog.push(snap);
     saveSessionLog();
   }
@@ -4705,6 +4751,38 @@ function finishSession(){
   document.getElementById('active-rest-timer').style.display='none';
   syncModalTimer();
   clearSession();
+  if(lastSnap) openPostWorkoutSummary(lastSnap);
+}
+
+function openPostWorkoutSummary(snap){
+  const modal = document.getElementById('post-summary-modal');
+  const sub = document.getElementById('post-summary-sub');
+  const body = document.getElementById('post-summary-body');
+  if(!modal || !sub || !body || !snap) return;
+  const exs = snap.exercises || [];
+  const totalSets = exs.reduce((n, ex)=> n + (ex.sets?.length || 0), 0);
+  const top = exs
+    .map(ex => ({ name: ex.name, rm: Number(ex.rm || 0) }))
+    .sort((a,b)=>b.rm-a.rm)[0];
+  const volume = exs.reduce((n, ex)=>{
+    return n + (ex.sets || []).reduce((m, s)=>m + ((Number(s.w)||0) * (Number(s.r)||0)), 0);
+  }, 0);
+  sub.textContent = `${snap.date} · ${snap.studio} · ${SESSION_LABELS[snap.type] || snap.type}`;
+  body.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:10px">
+      <div class="m-stat"><div class="m-stat-val" style="font-size:22px">${exs.length}</div><div class="m-stat-lbl">Übungen</div></div>
+      <div class="m-stat"><div class="m-stat-val" style="font-size:22px">${totalSets}</div><div class="m-stat-lbl">Sätze</div></div>
+      <div class="m-stat"><div class="m-stat-val" style="font-size:22px">${Math.round(volume)}</div><div class="m-stat-lbl">Volumen</div></div>
+    </div>
+    <div style="font-size:12px;color:var(--muted)">
+      ${top?.rm ? `Bestsatz/Top 1RM: <b>${top.name}</b> · ~${top.rm.toFixed(1)} kg` : 'Noch kein 1RM für diese Session'}
+    </div>
+  `;
+  modal.classList.add('open');
+}
+
+function closePostWorkoutSummary(){
+  document.getElementById('post-summary-modal')?.classList.remove('open');
 }
 
 function exportSession(){
