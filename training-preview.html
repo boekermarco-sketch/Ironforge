@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Letzte inhaltliche Änderung: 2026-04-22 19:41 MEZ (Mobile App-Startfläche, Frequenz-Sortierung, prominenter Rest-Timer) -->
+<!-- Letzte inhaltliche Änderung: 2026-04-22 19:55 MEZ (Mobile App-Polish: Start-Look, CTA-Layout, Header/Home) -->
 <html lang="de" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -729,7 +729,10 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
 .m-tools-fold > summary::-webkit-details-marker{display:none}
 .m-tools-fold[open] > summary{border-bottom:1px solid var(--line);color:var(--muted)}
 .m-tools-fold .m-tools-inset{padding:4px 8px 12px}
-.m-session-actions{display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:6px;flex-shrink:0}
+.m-session-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;flex-shrink:0}
+.m-session-actions .btn{min-height:44px}
+.m-start-btn{font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+.m-start-btn.primary{background:linear-gradient(150deg,#f0c470,var(--gold) 55%,#bd8125);color:#0a0a0a;border:1px solid rgba(208,163,90,.42)}
 .m-home-hero{margin:6px 0 10px;padding:12px;border-radius:16px;border:1px solid var(--line);background:linear-gradient(145deg,rgba(208,163,90,.14),rgba(88,185,176,.10))}
 .m-home-hero-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
 .m-home-hero-title{font-size:14px;font-weight:800;letter-spacing:.02em}
@@ -848,6 +851,26 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
   .m-ex-big-name{
     font-size:clamp(26px,7.5vw,36px) !important;
     line-height:1.1 !important;
+  }
+  .m-home-hero{
+    border-radius:20px !important;
+    padding:14px !important;
+    background:linear-gradient(160deg,rgba(208,163,90,.20),rgba(88,185,176,.14)) !important;
+    box-shadow:0 10px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.08) !important;
+  }
+  .m-home-hero-title{font-size:16px !important}
+  .m-home-pill{font-size:11px !important;padding:5px 10px !important}
+  .m-session-actions{
+    grid-template-columns:1fr 1fr !important;
+    gap:9px !important;
+    margin-bottom:10px !important;
+  }
+  .m-start-btn{
+    border-radius:14px !important;
+    min-height:46px !important;
+  }
+  .m-start-btn.primary{
+    box-shadow:0 6px 22px rgba(208,163,90,.34), inset 0 1px 0 rgba(255,255,255,.2) !important;
   }
 
   /* ── Log Button: premium gold ──────────────────────────────── */
@@ -1519,9 +1542,9 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
   </div>
   <div id="m-home-hero" class="m-home-hero"></div>
   <div class="m-session-actions">
-    <button type="button" class="btn btn-secondary btn-sm" style="padding:10px" onclick="openMobileStudioOverlay()">Studio wählen</button>
-    <button type="button" class="btn btn-teal btn-sm" style="padding:10px" onclick="startTrainingFromMobile()">Training starten</button>
-    <button type="button" class="btn btn-primary btn-sm" style="padding:10px" onclick="openMobilePool()">Pool &amp; Katalog</button>
+    <button type="button" class="btn btn-secondary btn-sm m-start-btn" onclick="openMobileStudioOverlay()">Studio wählen</button>
+    <button type="button" class="btn btn-teal btn-sm m-start-btn primary" onclick="startTrainingFromMobile()">Training starten</button>
+    <button type="button" class="btn btn-primary btn-sm m-start-btn" style="grid-column:1/-1" onclick="openMobilePool()">Pool &amp; Katalog</button>
   </div>
   <div id="m-start-flow-hint" class="m-tools-muted" style="text-align:center;margin:-2px 0 4px">Start-Flow: 1) Studio wählen 2) Training starten</div>
   <div class="m-tools-muted" style="text-align:center;margin:-2px 0 4px">Rand wischen: Training ↔ Rechner · Subtabs: Session-Typ</div>
@@ -1822,7 +1845,7 @@ function togglePoolFavOnly(checked){
   localStorage.setItem('ifl_pool_fav_only', checked ? '1' : '0');
   renderMobilePoolSheet();
 }
-const BUILD_STAMP = '2026-04-22 19:41 MEZ';
+const BUILD_STAMP = '2026-04-22 19:55 MEZ';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -5229,7 +5252,7 @@ let mobileView  = 'session'; // studio | plan | session | stats | mehr
 let mobileExIdx = 0;         // current exercise index in session navigator
 
 const M_HEADER_TITLES = {
-  session: 'Training',
+  session: 'Start',
   tools:   'Rechner',
 };
 const MOBILE_NAV_ORDER = ['session', 'tools'];
