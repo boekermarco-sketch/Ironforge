@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Letzte inhaltliche Änderung: 2026-04-22 19:55 MEZ (Mobile App-Polish: Start-Look, CTA-Layout, Header/Home) -->
+<!-- Letzte inhaltliche Änderung: 2026-04-22 20:07 MEZ (Mobile Native-Feel: Sticky Quick Actions + Start Transition) -->
 <html lang="de" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -733,6 +733,12 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
 .m-session-actions .btn{min-height:44px}
 .m-start-btn{font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
 .m-start-btn.primary{background:linear-gradient(150deg,#f0c470,var(--gold) 55%,#bd8125);color:#0a0a0a;border:1px solid rgba(208,163,90,.42)}
+.m-session-quick-wrap{position:sticky;top:0;z-index:3;background:linear-gradient(180deg,var(--bg) 72%,rgba(0,0,0,0));padding-bottom:6px}
+.m-session-enter{animation:mSessionEnter .34s cubic-bezier(.2,.8,.2,1)}
+@keyframes mSessionEnter{
+  from{transform:translateY(12px) scale(.985);opacity:.45}
+  to{transform:translateY(0) scale(1);opacity:1}
+}
 .m-home-hero{margin:6px 0 10px;padding:12px;border-radius:16px;border:1px solid var(--line);background:linear-gradient(145deg,rgba(208,163,90,.14),rgba(88,185,176,.10))}
 .m-home-hero-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
 .m-home-hero-title{font-size:14px;font-weight:800;letter-spacing:.02em}
@@ -1540,11 +1546,13 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
     <button class="m-subtab"        id="mst-free"   onclick="mChangeTab('free')">Frei</button>
     <button class="m-subtab"        id="mst-cardio" onclick="mChangeTab('cardio')">Cardio</button>
   </div>
-  <div id="m-home-hero" class="m-home-hero"></div>
-  <div class="m-session-actions">
-    <button type="button" class="btn btn-secondary btn-sm m-start-btn" onclick="openMobileStudioOverlay()">Studio wählen</button>
-    <button type="button" class="btn btn-teal btn-sm m-start-btn primary" onclick="startTrainingFromMobile()">Training starten</button>
-    <button type="button" class="btn btn-primary btn-sm m-start-btn" style="grid-column:1/-1" onclick="openMobilePool()">Pool &amp; Katalog</button>
+  <div class="m-session-quick-wrap">
+    <div id="m-home-hero" class="m-home-hero"></div>
+    <div class="m-session-actions">
+      <button type="button" class="btn btn-secondary btn-sm m-start-btn" onclick="openMobileStudioOverlay()">Studio wählen</button>
+      <button type="button" class="btn btn-teal btn-sm m-start-btn primary" onclick="startTrainingFromMobile()">Training starten</button>
+      <button type="button" class="btn btn-primary btn-sm m-start-btn" style="grid-column:1/-1" onclick="openMobilePool()">Pool &amp; Katalog</button>
+    </div>
   </div>
   <div id="m-start-flow-hint" class="m-tools-muted" style="text-align:center;margin:-2px 0 4px">Start-Flow: 1) Studio wählen 2) Training starten</div>
   <div class="m-tools-muted" style="text-align:center;margin:-2px 0 4px">Rand wischen: Training ↔ Rechner · Subtabs: Session-Typ</div>
@@ -1845,7 +1853,7 @@ function togglePoolFavOnly(checked){
   localStorage.setItem('ifl_pool_fav_only', checked ? '1' : '0');
   renderMobilePoolSheet();
 }
-const BUILD_STAMP = '2026-04-22 19:55 MEZ';
+const BUILD_STAMP = '2026-04-22 20:07 MEZ';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -5806,6 +5814,11 @@ function startTrainingFromMobile(){
   closeMobileStudioOverlay();
   if(!TRAIN_TABS.includes(currentTab)) changeTab('push');
   switchMobileView('session');
+  const card = document.getElementById('m-ex-card');
+  if(card){
+    card.classList.remove('m-session-enter');
+    requestAnimationFrame(()=>requestAnimationFrame(()=>card.classList.add('m-session-enter')));
+  }
   renderMobileSession();
   const hint = document.getElementById('m-start-flow-hint');
   if(hint) hint.textContent = `Aktiv: ${currentStudio} · ${SESSION_LABELS[currentTab] || currentTab}`;
