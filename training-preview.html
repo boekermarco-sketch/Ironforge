@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Letzte inhaltliche Änderung: 2026-04-23 18:07 MEZ (V1 Block: Undo 5s, Logger-Autosave, Sync-Status pending/ok/error, größere Touch-Targets) -->
+<!-- Letzte inhaltliche Änderung: 2026-04-23 18:28 MEZ (V1 Block 2: Übung überspringen, aktive/pausiert/abgeschlossen Zustände, robustes Session-State-UI) -->
 <html lang="de" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -146,6 +146,10 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
 .ex-tile-name{font-size:13px;font-weight:700;color:var(--text)}
 .ex-tile-badges{display:flex;gap:4px;align-items:center;flex-shrink:0}
 .ex-tile-cat{font-size:9px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:5px;background:rgba(255,255,255,.05)}
+.ex-state-pill{font-size:8px;font-weight:900;letter-spacing:.09em;text-transform:uppercase;padding:2px 7px;border-radius:999px;border:1px solid var(--line)}
+.ex-state-pill.active{background:rgba(88,185,176,.12);color:var(--teal);border-color:rgba(88,185,176,.32)}
+.ex-state-pill.paused{background:rgba(232,166,74,.14);color:var(--warn);border-color:rgba(232,166,74,.35)}
+.ex-state-pill.done{background:rgba(208,163,90,.14);color:var(--gold);border-color:rgba(208,163,90,.35)}
 .ex-tile-group{font-size:9px;color:var(--teal);background:rgba(88,185,176,.08);border:1px solid rgba(88,185,176,.15);padding:2px 7px;border-radius:5px;letter-spacing:.06em;cursor:pointer;transition:.15s}
 .ex-tile-group:hover{background:rgba(88,185,176,.15)}
 .ex-tile-history{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--soft);display:flex;flex-wrap:wrap;gap:5px;line-height:1.6}
@@ -1631,7 +1635,7 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
 <!-- LOGGER MODAL -->
 <div id="logger-modal" class="modal-overlay" onclick="closeModalOutside(event)">
   <div class="modal-box">
-    <img id="modal-ex-img" class="modal-ex-img" src="" alt="">
+    <img id="modal-ex-img" class="modal-ex-img" src="" alt="" loading="lazy">
     <div class="modal-title" id="modal-name">Übung</div>
     <div class="modal-sub" id="modal-info">–</div>
     <div id="prev-wrap" class="prev-wrap" style="display:none">
@@ -1654,6 +1658,7 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
     </details>
     <button onclick="finalizeLog(false)" class="btn btn-primary btn-full logger-action-btn" style="margin-bottom:7px">Speichern &amp; Timer starten</button>
     <button onclick="finalizeLog(true)" class="btn btn-teal btn-full logger-action-btn" style="margin-bottom:7px">Speichern &amp; nächste Übung</button>
+    <button onclick="skipCurrentExerciseFromLogger()" class="btn btn-secondary btn-full logger-action-btn" style="margin-bottom:7px">Übung überspringen (pausieren)</button>
     <button onclick="closeModal()" class="btn btn-secondary btn-full logger-action-btn">Abbrechen</button>
   </div>
 </div>
@@ -1792,7 +1797,7 @@ function togglePoolFavOnly(checked){
   localStorage.setItem('ifl_pool_fav_only', checked ? '1' : '0');
   renderMobilePoolSheet();
 }
-const BUILD_STAMP = '2026-04-23 18:07 MEZ';
+const BUILD_STAMP = '2026-04-23 18:28 MEZ';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -2541,7 +2546,15 @@ function setPoolMode(mode){
 
 function renderActive(){
   const zone = document.getElementById('active-zone');
-  const items = db.filter(x=>x.status==='active'&&x.sType===currentTab).sort((a,b)=>a.order-b.order);
+  const stateOrder = { active: 0, paused: 1, done: 2 };
+  const items = db
+    .filter(x=>x.status==='active'&&x.sType===currentTab)
+    .sort((a,b)=>{
+      const as = stateOrder[(a.trainState || 'active')] ?? 9;
+      const bs = stateOrder[(b.trainState || 'active')] ?? 9;
+      if(as !== bs) return as - bs;
+      return (a.order||0) - (b.order||0);
+    });
   zone.innerHTML = items.length
     ? items.map(ex=>tileHTML(ex,true)).join('')
     : '<div class="drop-empty">Übung aus Pool hierher ziehen</div>';
@@ -2563,6 +2576,9 @@ function tileHTML(ex, inActive){
     ? `<span class="ex-tile-group" onclick="event.stopPropagation();promptGroup(${ex.id})">${ex.group}</span>`
     : `<span class="ex-tile-group" style="opacity:.5" onclick="event.stopPropagation();promptGroup(${ex.id})">+ Gruppe</span>`;
   const catColor = CAT_COLOR[ex.cat]||'var(--soft)';
+  const trainState = ex.trainState || 'active';
+  const stateLabel = trainState === 'paused' ? 'Pausiert' : (trainState === 'done' ? 'Abgeschlossen' : 'Aktiv');
+  const statePill = inActive ? `<span class="ex-state-pill ${trainState}">${stateLabel}</span>` : '';
   const _pv = resolveExerciseImageUrl(ex);
   const _fb = exerciseImagePlaceholderUrl(ex);
   const imgHTML = `<img src="${attrUrl(_pv)}" class="ex-tile-img" loading="lazy" draggable="false" alt="" onerror="this.onerror=null;this.src='${attrUrl(_fb)}'">`;
@@ -2574,6 +2590,13 @@ function tileHTML(ex, inActive){
     : `<span class="pill" style="font-size:8px;padding:2px 7px;cursor:default">Standard</span>`;
   const quickAddBtn = !inActive
     ? `<button class="ex-quick-add" onclick="event.stopPropagation();addToCurrentSession(${ex.id})">+ Session</button>`
+    : '';
+  const stateControls = inActive
+    ? `<div style="display:flex;gap:4px;flex-wrap:wrap">
+        <button class="pill ${trainState==='active'?'active':''}" style="font-size:8px;padding:2px 7px" onclick="event.stopPropagation();setExerciseTrainState(${ex.id}, 'active')">Aktiv</button>
+        <button class="pill ${trainState==='paused'?'pill-red':''}" style="font-size:8px;padding:2px 7px" onclick="event.stopPropagation();setExerciseTrainState(${ex.id}, 'paused')">Pausiert</button>
+        <button class="pill ${trainState==='done'?'pill-gold':''}" style="font-size:8px;padding:2px 7px" onclick="event.stopPropagation();setExerciseTrainState(${ex.id}, 'done')">Abgeschlossen</button>
+      </div>`
     : '';
   const moveControls = inActive
     ? `<div class="ex-move-controls">
@@ -2587,12 +2610,16 @@ function tileHTML(ex, inActive){
       <div style="flex:1;min-width:0">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px">
           <div class="ex-tile-name">${ex.name}</div>
-          <span class="ex-tile-cat" style="color:${catColor};flex-shrink:0">${ex.cat}</span>
+          <div style="display:flex;gap:4px;align-items:center;flex-shrink:0">
+            ${statePill}
+            <span class="ex-tile-cat" style="color:${catColor};flex-shrink:0">${ex.cat}</span>
+          </div>
         </div>
         ${artHTML}
       </div>
     </div>
     ${grpLabel}
+    ${stateControls}
     <div style="display:flex;align-items:center;gap:6px;margin-top:5px">${scopeBadge}${quickAddBtn}${moveControls}</div>
     <div class="ex-tile-history" style="margin-top:5px">${setsHTML||'<span style="color:var(--soft)">Noch keine Einträge</span>'}</div>
     ${rm>0?`<div class="ex-tile-footer">
@@ -2616,6 +2643,7 @@ function addToCurrentSession(id){
   }
   ex.status = 'active';
   ex.sType = currentTab;
+  ex.trainState = 'active';
   const maxOrder = Math.max(
     ...db.filter(x=>x.status==='active' && x.sType===currentTab).map(x=>x.order||0),
     0
@@ -2626,6 +2654,14 @@ function addToCurrentSession(id){
   closeMobilePool();
   render();
   showToast(`✓ ${ex.name} → Session`, 'ok');
+}
+
+function setExerciseTrainState(id, state){
+  const ex = db.find(x=>x.id===id);
+  if(!ex) return;
+  ex.trainState = state;
+  saveDB();
+  renderActive();
 }
 
 function moveExercise(id, step){
@@ -4084,6 +4120,7 @@ function addExercise(){
 // ═══ LOGGER MODAL ════════════════════════════════════════════
 function openLogger(ex){
   activeEx = ex;
+  activeEx.trainState = 'active';
   document.getElementById('modal-name').textContent = ex.name;
   const artInfo = ex.art ? ` · ${ex.brand||'gym80'} ${ex.art}` : '';
   document.getElementById('modal-info').textContent = [ex.cat, ex.group].filter(Boolean).join(' · ') + artInfo;
@@ -4155,6 +4192,7 @@ function finalizeLog(goNext){
     const notes = (document.getElementById('ex-notes')?.value || '').trim();
     activeEx.notes = activeEx.notes || {};
     activeEx.notes[currentStudio] = notes;
+    activeEx.trainState = 'done';
     clearActiveLogDraft();
     queueLogUndo({
       id: activeEx.id,
@@ -4169,6 +4207,16 @@ function finalizeLog(goNext){
       openNextExerciseAfter(loggedId);
     }
   }
+}
+
+function skipCurrentExerciseFromLogger(){
+  if(!activeEx) return;
+  activeEx.trainState = 'paused';
+  saveActiveLogDraft();
+  saveDB();
+  closeModal();
+  render();
+  showToast(`Übung pausiert: ${activeEx.name}`, 'warn');
 }
 
 function openNextExerciseAfter(id){
