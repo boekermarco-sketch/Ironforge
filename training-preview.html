@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Letzte inhaltliche Änderung: 2026-04-23 18:28 MEZ (V1 Block 2: Übung überspringen, aktive/pausiert/abgeschlossen Zustände, robustes Session-State-UI) -->
+<!-- Letzte inhaltliche Änderung: 2026-04-24 14:15 MEZ (V1 Block 3: Studio Context Header, Plan Day Card, Session Progress Rail, kein Pflicht-Setup-Modal im Session-Flow) -->
 <html lang="de" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -124,6 +124,11 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
 .tab-state{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.03)}
 .tab-state-title{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--soft);font-weight:800}
 [data-theme="light"] .tab-state{background:rgba(0,0,0,.03)}
+.session-meta-bar{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;padding:8px 10px;border-radius:11px;border:1px solid var(--line);background:rgba(255,255,255,.02)}
+.plan-day-card{margin-bottom:8px;padding:10px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.02)}
+.session-progress-rail{margin-bottom:10px;padding:9px 10px;border-radius:11px;border:1px solid var(--line);background:rgba(255,255,255,.02)}
+.session-progress-track{height:6px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:6px}
+.session-progress-fill{height:100%;background:var(--teal)}
 .edit-mode-banner{display:none;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;padding:10px 12px;border-radius:12px;border:1px solid rgba(222,113,113,.3);background:rgba(222,113,113,.08)}
 .edit-mode-banner.show{display:flex}
 .edit-done-fab{display:none;position:fixed;right:14px;bottom:92px;z-index:95;background:rgba(222,113,113,.95);color:#fff;border:none;border-radius:999px;padding:11px 14px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;box-shadow:var(--shadow);cursor:pointer}
@@ -1071,7 +1076,7 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
       <button onclick="exportBackup()" class="btn btn-secondary btn-sm">Backup Export</button>
       <button onclick="importBackup()" class="btn btn-secondary btn-sm">Backup Import</button>
-      <button onclick="openSetupWizard(true)" class="btn btn-secondary btn-sm">Sync Setup</button>
+      <button onclick="openSetupWizard(false)" class="btn btn-secondary btn-sm">Sync Setup</button>
       <button onclick="syncToCloud()" class="btn btn-secondary btn-sm">Cloud Hochladen</button>
       <button onclick="syncFromCloud()" class="btn btn-secondary btn-sm">Cloud Laden</button>
       <input type="file" id="backup-file-input" accept=".json,application/json" style="display:none" onchange="handleBackupFile(event)">
@@ -1151,6 +1156,9 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
             <button onclick="finishSession()" class="btn btn-primary btn-sm">Beenden ✓</button>
           </div>
         </div>
+        <div id="studio-context-header" class="session-meta-bar"></div>
+        <div id="plan-day-card" class="plan-day-card"></div>
+        <div id="session-progress-rail" class="session-progress-rail"></div>
         <!-- Session-Fokus-Bar (nur Mobile, nur bei Phase 'session') -->
         <div class="session-focus-bar" id="session-focus-bar" style="display:none">
           <div class="focus-bar-label">Session Fokus · Nächste Übung</div>
@@ -1797,7 +1805,7 @@ function togglePoolFavOnly(checked){
   localStorage.setItem('ifl_pool_fav_only', checked ? '1' : '0');
   renderMobilePoolSheet();
 }
-const BUILD_STAMP = '2026-04-23 18:28 MEZ';
+const BUILD_STAMP = '2026-04-24 14:15 MEZ';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -2559,6 +2567,65 @@ function renderActive(){
     ? items.map(ex=>tileHTML(ex,true)).join('')
     : '<div class="drop-empty">Übung aus Pool hierher ziehen</div>';
   attachTileEvents(zone,'active');
+  renderSessionMeta();
+}
+
+function getCurrentSessionItems(){
+  const stateOrder = { active: 0, paused: 1, done: 2 };
+  return db
+    .filter(x=>x.status==='active'&&x.sType===currentTab)
+    .sort((a,b)=>{
+      const as = stateOrder[(a.trainState || 'active')] ?? 9;
+      const bs = stateOrder[(b.trainState || 'active')] ?? 9;
+      if(as !== bs) return as - bs;
+      return (a.order||0) - (b.order||0);
+    });
+}
+
+function renderSessionMeta(){
+  const context = document.getElementById('studio-context-header');
+  const plan = document.getElementById('plan-day-card');
+  const rail = document.getElementById('session-progress-rail');
+  if(!context || !plan || !rail) return;
+  if(!TRAIN_TABS.includes(currentTab)){
+    context.style.display = 'none';
+    plan.style.display = 'none';
+    rail.style.display = 'none';
+    return;
+  }
+  context.style.display = '';
+  plan.style.display = '';
+  rail.style.display = '';
+  const items = getCurrentSessionItems();
+  const total = items.length;
+  const done = items.filter(x=>(x.trainState||'active')==='done').length;
+  const paused = items.filter(x=>(x.trainState||'active')==='paused').length;
+  const active = items.filter(x=>(x.trainState||'active')==='active').length;
+  const hasTpl = !!SESSION_TEMPLATES[currentTab];
+  const nextIdx = Math.max(0, items.findIndex(x=>(x.trainState||'active')!=='done'));
+  const progress = total ? Math.min(100, Math.round((done/total)*100)) : 0;
+  context.innerHTML = `
+    <div style="font-size:12px;color:var(--muted)">
+      Studio: <b>${currentStudio}</b> · Plan: <b>${SESSION_LABELS[currentTab] || currentTab}</b>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+      ${hasTpl?'<span class="pill pill-gold" style="cursor:default">Plan-Template aktivierbar</span>':''}
+      <span class="pill" style="cursor:default">${currentTab.toUpperCase()}</span>
+    </div>
+  `;
+  plan.innerHTML = `
+    <div class="tab-state-title" style="margin-bottom:6px">Plan Day Card</div>
+    <div style="font-size:12px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap">
+      <span>Gesamt: <b>${total}</b></span>
+      <span style="color:var(--teal)">Aktiv: <b>${active}</b></span>
+      <span style="color:var(--warn)">Pausiert: <b>${paused}</b></span>
+      <span style="color:var(--gold)">Abgeschlossen: <b>${done}</b></span>
+    </div>
+  `;
+  rail.innerHTML = `
+    <div style="font-size:11px;color:var(--muted)">Session Progress Rail · ${done}/${total} erledigt${total?` · nächste Übung ${Math.min(nextIdx+1,total)}/${total}`:''}</div>
+    <div class="session-progress-track"><div class="session-progress-fill" style="width:${progress}%"></div></div>
+  `;
 }
 
 function tileHTML(ex, inActive){
@@ -4654,6 +4721,11 @@ function updateSyncStatus(text){
 }
 
 function openSetupWizard(force){
+  if(force && isInCriticalSessionFlow()){
+    showToast('Setup-Modal unterdrückt: Session läuft', 'warn', 2200);
+    updateSyncStatus('Sync-Setup nötig (später öffnen, Session läuft)');
+    return;
+  }
   const cfg = getSyncConfig();
   const overlay = document.getElementById('setup-overlay');
   if(!overlay) return;
@@ -4667,6 +4739,14 @@ function openSetupWizard(force){
     ? 'Bitte vollständig ausfüllen und speichern.'
     : '';
   overlay.classList.add('open');
+}
+
+function isInCriticalSessionFlow(){
+  const loggerOpen = document.getElementById('logger-modal')?.classList.contains('open');
+  const overlayOpen = document.getElementById('setup-overlay')?.classList.contains('open');
+  const trainTab = TRAIN_TABS.includes(currentTab);
+  const activeItems = db.filter(x=>x.status==='active'&&x.sType===currentTab).length;
+  return !!(loggerOpen || timerRunning || (trainTab && activeItems > 0 && !overlayOpen));
 }
 
 function closeSetupWizard(){
@@ -4931,9 +5011,12 @@ function scheduleAutoSync(){
 async function syncToCloud(options = {}){
   const silent = !!options.silent;
   const cfg = getSyncConfig();
-  if(!cfg.supabaseUrl || !cfg.anonKey){ openSetupWizard(true); return; }
+  if(!cfg.supabaseUrl || !cfg.anonKey){
+    if(!silent) openSetupWizard(false);
+    return;
+  }
   if(!canRunCloudSync()){
-    if(!silent) openSetupWizard(true);
+    if(!silent) openSetupWizard(false);
     return;
   }
   syncStateTone = 'pending';
@@ -5022,8 +5105,8 @@ function base64ToBytes(base64){
 
 async function syncFromCloud(){
   const cfg = getSyncConfig();
-  if(!cfg.supabaseUrl || !cfg.anonKey){ openSetupWizard(true); return; }
-  if(!canRunCloudSync()){ openSetupWizard(true); return; }
+  if(!cfg.supabaseUrl || !cfg.anonKey){ openSetupWizard(false); return; }
+  if(!canRunCloudSync()){ openSetupWizard(false); return; }
   syncStateTone = 'pending';
   updateSyncStatus('Sync: lade Cloud-Daten...');
   try{
@@ -6074,7 +6157,7 @@ closeAnalyseForgeFoldForMobile();
 window.addEventListener('pageshow', () => closeAnalyseForgeFoldForMobile());
 const _initSync = getSyncConfig();
 if(!_initSync.supabaseUrl || !_initSync.anonKey){
-  openSetupWizard(true);
+  openSetupWizard(false);
 } else {
   refreshDeviceCatalogImageCache().then(()=>{
     if(typeof render === 'function') render();
