@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Letzte inhaltliche Änderung: 2026-04-22 19:24 MEZ (Mobile Block: 2-Tap Start, One-Tap Repeat, Ghost-Satz-Hints) -->
+<!-- Letzte inhaltliche Änderung: 2026-04-22 19:41 MEZ (Mobile App-Startfläche, Frequenz-Sortierung, prominenter Rest-Timer) -->
 <html lang="de" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -730,6 +730,12 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
 .m-tools-fold[open] > summary{border-bottom:1px solid var(--line);color:var(--muted)}
 .m-tools-fold .m-tools-inset{padding:4px 8px 12px}
 .m-session-actions{display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:6px;flex-shrink:0}
+.m-home-hero{margin:6px 0 10px;padding:12px;border-radius:16px;border:1px solid var(--line);background:linear-gradient(145deg,rgba(208,163,90,.14),rgba(88,185,176,.10))}
+.m-home-hero-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.m-home-hero-title{font-size:14px;font-weight:800;letter-spacing:.02em}
+.m-home-hero-sub{font-size:11px;color:var(--muted)}
+.m-home-hero-stats{display:flex;gap:8px;flex-wrap:wrap}
+.m-home-pill{font-size:10px;padding:4px 8px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--text)}
 
 /* ══ MOBILE FORTSCHRITT (Analyse-Tab) ═══════════════════════════ */
 #m-analyse-view{display:none;position:fixed;top:54px;left:0;right:0;bottom:68px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px 20px;flex-direction:column;gap:12px;background:var(--bg)}
@@ -1511,6 +1517,7 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
     <button class="m-subtab"        id="mst-free"   onclick="mChangeTab('free')">Frei</button>
     <button class="m-subtab"        id="mst-cardio" onclick="mChangeTab('cardio')">Cardio</button>
   </div>
+  <div id="m-home-hero" class="m-home-hero"></div>
   <div class="m-session-actions">
     <button type="button" class="btn btn-secondary btn-sm" style="padding:10px" onclick="openMobileStudioOverlay()">Studio wählen</button>
     <button type="button" class="btn btn-teal btn-sm" style="padding:10px" onclick="startTrainingFromMobile()">Training starten</button>
@@ -1815,7 +1822,7 @@ function togglePoolFavOnly(checked){
   localStorage.setItem('ifl_pool_fav_only', checked ? '1' : '0');
   renderMobilePoolSheet();
 }
-const BUILD_STAMP = '2026-04-22 19:24 MEZ';
+const BUILD_STAMP = '2026-04-22 19:41 MEZ';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -2536,10 +2543,14 @@ function renderCatFilters(){
 function renderPool(){
   const zone = document.getElementById('pool-zone');
   renderPoolMode();
-  const items = db
+  const freqOrderMap = buildPoolFreqOrderMap();
+  let items = db
     .filter(x=>x.status==='pool'&&x.cat===activePoolCat)
     .filter(x=>poolMode==='global' ? (x.poolScope||'global')==='global' : (x.poolScope||'global')==='studio' && x.gym===currentStudio)
     .sort((a,b)=>a.order-b.order);
+  if(items.length){
+    items = sortPoolItemsByFrequencyThenOrder(items, freqOrderMap);
+  }
   document.getElementById('pool-pill').textContent = items.length;
   zone.innerHTML = items.length
     ? items.map(ex=>tileHTML(ex,false)).join('')
@@ -5274,9 +5285,32 @@ function getMobileSessionItems(){
            .sort((a,b)=>a.order-b.order);
 }
 
+function renderMobileHomeHero(items){
+  const hero = document.getElementById('m-home-hero');
+  if(!hero) return;
+  const today = new Date().toLocaleDateString('de-DE', { weekday:'short', day:'2-digit', month:'2-digit' });
+  const done = items.filter(x => (x.trainState || 'active') === 'done').length;
+  const poolCount = db.filter(x=>x.status==='pool').length;
+  hero.innerHTML = `
+    <div class="m-home-hero-top">
+      <div>
+        <div class="m-home-hero-title">Iron Forge Mobile</div>
+        <div class="m-home-hero-sub">${today} · ${currentStudio} · ${SESSION_LABELS[currentTab] || currentTab}</div>
+      </div>
+      <button type="button" class="btn btn-secondary btn-sm" style="padding:7px 10px" onclick="openMobileStudioOverlay()">Studio</button>
+    </div>
+    <div class="m-home-hero-stats">
+      <span class="m-home-pill">${items.length} aktiv</span>
+      <span class="m-home-pill">${done} erledigt</span>
+      <span class="m-home-pill">${poolCount} im Pool</span>
+    </div>
+  `;
+}
+
 function renderMobileSession(){
   if(!isMobile() || !document.body.classList.contains('ifl-mobile-app')) return;
   const items = getMobileSessionItems();
+  renderMobileHomeHero(items);
   const card  = document.getElementById('m-ex-card');
   if(!card) return;
 
@@ -5348,6 +5382,10 @@ function renderMobileSession(){
   const mImgFb = exerciseImagePlaceholderUrl(ex);
 
   card.innerHTML = `
+    ${timerRunning ? `<div style="margin-bottom:8px;padding:8px 10px;border-radius:12px;border:1px solid rgba(208,163,90,.28);background:rgba(208,163,90,.12);display:flex;justify-content:space-between;align-items:center;gap:8px">
+      <span style="font-size:11px;font-weight:700;color:var(--gold)">Pause läuft: ${formatTimer(timerSec)}</span>
+      <button type="button" class="btn btn-secondary btn-sm" style="padding:4px 8px" onclick="stopRestTimer()">Stop</button>
+    </div>` : ''}
     <div class="m-ex-progress-row">
       <span class="m-ex-counter">${mobileExIdx+1} / ${items.length}</span>
       <div class="m-ex-dots">${dotsHTML}</div>
@@ -5593,7 +5631,7 @@ function renderMobilePoolSheet(){
   }
 
   const freqOrderMap = buildPoolFreqOrderMap();
-  if(qPoolActive && items.length){
+  if(items.length){
     items = sortPoolItemsByFrequencyThenOrder(items, freqOrderMap);
   }
 
