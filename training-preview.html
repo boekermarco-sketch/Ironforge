@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#060b14">
+<meta name="theme-color" content="#050608">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
@@ -12,22 +12,23 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 :root {
-  --bg:#060b14; --panel:#0f1828; --panel2:#162338; --line:rgba(143,181,242,.16);
-  --text:#eef4ff; --muted:#b6c4dc; --soft:#8fa6ca;
-  --gold:#6ea8ff; --goldSoft:rgba(110,168,255,.14);
-  --teal:#7de9ff; --red:#ff7f95; --warn:#f2b66f;
-  --shadow:0 30px 90px rgba(0,4,14,.48);
-  --shine:linear-gradient(90deg,transparent,rgba(174,210,255,.70),transparent);
+  --bg:#050608; --panel:#101317; --panel2:#13171c; --line:rgba(214,198,169,.08);
+  --text:#fbf7ef; --muted:#b9b1a2; --soft:#898174;
+  --gold:#d0a35a; --goldSoft:rgba(208,163,90,.08);
+  --teal:#58b9b0; --red:#de7171; --warn:#e8a64a;
+  --shadow:0 30px 90px rgba(0,0,0,.38);
+  --shine:linear-gradient(90deg,transparent,var(--gold),transparent);
 }
 [data-theme="light"] {
-  --bg:#eff4fb; --panel:#fbfdff; --panel2:#e9f0fb; --line:rgba(54,98,162,.14);
-  --text:#0f1a2a; --muted:#4e6280; --soft:#7087a8; --gold:#2f6fce;
-  --goldSoft:rgba(47,111,206,.11); --teal:#0f8ea8; --red:#c44040; --warn:#ba6d16;
-  --shadow:0 4px 30px rgba(24,50,92,.12);
-  --shine:linear-gradient(90deg,transparent,rgba(47,111,206,.35),transparent);
+  --bg:#f0ede8; --panel:#f8f6f2; --panel2:#ede9e3; --line:rgba(60,45,25,.1);
+  --text:#1c1814; --muted:#5c5448; --soft:#8a8070; --gold:#b07d20;
+  --goldSoft:rgba(176,125,32,.10); --teal:#2a9090; --red:#c44040; --warn:#c87020;
+  --shadow:0 4px 30px rgba(30,20,10,.12);
+  --shine:linear-gradient(90deg,transparent,rgba(176,125,32,.35),transparent);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-size:15px;scroll-behavior:smooth}
@@ -1054,6 +1055,365 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
     border-radius:14px !important;
     padding:13px 16px !important;
     font-size:12px !important;
+  }
+}
+/* ══ EMERALD NIGHT: MOBILE-ONLY SKIN (Desktop untouched) ═══════════════ */
+@media(max-width:640px){
+  body.ifl-mobile-app{
+    --bg:#050505;
+    --panel:rgba(18,22,18,.78);
+    --panel2:rgba(12,16,12,.78);
+    --line:rgba(255,255,255,.11);
+    --text:#ffffff;
+    --muted:#a0a0a0;
+    --soft:#879487;
+    --gold:#50c878;
+    --goldSoft:rgba(80,200,120,.14);
+    --teal:#66dd8b;
+    --warn:#8df1ab;
+    --shadow:0 10px 30px rgba(0,0,0,.8);
+    --shine:linear-gradient(90deg,transparent,rgba(255,255,255,.14),transparent);
+    font-family:'Space Grotesk','Manrope',sans-serif;
+    background:
+      radial-gradient(120% 80% at 100% 0%, rgba(80,200,120,.16), transparent 55%),
+      radial-gradient(100% 70% at 0% 100%, rgba(80,200,120,.10), transparent 58%),
+      #050505 !important;
+  }
+  body.ifl-mobile-app #m-app-header{
+    background:rgba(5,5,5,.84) !important;
+    backdrop-filter:blur(24px) !important;
+    -webkit-backdrop-filter:blur(24px) !important;
+    border-bottom:1px solid rgba(255,255,255,.09) !important;
+  }
+  body.ifl-mobile-app .m-header-title{
+    font-family:'Space Grotesk','Manrope',sans-serif !important;
+    font-weight:700 !important;
+    letter-spacing:-.01em !important;
+  }
+  body.ifl-mobile-app .m-header-studio{
+    color:var(--gold) !important;
+    text-shadow:0 0 8px rgba(80,200,120,.55) !important;
+  }
+  body.ifl-mobile-app .mobile-bottom-nav{
+    background:rgba(5,5,5,.88) !important;
+    backdrop-filter:blur(30px) saturate(155%) !important;
+    -webkit-backdrop-filter:blur(30px) saturate(155%) !important;
+    border-top:1px solid rgba(80,200,120,.26) !important;
+    box-shadow:0 -10px 40px rgba(0,0,0,.8) !important;
+  }
+  body.ifl-mobile-app .m5-tab{
+    border-color:rgba(255,255,255,.12) !important;
+    background:rgba(255,255,255,.03) !important;
+  }
+  body.ifl-mobile-app .m5-tab.active{
+    color:var(--gold) !important;
+    text-shadow:0 0 7px rgba(80,200,120,.62) !important;
+  }
+  body.ifl-mobile-app .m5-tab.active::after{
+    background:linear-gradient(90deg,rgba(80,200,120,.35),#50c878,rgba(80,200,120,.35)) !important;
+    box-shadow:0 0 9px rgba(80,200,120,.48) !important;
+  }
+  body.ifl-mobile-app .m5-center svg{
+    background:linear-gradient(145deg,#66dd8b,#50c878,#2e8b57) !important;
+    box-shadow:0 4px 18px rgba(80,200,120,.55) !important;
+  }
+  body.ifl-mobile-app #m-session-overlay{
+    background:
+      radial-gradient(100% 70% at 100% 0%, rgba(80,200,120,.1), transparent 58%),
+      #050505 !important;
+  }
+  body.ifl-mobile-app .m-subtab{
+    font-family:'Space Grotesk','Manrope',sans-serif !important;
+    border-color:rgba(255,255,255,.1) !important;
+    background:rgba(255,255,255,.03) !important;
+    color:var(--muted) !important;
+  }
+  body.ifl-mobile-app .m-subtab.active{
+    background:rgba(80,200,120,.14) !important;
+    border-color:rgba(80,200,120,.42) !important;
+    color:var(--gold) !important;
+    box-shadow:0 0 10px rgba(80,200,120,.25) !important;
+  }
+  body.ifl-mobile-app .m-home-hero{
+    background:rgba(255,255,255,.03) !important;
+    backdrop-filter:blur(20px) !important;
+    -webkit-backdrop-filter:blur(20px) !important;
+    border:1px solid rgba(80,200,120,.24) !important;
+    border-radius:24px !important;
+    box-shadow:0 10px 30px rgba(0,0,0,.5), 0 0 18px rgba(80,200,120,.14) !important;
+  }
+  body.ifl-mobile-app .m-home-hero-title{
+    font-family:'Space Grotesk','Manrope',sans-serif !important;
+    font-weight:700 !important;
+  }
+  body.ifl-mobile-app .m-home-pill{
+    border-color:rgba(80,200,120,.28) !important;
+    background:rgba(80,200,120,.08) !important;
+    color:#c9f7d9 !important;
+  }
+  body.ifl-mobile-app .m-ex-card{
+    background:rgba(255,255,255,.04) !important;
+    backdrop-filter:blur(24px) !important;
+    -webkit-backdrop-filter:blur(24px) !important;
+    border:1px solid rgba(255,255,255,.1) !important;
+    border-radius:24px !important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.12), 0 8px 32px rgba(0,0,0,.7) !important;
+  }
+  body.ifl-mobile-app .m-ex-big-name{
+    font-family:'Space Grotesk','Manrope',sans-serif !important;
+    text-transform:uppercase;
+    letter-spacing:-.02em !important;
+  }
+  body.ifl-mobile-app #m-rest-bar,
+  body.ifl-mobile-app .m-rest-bar{
+    background:rgba(80,200,120,.12) !important;
+    border:1px solid rgba(80,200,120,.35) !important;
+    box-shadow:0 0 18px rgba(80,200,120,.2) !important;
+  }
+  body.ifl-mobile-app .m-rest-val{
+    color:var(--gold) !important;
+    text-shadow:0 0 10px rgba(80,200,120,.5) !important;
+    font-family:'Space Grotesk','Manrope',sans-serif !important;
+    font-weight:700 !important;
+  }
+  body.ifl-mobile-app .m-nav-btn{
+    border-color:rgba(255,255,255,.12) !important;
+    background:rgba(255,255,255,.04) !important;
+    color:#d7ded7 !important;
+  }
+  body.ifl-mobile-app .m-nav-btn:active{
+    background:rgba(80,200,120,.16) !important;
+    color:var(--gold) !important;
+  }
+  body.ifl-mobile-app .m-log-btn{
+    height:60px !important;
+    border-radius:18px !important;
+    border:1px solid rgba(140,255,183,.5) !important;
+    background:linear-gradient(135deg,#66dd8b 0%, #50c878 45%, #2e8b57 100%) !important;
+    color:#07220f !important;
+    font-family:'Space Grotesk','Manrope',sans-serif !important;
+    font-size:22px !important;
+    font-weight:800 !important;
+    letter-spacing:.02em !important;
+    text-transform:uppercase !important;
+    box-shadow:0 0 22px rgba(80,200,120,.4), inset 0 1px 1px rgba(255,255,255,.33) !important;
+  }
+  body.ifl-mobile-app #m-pool-sheet{
+    background:rgba(10,14,11,.94) !important;
+    backdrop-filter:blur(24px) saturate(140%) !important;
+    -webkit-backdrop-filter:blur(24px) saturate(140%) !important;
+    border-top:1px solid rgba(255,255,255,.1) !important;
+    box-shadow:0 -8px 48px rgba(0,0,0,.68) !important;
+  }
+  body.ifl-mobile-app .m-pool-item{
+    background:rgba(255,255,255,.03) !important;
+    border:1px solid rgba(255,255,255,.1) !important;
+  }
+  body.ifl-mobile-app .m-pool-item--catalog{
+    border-color:rgba(80,200,120,.24) !important;
+    box-shadow:0 0 10px rgba(80,200,120,.12) !important;
+  }
+  body.ifl-mobile-app .m-pool-add-btn{
+    border-radius:12px !important;
+    border:1px solid rgba(80,200,120,.38) !important;
+    background:rgba(80,200,120,.14) !important;
+    color:#c8f7d8 !important;
+    font-family:'Space Grotesk','Manrope',sans-serif !important;
+  }
+  body.ifl-mobile-app .m-pool-fab{
+    border-color:rgba(80,200,120,.4) !important;
+    background:rgba(80,200,120,.15) !important;
+    color:#c9f7d9 !important;
+    box-shadow:0 4px 22px rgba(80,200,120,.2) !important;
+  }
+  /* Workout Start screen (Heute + Start actions) */
+  body.ifl-mobile-app #m-heute-view{
+    background:
+      radial-gradient(120% 70% at 100% 0%, rgba(80,200,120,.1), transparent 55%),
+      #050505 !important;
+  }
+  body.ifl-mobile-app .m-heute-greeting{
+    font-family:'Space Grotesk','Manrope',sans-serif !important;
+    font-weight:700 !important;
+    letter-spacing:-.03em !important;
+  }
+  body.ifl-mobile-app .m-heute-stat,
+  body.ifl-mobile-app .m-heute-kfa-card,
+  body.ifl-mobile-app .m-heute-log-card,
+  body.ifl-mobile-app .m-heute-snap-card,
+  body.ifl-mobile-app .m-heute-equip{
+    background:rgba(255,255,255,.04) !important;
+    border:1px solid rgba(255,255,255,.11) !important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.1), 0 10px 26px rgba(0,0,0,.45) !important;
+  }
+  body.ifl-mobile-app .m-heute-action-card{
+    background:linear-gradient(135deg,rgba(80,200,120,.2),rgba(46,139,87,.12)) !important;
+    border:1px solid rgba(80,200,120,.34) !important;
+    box-shadow:0 0 17px rgba(80,200,120,.15) !important;
+  }
+  body.ifl-mobile-app .m-heute-action-icon{
+    background:rgba(80,200,120,.2) !important;
+    border:1px solid rgba(80,200,120,.3) !important;
+  }
+  body.ifl-mobile-app .m-session-actions .m-start-btn{
+    font-family:'Space Grotesk','Manrope',sans-serif !important;
+    border-radius:16px !important;
+    border:1px solid rgba(255,255,255,.14) !important;
+    background:rgba(255,255,255,.03) !important;
+    color:#dbe4db !important;
+  }
+  body.ifl-mobile-app .m-session-actions .m-start-btn.primary{
+    background:linear-gradient(135deg,#66dd8b,#50c878,#2e8b57) !important;
+    border-color:rgba(140,255,183,.55) !important;
+    color:#07220f !important;
+    box-shadow:0 0 22px rgba(80,200,120,.35), inset 0 1px 0 rgba(255,255,255,.35) !important;
+  }
+
+  /* Active Session screen */
+  body.ifl-mobile-app .m-ex-counter,
+  body.ifl-mobile-app .m-ex-hist-label{
+    color:#9fd8b2 !important;
+  }
+  body.ifl-mobile-app .m-ex-hist-set{
+    border-color:rgba(255,255,255,.1) !important;
+    background:rgba(255,255,255,.04) !important;
+  }
+  body.ifl-mobile-app .m-ex-hist-set.up,
+  body.ifl-mobile-app .m-ex-today-set{
+    color:#baf7cd !important;
+    border-color:rgba(80,200,120,.4) !important;
+    background:rgba(80,200,120,.12) !important;
+  }
+  body.ifl-mobile-app .m-action-row{
+    gap:10px !important;
+  }
+
+  /* Exercise catalog (bottom sheet + list) */
+  body.ifl-mobile-app #m-uebungen-view{
+    background:#050505 !important;
+  }
+  body.ifl-mobile-app .m-ueb-sticky{
+    background:rgba(5,5,5,.86) !important;
+    border-bottom:1px solid rgba(255,255,255,.09) !important;
+    backdrop-filter:blur(22px) !important;
+    -webkit-backdrop-filter:blur(22px) !important;
+  }
+  body.ifl-mobile-app .m-ueb-title{
+    font-family:'Space Grotesk','Manrope',sans-serif !important;
+    font-weight:700 !important;
+  }
+  body.ifl-mobile-app .m-ueb-segment{
+    background:rgba(255,255,255,.05) !important;
+    border:1px solid rgba(255,255,255,.1) !important;
+  }
+  body.ifl-mobile-app .m-seg-btn{
+    font-family:'Space Grotesk','Manrope',sans-serif !important;
+  }
+  body.ifl-mobile-app .m-seg-btn.active{
+    background:rgba(80,200,120,.18) !important;
+    color:#d8f8e2 !important;
+    box-shadow:0 0 10px rgba(80,200,120,.18) !important;
+  }
+  body.ifl-mobile-app .m-ueb-row:active{
+    background:rgba(80,200,120,.1) !important;
+  }
+  body.ifl-mobile-app .m-ueb-thumb{
+    border-color:rgba(80,200,120,.22) !important;
+  }
+  body.ifl-mobile-app .m-ueb-chevron{
+    color:rgba(80,200,120,.4) !important;
+  }
+
+  /* Plate calculator / tools screen */
+  body.ifl-mobile-app #m-tools-view{
+    background:#050505 !important;
+    gap:10px !important;
+  }
+  body.ifl-mobile-app .m-tools-panel,
+  body.ifl-mobile-app .m-tools-fold{
+    background:rgba(255,255,255,.03) !important;
+    border:1px solid rgba(255,255,255,.11) !important;
+    border-radius:16px !important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 10px 26px rgba(0,0,0,.4) !important;
+  }
+  body.ifl-mobile-app .m-tools-h,
+  body.ifl-mobile-app .m-tools-fold > summary{
+    font-family:'Space Grotesk','Manrope',sans-serif !important;
+    color:#9fd8b2 !important;
+  }
+  body.ifl-mobile-app .m-tools-grid2 input{
+    border:1px solid rgba(80,200,120,.35) !important;
+    background:rgba(80,200,120,.06) !important;
+    color:#ecffee !important;
+  }
+  body.ifl-mobile-app .m-tools-out{
+    color:#66dd8b !important;
+    text-shadow:0 0 10px rgba(80,200,120,.35) !important;
+  }
+  body.ifl-mobile-app .m-tools-table th{
+    color:#9fd8b2 !important;
+  }
+  body.ifl-mobile-app .m-tools-table td{
+    border-bottom-color:rgba(255,255,255,.07) !important;
+  }
+  body.ifl-mobile-app .catalog-row{
+    background:rgba(255,255,255,.04) !important;
+    border-color:rgba(80,200,120,.24) !important;
+    box-shadow:0 0 14px rgba(80,200,120,.1) !important;
+  }
+  body.ifl-mobile-app .catalog-img{
+    border-bottom:1px solid rgba(80,200,120,.2) !important;
+  }
+
+  /* Micro polish: haptics + timing + subtle glow */
+  body.ifl-mobile-app .m5-tab,
+  body.ifl-mobile-app .m-subtab,
+  body.ifl-mobile-app .m-nav-btn,
+  body.ifl-mobile-app .m-pool-add-btn,
+  body.ifl-mobile-app .m-seg-btn,
+  body.ifl-mobile-app .m-ueb-row,
+  body.ifl-mobile-app .m-heute-action-card{
+    transition:transform .16s cubic-bezier(.2,.8,.2,1), box-shadow .24s ease, background-color .2s ease !important;
+    will-change:transform;
+  }
+  body.ifl-mobile-app .m5-tab:active,
+  body.ifl-mobile-app .m-subtab:active,
+  body.ifl-mobile-app .m-nav-btn:active,
+  body.ifl-mobile-app .m-pool-add-btn:active,
+  body.ifl-mobile-app .m-seg-btn:active{
+    transform:scale(.94) !important;
+  }
+  body.ifl-mobile-app .m-log-btn:active{
+    transform:scale(.965) !important;
+  }
+  body.ifl-mobile-app .m-heute-action-card:active,
+  body.ifl-mobile-app .m-ueb-row:active{
+    transform:scale(.985) !important;
+  }
+  body.ifl-mobile-app .m-log-btn,
+  body.ifl-mobile-app .m-session-actions .m-start-btn.primary{
+    animation:emeraldPrimaryPulse 2.8s ease-in-out infinite;
+  }
+  @keyframes emeraldPrimaryPulse{
+    0%,100%{box-shadow:0 0 18px rgba(80,200,120,.22), inset 0 1px 1px rgba(255,255,255,.26)}
+    50%{box-shadow:0 0 26px rgba(80,200,120,.38), inset 0 1px 1px rgba(255,255,255,.34)}
+  }
+  body.ifl-mobile-app .m-ex-card,
+  body.ifl-mobile-app .m-home-hero,
+  body.ifl-mobile-app .m-heute-stat,
+  body.ifl-mobile-app .m-tools-panel{
+    transition:box-shadow .3s ease, border-color .3s ease !important;
+  }
+  body.ifl-mobile-app .m-ex-card:active,
+  body.ifl-mobile-app .m-home-hero:active{
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.12), 0 12px 36px rgba(0,0,0,.78), 0 0 18px rgba(80,200,120,.14) !important;
+  }
+  body.ifl-mobile-app #m-pool-sheet.open{
+    animation:emeraldSheetIn .26s cubic-bezier(.2,.8,.2,1);
+  }
+  @keyframes emeraldSheetIn{
+    from{transform:translateY(12%);opacity:.72}
+    to{transform:translateY(0);opacity:1}
   }
 }
 </style>
