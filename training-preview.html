@@ -463,7 +463,7 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
   /* ── BOTTOM NAV ────────────────────────────────────── */
   .mobile-bottom-nav{
     display:grid !important;
-    grid-template-columns:1fr 1fr;
+    grid-template-columns:repeat(4,1fr);
     position:fixed;bottom:0;left:0;right:0;
     height:68px;z-index:100;
     background:var(--panel);
@@ -474,11 +474,13 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
   }
   .m5-tab{
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
-    padding:8px 10px;border-radius:12px;border:1px solid var(--line);
+    padding:8px 6px;border-radius:12px;border:1px solid var(--line);
     background:rgba(255,255,255,.04);color:var(--soft);
-    font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+    font-size:8px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
     cursor:pointer;transition:.18s;
   }
+  #m-plan-view,#m-focus-view{display:none;min-height:0;flex:1;flex-direction:column;gap:8px}
+  #m-plan-view.active,#m-focus-view.active{display:flex}
   .m5-tab svg{stroke:currentColor;transition:.18s}
   .m5-tab.active{color:var(--gold)}
   .m5-tab.active svg{stroke:var(--gold)}
@@ -1886,15 +1888,23 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
 </div>
 <!-- Mobile-App-Shell (≤640px): Standard an; Aus mit localStorage ifl_app_shell=0 -->
 <div id="ifl-shell-root" class="ifl-shell-root" aria-hidden="true">
-<!-- MOBILE BOTTOM NAV: Training + kompakte Tools (Rest = Desktop) -->
+<!-- MOBILE BOTTOM NAV: Focus / Plan / Pool / Tools -->
 <nav class="mobile-bottom-nav" id="mobile-bottom-nav">
-  <button class="m5-tab active" id="m5-session" onclick="switchMobileView('session')">
+  <button class="m5-tab active" id="m5-focus" onclick="switchMobileView('focus')">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"></circle><path d="M12 9v6M9 12h6"></path></svg>
+    <span>Focus</span>
+  </button>
+  <button class="m5-tab" id="m5-plan" onclick="switchMobileView('plan')">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 5v14M18 5v14"/><path d="M6 8h4M14 8h4M6 16h4M14 16h4"/><rect x="10" y="5" width="4" height="14" rx="1"/></svg>
-    <span>Training</span>
+    <span>Plan</span>
+  </button>
+  <button class="m5-tab" id="m5-pool" onclick="switchMobileView('pool')">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h10"></path><circle cx="18" cy="17" r="2"></circle></svg>
+    <span>Pool</span>
   </button>
   <button class="m5-tab" id="m5-tools" onclick="switchMobileView('tools')">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></svg>
-    <span>Rechner</span>
+    <span>Tools</span>
   </button>
 </nav>
 
@@ -1918,43 +1928,47 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
 
 <!-- ══ MOBILE SESSION FOCUS OVERLAY ═════════════════════════ -->
 <div id="m-session-overlay">
-  <!-- Sub-tab selector -->
-  <div id="m-subtab-bar" class="m-subtab-bar">
-    <button class="m-subtab active" id="mst-push"   onclick="mChangeTab('push')">Push</button>
-    <button class="m-subtab"        id="mst-pull_a" onclick="mChangeTab('pull_a')">Pull A</button>
-    <button class="m-subtab"        id="mst-pull_b" onclick="mChangeTab('pull_b')">Pull B</button>
-    <button class="m-subtab"        id="mst-legs"   onclick="mChangeTab('legs')">Beine</button>
-    <button class="m-subtab"        id="mst-free"   onclick="mChangeTab('free')">Frei</button>
-    <button class="m-subtab"        id="mst-cardio" onclick="mChangeTab('cardio')">Cardio</button>
-  </div>
-  <div class="m-session-quick-wrap">
-    <div id="m-home-hero" class="m-home-hero"></div>
-    <div class="m-session-actions">
-      <button type="button" class="btn btn-secondary btn-sm m-start-btn" onclick="openMobileStudioOverlay()">Studio wählen</button>
-      <button type="button" class="btn btn-teal btn-sm m-start-btn primary" onclick="startTrainingFromMobile()">Training starten</button>
-      <button type="button" class="btn btn-primary btn-sm m-start-btn" style="grid-column:1/-1" onclick="openMobilePool()">Pool &amp; Katalog</button>
+  <div id="m-plan-view">
+    <!-- Sub-tab selector -->
+    <div id="m-subtab-bar" class="m-subtab-bar">
+      <button class="m-subtab active" id="mst-push"   onclick="mChangeTab('push')">Push</button>
+      <button class="m-subtab"        id="mst-pull_a" onclick="mChangeTab('pull_a')">Pull A</button>
+      <button class="m-subtab"        id="mst-pull_b" onclick="mChangeTab('pull_b')">Pull B</button>
+      <button class="m-subtab"        id="mst-legs"   onclick="mChangeTab('legs')">Beine</button>
+      <button class="m-subtab"        id="mst-free"   onclick="mChangeTab('free')">Frei</button>
+      <button class="m-subtab"        id="mst-cardio" onclick="mChangeTab('cardio')">Cardio</button>
     </div>
-  </div>
-  <div id="m-start-flow-hint" class="m-tools-muted" style="text-align:center;margin:-2px 0 4px">Start-Flow: 1) Studio wählen 2) Training starten</div>
-  <div class="m-tools-muted" style="text-align:center;margin:-2px 0 4px">Rand wischen: Training ↔ Rechner · Subtabs: Session-Typ</div>
-
-  <!-- Exercise focus card (only this block scrolls) -->
-  <div class="m-ex-scroll">
-    <div class="m-ex-card" id="m-ex-card">
-      <!-- Injected by renderMobileSession() -->
+    <div class="m-session-quick-wrap">
+      <div id="m-home-hero" class="m-home-hero"></div>
+      <div class="m-session-actions">
+        <button type="button" class="btn btn-secondary btn-sm m-start-btn" onclick="openMobileStudioOverlay()">Studio wählen</button>
+        <button type="button" class="btn btn-teal btn-sm m-start-btn primary" onclick="startTrainingFromMobile()">Training starten</button>
+        <button type="button" class="btn btn-primary btn-sm m-start-btn" style="grid-column:1/-1" onclick="openMobilePool()">Pool &amp; Katalog</button>
+      </div>
     </div>
+    <div id="m-start-flow-hint" class="m-tools-muted" style="text-align:center;margin:-2px 0 4px">Start-Flow: 1) Studio wählen 2) Training starten</div>
+    <div class="m-tools-muted" style="text-align:center;margin:-2px 0 4px">Rand wischen: Focus ↔ Plan ↔ Pool ↔ Tools</div>
   </div>
 
-  <!-- Log + Nav -->
-  <div class="m-action-row">
-    <button onclick="mNavEx(-1)" class="m-nav-btn" id="m-nav-prev">←</button>
-    <button onclick="mOpenLogger()" class="m-log-btn" id="m-log-btn">Satz loggen</button>
-    <button onclick="mNavEx(1)"  class="m-nav-btn" id="m-nav-next">→</button>
-  </div>
+  <div id="m-focus-view">
+    <!-- Exercise focus card (only this block scrolls) -->
+    <div class="m-ex-scroll">
+      <div class="m-ex-card" id="m-ex-card">
+        <!-- Injected by renderMobileSession() -->
+      </div>
+    </div>
 
-  <!-- Finish session -->
-  <div style="text-align:center;padding:6px 0 2px">
-    <button onclick="finishSession()" class="btn btn-secondary btn-sm" style="font-size:11px">Session beenden ✓</button>
+    <!-- Log + Nav -->
+    <div class="m-action-row">
+      <button onclick="mNavEx(-1)" class="m-nav-btn" id="m-nav-prev">←</button>
+      <button onclick="mOpenLogger()" class="m-log-btn" id="m-log-btn">Satz loggen</button>
+      <button onclick="mNavEx(1)"  class="m-nav-btn" id="m-nav-next">→</button>
+    </div>
+
+    <!-- Finish session -->
+    <div style="text-align:center;padding:6px 0 2px">
+      <button onclick="finishSession()" class="btn btn-secondary btn-sm" style="font-size:11px">Session beenden ✓</button>
+    </div>
   </div>
 </div>
 
@@ -2255,7 +2269,7 @@ function togglePoolFavOnly(checked){
   localStorage.setItem('ifl_pool_fav_only', checked ? '1' : '0');
   renderMobilePoolSheet();
 }
-const BUILD_STAMP = '2026-04-27 19:50 MEZ';
+const BUILD_STAMP = '2026-04-28 14:25 MEZ';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -5823,14 +5837,16 @@ function markSyncPending(){
 // MOBILE APP – View-System, Session-Navigator, Pool-Sheet
 // ════════════════════════════════════════════════════════════
 
-let mobileView  = 'session'; // studio | plan | session | stats | mehr
+let mobileView  = 'focus'; // focus | plan | pool | tools
 let mobileExIdx = 0;         // current exercise index in session navigator
 
 const M_HEADER_TITLES = {
-  session: 'Start',
-  tools:   'Rechner',
+  focus: 'Focus',
+  plan:  'Plan',
+  pool:  'Pool',
+  tools: 'Tools',
 };
-const MOBILE_NAV_ORDER = ['session', 'tools'];
+const MOBILE_NAV_ORDER = ['focus', 'plan', 'pool', 'tools'];
 let _swipeSX = 0, _swipeSY = 0, _swipeTrack = false, _swipeEdge = false;
 
 function isMobile(){ return window.matchMedia('(max-width:640px)').matches; }
@@ -5839,7 +5855,7 @@ function switchMobileView(view){
   if(!isMobile() || !document.body.classList.contains('ifl-mobile-app')) return;
   mobileView = view;
 
-  ['session', 'tools'].forEach(v=>{
+  ['focus', 'plan', 'pool', 'tools'].forEach(v=>{
     document.getElementById('m5-'+v)?.classList.toggle('active', v === view);
   });
 
@@ -5847,24 +5863,37 @@ function switchMobileView(view){
   if(titleEl) titleEl.textContent = M_HEADER_TITLES[view] || 'Iron Forge';
   _updateMobileHeader();
 
-  document.getElementById('m-session-overlay')?.classList.toggle('active', view === 'session');
+  const useSessionOverlay = view === 'focus' || view === 'plan' || view === 'pool';
+  document.getElementById('m-session-overlay')?.classList.toggle('active', useSessionOverlay);
   document.getElementById('m-tools-view')?.classList.toggle('active', view === 'tools');
+  document.getElementById('m-plan-view')?.classList.toggle('active', view === 'plan' || view === 'pool');
+  document.getElementById('m-focus-view')?.classList.toggle('active', view === 'focus');
 
   const backBtn = document.getElementById('m-header-back');
   if(backBtn) backBtn.style.display = 'none';
 
-  if(view === 'session'){
+  if(view === 'focus'){
     if(!TRAIN_TABS.includes(currentTab)) changeTab('push');
     mobileExIdx = 0;
     renderMobileSession();
     syncMobileRestTimer();
+    closeMobilePool();
+  } else if(view === 'plan'){
+    if(!TRAIN_TABS.includes(currentTab)) changeTab('push');
+    renderMobileSession();
+    closeMobilePool();
+  } else if(view === 'pool'){
+    if(!TRAIN_TABS.includes(currentTab)) changeTab('push');
+    renderMobileSession();
+    openMobilePool();
   } else if(view === 'tools'){
+    closeMobilePool();
     renderMobileTools();
   }
 }
 
 function mHeaderBack(){
-  switchMobileView('session');
+  switchMobileView('focus');
 }
 
 function mChangeTab(tab){
@@ -6415,7 +6444,7 @@ function startTrainingFromMobile(){
   }
   closeMobileStudioOverlay();
   if(!TRAIN_TABS.includes(currentTab)) changeTab('push');
-  switchMobileView('session');
+  switchMobileView('focus');
   const card = document.getElementById('m-ex-card');
   if(card){
     card.classList.remove('m-session-enter');
@@ -6502,9 +6531,9 @@ function applyMobileAppShell(){
   _updateMobileHeader();
   attachMobileEdgeSwipe();
   attachMobileSubtabSwipe();
-  if(!had) switchMobileView('session');
+  if(!had) switchMobileView('focus');
   else {
-    if(mobileView === 'session') renderMobileSession();
+    if(mobileView === 'focus' || mobileView === 'plan' || mobileView === 'pool') renderMobileSession();
     else if(mobileView === 'tools') renderMobileTools();
     syncMobileRestTimer();
   }
@@ -6581,7 +6610,7 @@ render = function(){
   _origRender();
   if(isMobile() && document.body.classList.contains('ifl-mobile-app')){
     _updateMobileHeader();
-    if(mobileView==='session') renderMobileSession();
+    if(mobileView==='focus' || mobileView==='plan' || mobileView==='pool') renderMobileSession();
     if(mobileView==='tools')  renderMobileTools();
   }
 };
