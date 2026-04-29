@@ -1226,21 +1226,89 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
     -webkit-backdrop-filter:blur(24px) saturate(140%) !important;
     border-top:1px solid rgba(255,255,255,.1) !important;
     box-shadow:0 -8px 48px rgba(0,0,0,.68) !important;
+    padding:14px 16px 90px !important;
+  }
+  body.ifl-mobile-app #m-pool-sheet .sh{
+    margin-bottom:12px !important;
+    align-items:center !important;
+  }
+  body.ifl-mobile-app #m-pool-sheet .sh-title{
+    letter-spacing:.14em !important;
+    font-size:11px !important;
+    text-transform:uppercase !important;
+  }
+  body.ifl-mobile-app #m-pool-search{
+    border-radius:999px !important;
+    min-height:52px !important;
+    padding:12px 18px !important;
+    font-size:16px !important;
+    border-color:rgba(80,200,120,.35) !important;
+    background:rgba(255,255,255,.05) !important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.12), 0 0 0 1px rgba(80,200,120,.08) !important;
+  }
+  body.ifl-mobile-app #m-pool-sheet .cat-filters{
+    gap:8px !important;
+    margin-bottom:12px !important;
+  }
+  body.ifl-mobile-app #m-pool-sheet .pill{
+    padding:7px 14px !important;
+    border-radius:999px !important;
+    font-size:10px !important;
+    letter-spacing:.1em !important;
+    border-color:rgba(255,255,255,.13) !important;
+    background:rgba(255,255,255,.04) !important;
+    color:#cdd3cd !important;
+  }
+  body.ifl-mobile-app #m-pool-sheet .pill.active{
+    background:linear-gradient(135deg,rgba(80,200,120,.24),rgba(46,139,87,.22)) !important;
+    border-color:rgba(80,200,120,.42) !important;
+    color:#d8f8e2 !important;
+    box-shadow:0 0 14px rgba(80,200,120,.18) !important;
   }
   body.ifl-mobile-app .m-pool-item{
-    background:rgba(255,255,255,.03) !important;
-    border:1px solid rgba(255,255,255,.1) !important;
+    grid-template-columns:60px 1fr auto auto !important;
+    border-radius:22px !important;
+    padding:10px 12px !important;
+    margin-bottom:8px !important;
+    background:linear-gradient(160deg,rgba(255,255,255,.06),rgba(255,255,255,.02)) !important;
+    border:1px solid rgba(255,255,255,.12) !important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.1), 0 8px 24px rgba(0,0,0,.28) !important;
   }
   body.ifl-mobile-app .m-pool-item--catalog{
     border-color:rgba(80,200,120,.24) !important;
     box-shadow:0 0 10px rgba(80,200,120,.12) !important;
   }
+  body.ifl-mobile-app .m-pool-thumb-cell{
+    width:60px !important;
+    height:60px !important;
+  }
+  body.ifl-mobile-app .m-pool-thumb,
+  body.ifl-mobile-app .m-pool-thumb-empty{
+    width:60px !important;
+    height:60px !important;
+    border-radius:999px !important;
+  }
+  body.ifl-mobile-app .m-pool-item-name{
+    font-size:15px !important;
+    letter-spacing:-.01em !important;
+  }
+  body.ifl-mobile-app .m-pool-item-meta{
+    font-size:11px !important;
+    color:#94a193 !important;
+  }
+  body.ifl-mobile-app .m-pool-star{
+    font-size:18px !important;
+    color:#78e69c !important;
+  }
   body.ifl-mobile-app .m-pool-add-btn{
-    border-radius:12px !important;
-    border:1px solid rgba(80,200,120,.38) !important;
-    background:rgba(80,200,120,.14) !important;
-    color:#c8f7d8 !important;
+    border-radius:999px !important;
+    border:1px solid rgba(80,200,120,.5) !important;
+    background:linear-gradient(135deg,rgba(80,200,120,.2),rgba(46,139,87,.2)) !important;
+    color:#d8f8e2 !important;
     font-family:'Space Grotesk','Manrope',sans-serif !important;
+    min-height:38px !important;
+    padding:8px 14px !important;
+    box-shadow:0 0 12px rgba(80,200,120,.15) !important;
   }
   body.ifl-mobile-app .m-pool-fab{
     border-color:rgba(80,200,120,.4) !important;
@@ -2269,7 +2337,7 @@ function togglePoolFavOnly(checked){
   localStorage.setItem('ifl_pool_fav_only', checked ? '1' : '0');
   renderMobilePoolSheet();
 }
-const BUILD_STAMP = '2026-04-29 18:44 MEZ';
+const BUILD_STAMP = '2026-04-29 20:49 MEZ';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -6269,12 +6337,12 @@ function renderMobilePoolSheet(){
     ? `<div class="m-tools-muted" style="font-size:10px;width:100%;margin:0 0 8px;line-height:1.35">Suche aktiv: <strong>alle Kategorien</strong> im Pool (Pille „${mEsc(mobilePoolCat)}“ greift nur ohne Suchtext).</div>`
     : '';
 
-  const toolbar = `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap">
-    <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600">
+  const toolbar = `<div class="m-pool-toolbar" style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+    <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;background:rgba(255,255,255,.03);padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.08)">
       <input type="checkbox" ${studioOnly ? 'checked' : ''} onchange="togglePoolStudioOnly(this.checked)">
       Nur Studio-Liste (${studioLines.length})
     </label>
-    <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600">
+    <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;background:rgba(255,255,255,.03);padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.08)">
       <input type="checkbox" ${favOnly ? 'checked' : ''} onchange="togglePoolFavOnly(this.checked)">
       Nur Favoriten (${favSet.size})
     </label>
@@ -6327,10 +6395,10 @@ function renderMobilePoolSheet(){
     </div>`);
   }
   const freqBlock = freqRows.length
-    ? `<div class="m-tools-h" style="margin-bottom:6px">Häufig genutzt</div>${freqRows.join('')}`
+    ? `<div class="m-tools-h" style="margin-bottom:8px;letter-spacing:.16em">Häufig genutzt</div>${freqRows.join('')}`
     : '';
   const recentBlock = recentRows.length
-    ? `<div class="m-tools-h" style="margin:${freqRows.length ? '10px' : '0'} 0 6px">Zuletzt trainiert</div>${recentRows.join('')}`
+    ? `<div class="m-tools-h" style="margin:${freqRows.length ? '12px' : '0'} 0 8px;letter-spacing:.16em">Zuletzt trainiert</div>${recentRows.join('')}`
     : '';
   const rest = items.filter(ex => !freqIds.has(ex.id) && !recentIds.has(ex.id));
 
@@ -6341,7 +6409,7 @@ function renderMobilePoolSheet(){
     const catHits = rawCat.filter(r => String(r.name || '').trim());
     window.__iflCatHits = catHits;
     if(catHits.length){
-      catalogPoolHtml = `<div class="m-tools-h" style="margin:14px 0 8px">Cloud/DB Suche (Supabase)</div>` +
+      catalogPoolHtml = `<div class="m-tools-h" style="margin:16px 0 8px;letter-spacing:.16em">Cloud/DB Suche (Supabase)</div>` +
         catHits.map((row, i)=>{
           const meta = [row.brand, row.cat, row.group].filter(Boolean).join(' · ') || '–';
           const ph = { name: row.name, brand: row.brand, art: row.art, img: row.img, cat: row.cat || 'Brust' };
