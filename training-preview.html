@@ -1386,6 +1386,66 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
     color:#07220f !important;
     box-shadow:0 0 22px rgba(80,200,120,.35), inset 0 1px 0 rgba(255,255,255,.35) !important;
   }
+  body.ifl-mobile-app #m-plan-list{
+    display:grid;
+    gap:8px;
+    margin-top:4px;
+    padding-bottom:4px;
+  }
+  body.ifl-mobile-app .m-plan-item{
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:10px;
+    align-items:center;
+    border-radius:16px;
+    padding:10px 12px;
+    border:1px solid rgba(255,255,255,.1);
+    background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,.02));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.09), 0 8px 20px rgba(0,0,0,.25);
+  }
+  body.ifl-mobile-app .m-plan-item-main{
+    min-width:0;
+  }
+  body.ifl-mobile-app .m-plan-item-name{
+    font-size:14px;
+    font-weight:700;
+    letter-spacing:-.01em;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  body.ifl-mobile-app .m-plan-item-meta{
+    margin-top:2px;
+    font-size:10px;
+    color:#95a195;
+  }
+  body.ifl-mobile-app .m-plan-item-state{
+    padding:4px 10px;
+    border-radius:999px;
+    font-size:9px;
+    font-weight:800;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    border:1px solid rgba(255,255,255,.12);
+    color:#cfd6cf;
+    background:rgba(255,255,255,.04);
+    white-space:nowrap;
+  }
+  body.ifl-mobile-app .m-plan-item-state.active{
+    color:#d8f8e2;
+    border-color:rgba(80,200,120,.45);
+    background:rgba(80,200,120,.18);
+  }
+  body.ifl-mobile-app .m-plan-item-state.paused{
+    color:#f6d28d;
+    border-color:rgba(232,166,74,.4);
+    background:rgba(232,166,74,.14);
+  }
+  body.ifl-mobile-app .m-plan-item-state.done{
+    color:#adbacf;
+    border-color:rgba(173,186,207,.35);
+    background:rgba(173,186,207,.12);
+  }
 
   /* Active Session screen */
   body.ifl-mobile-app .m-ex-counter,
@@ -2051,6 +2111,7 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
     </div>
     <div id="m-start-flow-hint" class="m-tools-muted" style="text-align:center;margin:-2px 0 4px">Start-Flow: 1) Studio wählen 2) Training starten</div>
     <div class="m-tools-muted" style="text-align:center;margin:-2px 0 4px">Rand wischen: Focus ↔ Plan ↔ Pool ↔ Tools</div>
+    <div id="m-plan-list"></div>
   </div>
 
   <div id="m-focus-view">
@@ -2372,7 +2433,7 @@ function togglePoolFavOnly(checked){
   localStorage.setItem('ifl_pool_fav_only', checked ? '1' : '0');
   renderMobilePoolSheet();
 }
-const BUILD_STAMP = '2026-04-30 11:25 MEZ';
+const BUILD_STAMP = '2026-04-30 11:31 MEZ';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -6049,10 +6110,39 @@ function renderMobileHomeHero(items){
   `;
 }
 
+function renderMobilePlanList(items){
+  const wrap = document.getElementById('m-plan-list');
+  if(!wrap) return;
+  if(!items.length){
+    wrap.innerHTML = `<div class="m-tools-muted" style="text-align:center;padding:8px 6px">Keine Übungen im Plan. Öffne Pool und füge Übungen hinzu.</div>`;
+    return;
+  }
+  const stateLabel = (s)=>{
+    if(s === 'done') return 'Done';
+    if(s === 'paused') return 'Pause';
+    return 'Aktiv';
+  };
+  const rows = items.map((ex, idx)=>{
+    const st = ex.trainState || 'active';
+    const hist = ex.history?.[currentStudio] || [];
+    const last = hist.length ? `${hist[hist.length-1].w}×${hist[hist.length-1].r}` : '–';
+    const meta = [ex.group || ex.cat || '', `#${idx+1}`, `Letztes: ${last}`].filter(Boolean).join(' · ');
+    return `<div class="m-plan-item">
+      <div class="m-plan-item-main">
+        <div class="m-plan-item-name">${mEsc(ex.name)}</div>
+        <div class="m-plan-item-meta">${mEsc(meta)}</div>
+      </div>
+      <span class="m-plan-item-state ${mEsc(st)}">${stateLabel(st)}</span>
+    </div>`;
+  }).join('');
+  wrap.innerHTML = rows;
+}
+
 function renderMobileSession(){
   if(!isMobile() || !document.body.classList.contains('ifl-mobile-app')) return;
   const items = getMobileSessionItems();
   renderMobileHomeHero(items);
+  renderMobilePlanList(items);
   const card  = document.getElementById('m-ex-card');
   if(!card) return;
   card.classList.remove('m-ex-card--empty');
