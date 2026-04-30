@@ -600,7 +600,9 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
     transform:translateY(100%);
     transition:transform .28s cubic-bezier(.4,0,.2,1);
     max-height:80dvh;
-    overflow-y:auto;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
   }
   #m-pool-sheet.open{transform:translateY(0)}
   .m-sheet-handle{width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,.12);margin:0 auto 12px}
@@ -614,7 +616,7 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
   .m-pool-search{width:100%;box-sizing:border-box;margin:0 0 10px;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.22);color:var(--text);font-size:15px;font-family:'Manrope',sans-serif}
   .m-pool-search:focus,.m-pool-search:focus-visible{outline:none;border-color:rgba(80,200,120,.45);box-shadow:0 0 0 2px rgba(80,200,120,.12)}
   [data-theme="light"] .m-pool-search{background:rgba(255,255,255,.85)}
-  .m-pool-top-sticky{position:sticky;top:0;z-index:2;background:linear-gradient(180deg,var(--panel) 78%,rgba(0,0,0,0));padding-bottom:4px}
+  .m-pool-top-sticky{position:sticky;top:0;z-index:2;flex-shrink:0;background:linear-gradient(180deg,var(--panel) 78%,rgba(0,0,0,0));padding-bottom:4px}
   .m-pool-segment-row{display:flex;align-items:center;gap:8px;margin:0 0 8px}
   .m-pool-segment{display:grid;grid-template-columns:1fr 1fr;gap:4px;flex:1;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:999px;padding:4px}
   .m-pool-seg-btn{border:none;background:transparent;color:var(--soft);font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:8px 10px;cursor:pointer}
@@ -2127,7 +2129,7 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
       <button class="m-subtab"        id="mst-free"   onclick="mChangeTab('free')">Frei</button>
       <button class="m-subtab"        id="mst-cardio" onclick="mChangeTab('cardio')">Cardio</button>
     </div>
-    <div class="m-session-quick-wrap">
+    <div id="m-home-quick-wrap" class="m-session-quick-wrap">
       <div id="m-home-hero" class="m-home-hero"></div>
       <div class="m-session-actions">
         <button type="button" class="btn btn-secondary btn-sm m-start-btn" onclick="openMobileStudioOverlay()">Studio wählen</button>
@@ -2136,7 +2138,7 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
       </div>
     </div>
     <div id="m-start-flow-hint" class="m-tools-muted" style="text-align:center;margin:-2px 0 4px">Start-Flow: 1) Studio wählen 2) Training starten</div>
-    <div class="m-tools-muted" style="text-align:center;margin:-2px 0 4px">Rand wischen: Focus ↔ Plan ↔ Pool ↔ Tools</div>
+    <div id="m-home-swipe-hint" class="m-tools-muted" style="text-align:center;margin:-2px 0 4px">Rand wischen: Focus ↔ Plan ↔ Pool ↔ Tools</div>
     <div id="m-plan-list"></div>
   </div>
 
@@ -2206,7 +2208,7 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
     </div>
     <div id="m-pool-filter-summary" class="m-tools-muted" style="display:none;margin:0 0 8px"></div>
   </div>
-  <div id="m-pool-sheet-list" style="overflow-y:auto;max-height:55dvh;padding-bottom:8px"></div>
+  <div id="m-pool-sheet-list" style="overflow-y:auto;flex:1;min-height:0;padding-bottom:8px"></div>
 </div>
 <div id="m-pool-filter-modal" class="modal-overlay" onclick="if(event.target.id==='m-pool-filter-modal')mClosePoolFilters()">
   <div class="modal-box" style="max-width:520px">
@@ -2521,7 +2523,7 @@ function togglePoolFavOnly(checked){
   mSyncPoolFilterSummary();
   renderMobilePoolSheet();
 }
-const BUILD_STAMP = '2026-04-30 12:07 MEZ';
+const BUILD_STAMP = '2026-04-30 12:15 MEZ';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -6124,6 +6126,7 @@ function switchMobileView(view){
 
   const backBtn = document.getElementById('m-header-back');
   if(backBtn) backBtn.style.display = 'none';
+  syncMobilePlanHomeSections(view);
 
   if(view === 'home'){
     if(!TRAIN_TABS.includes(currentTab)) changeTab('push');
@@ -6159,6 +6162,20 @@ function switchMobileView(view){
     void enterEl.offsetWidth;
     enterEl.classList.add('m-view-enter');
   }
+}
+
+function syncMobilePlanHomeSections(view){
+  const quick = document.getElementById('m-home-quick-wrap');
+  const hint = document.getElementById('m-start-flow-hint');
+  const swipeHint = document.getElementById('m-home-swipe-hint');
+  const planList = document.getElementById('m-plan-list');
+  if(!quick || !hint || !planList) return;
+  const isHome = view === 'home';
+  const isPlan = view === 'plan';
+  quick.style.display = isHome ? '' : 'none';
+  hint.style.display = isHome ? '' : 'none';
+  if(swipeHint) swipeHint.style.display = isHome ? '' : 'none';
+  planList.style.display = isHome || isPlan ? '' : 'none';
 }
 
 function mHeaderBack(){
