@@ -614,6 +614,11 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
   .m-pool-search{width:100%;box-sizing:border-box;margin:0 0 10px;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.22);color:var(--text);font-size:15px;font-family:'Manrope',sans-serif}
   .m-pool-search:focus,.m-pool-search:focus-visible{outline:none;border-color:rgba(80,200,120,.45);box-shadow:0 0 0 2px rgba(80,200,120,.12)}
   [data-theme="light"] .m-pool-search{background:rgba(255,255,255,.85)}
+  .m-pool-top-sticky{position:sticky;top:0;z-index:2;background:linear-gradient(180deg,var(--panel) 78%,rgba(0,0,0,0));padding-bottom:4px}
+  .m-pool-segment-row{display:flex;align-items:center;gap:8px;margin:0 0 8px}
+  .m-pool-segment{display:grid;grid-template-columns:1fr 1fr;gap:4px;flex:1;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:999px;padding:4px}
+  .m-pool-seg-btn{border:none;background:transparent;color:var(--soft);font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:8px 10px;cursor:pointer}
+  .m-pool-seg-btn.active{background:rgba(80,200,120,.16);color:#d8f8e2}
   .m-pool-item-name{font-size:13px;font-weight:700;color:var(--text)}
   .m-pool-item-meta{font-size:10px;color:var(--soft);margin-top:2px}
   .m-pool-add-btn{background:rgba(208,163,90,.12);color:var(--gold);border:1px solid rgba(208,163,90,.3);border-radius:9px;padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap}
@@ -1273,6 +1278,23 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
     border-color:rgba(80,200,120,.35) !important;
     background:rgba(255,255,255,.05) !important;
     box-shadow:inset 0 1px 0 rgba(255,255,255,.12), 0 0 0 1px rgba(80,200,120,.08) !important;
+  }
+  body.ifl-mobile-app .m-pool-top-sticky{
+    top:-2px !important;
+    padding-top:2px !important;
+    background:linear-gradient(180deg,rgba(10,14,11,.98) 82%,rgba(10,14,11,0)) !important;
+  }
+  body.ifl-mobile-app .m-pool-segment{
+    border-color:rgba(255,255,255,.12) !important;
+    background:rgba(255,255,255,.03) !important;
+  }
+  body.ifl-mobile-app .m-pool-seg-btn{
+    color:#b6c3b6 !important;
+  }
+  body.ifl-mobile-app .m-pool-seg-btn.active{
+    background:linear-gradient(135deg,rgba(80,200,120,.24),rgba(46,139,87,.22)) !important;
+    border:1px solid rgba(80,200,120,.35) !important;
+    color:#d8f8e2 !important;
   }
   body.ifl-mobile-app #m-pool-sheet .cat-filters{
     gap:8px !important;
@@ -2110,7 +2132,7 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
       <div class="m-session-actions">
         <button type="button" class="btn btn-secondary btn-sm m-start-btn" onclick="openMobileStudioOverlay()">Studio wählen</button>
         <button type="button" class="btn btn-teal btn-sm m-start-btn primary" onclick="startTrainingFromMobile()">Training starten</button>
-        <button type="button" class="btn btn-primary btn-sm m-start-btn" style="grid-column:1/-1" onclick="openMobilePool()">Pool &amp; Katalog</button>
+        <button type="button" class="btn btn-primary btn-sm m-start-btn" style="grid-column:1/-1" onclick="switchMobileView('pool')">Zum Pool</button>
       </div>
     </div>
     <div id="m-start-flow-hint" class="m-tools-muted" style="text-align:center;margin:-2px 0 4px">Start-Flow: 1) Studio wählen 2) Training starten</div>
@@ -2169,14 +2191,75 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
 <div id="m-pool-backdrop" onclick="closeMobilePool()"></div>
 <div id="m-pool-sheet">
   <div class="m-sheet-handle"></div>
-  <div class="sh" style="margin-bottom:10px">
-    <div class="sh-title">Pool · <span id="m-pool-sheet-tab"></span><span id="m-pool-catalog-count" style="font-weight:600;color:var(--soft);font-size:11px"></span></div>
-    <button onclick="closeMobilePool()" class="btn btn-secondary btn-sm" style="padding:3px 10px">✕</button>
+    <div class="sh" style="margin-bottom:10px">
+      <div class="sh-title">Pool</div>
+      <button onclick="closeMobilePool()" class="btn btn-secondary btn-sm" style="padding:3px 10px">✕</button>
   </div>
-  <input type="search" id="m-pool-search" class="m-pool-search" placeholder="Übungen &amp; Gerätekatalog (Name, Muskel, Hersteller)…" autocomplete="off" oninput="renderMobilePoolSheet()">
-  <div id="m-catalog-filter-chips" class="cat-filters" style="margin-bottom:8px"></div>
-  <div class="cat-filters" id="m-pool-cat-filters"></div>
+  <div class="m-pool-top-sticky">
+    <input type="search" id="m-pool-search" class="m-pool-search" placeholder="Übungen &amp; Gerätekatalog suchen..." autocomplete="off" oninput="renderMobilePoolSheet()">
+    <div class="m-pool-segment-row">
+      <div class="m-pool-segment" role="tablist" aria-label="Pool-Segment">
+        <button type="button" id="m-pool-seg-exercises" class="m-pool-seg-btn active" onclick="mSetPoolSegment('exercises')">Übungen</button>
+        <button type="button" id="m-pool-seg-catalog" class="m-pool-seg-btn" onclick="mSetPoolSegment('catalog')">Gerätekatalog</button>
+      </div>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="mOpenPoolFilters()">Filter</button>
+    </div>
+    <div id="m-pool-filter-summary" class="m-tools-muted" style="display:none;margin:0 0 8px"></div>
+  </div>
   <div id="m-pool-sheet-list" style="overflow-y:auto;max-height:55dvh;padding-bottom:8px"></div>
+</div>
+<div id="m-pool-filter-modal" class="modal-overlay" onclick="if(event.target.id==='m-pool-filter-modal')mClosePoolFilters()">
+  <div class="modal-box" style="max-width:520px">
+    <div class="modal-title">Pool Filter</div>
+    <div class="modal-sub">Optionale Detailfilter fur Übungen und Katalog</div>
+    <div style="display:grid;gap:10px;margin:10px 0 14px">
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--soft)">
+        <input type="checkbox" id="m-filter-fav-only">
+        Nur Favoriten
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--soft)">
+        <input type="checkbox" id="m-filter-studio-only">
+        Nur Studio-Liste
+      </label>
+      <div class="form-group" style="margin:0">
+        <label>Marke</label>
+        <select id="m-filter-brand">
+          <option value="all">Alle</option>
+          <option value="gym80">gym80</option>
+          <option value="matrix">Matrix</option>
+          <option value="egym">eGym</option>
+          <option value="freihantel">Freihantel</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin:0">
+        <label>Zielmuskel</label>
+        <select id="m-filter-target">
+          <option value="all">Alle</option>
+          <option value="brust">Brust</option>
+          <option value="rucken">Rücken</option>
+          <option value="beine">Beine</option>
+          <option value="glutes">Glutes</option>
+          <option value="schulter">Schulter</option>
+          <option value="arme">Arme</option>
+          <option value="core">Core</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin:0">
+        <label>Session-Typ</label>
+        <select id="m-filter-stype">
+          <option value="all">Alle</option>
+          <option value="push">Push</option>
+          <option value="pull">Pull</option>
+          <option value="legs">Legs</option>
+          <option value="cardio">Cardio</option>
+          <option value="free">Frei</option>
+        </select>
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary btn-full" style="margin-bottom:8px" onclick="mApplyPoolFilters()">Filter anwenden</button>
+    <button type="button" class="btn btn-secondary btn-full" style="margin-bottom:8px" onclick="mResetPoolFilters()">Filter zurucksetzen</button>
+    <button type="button" class="btn btn-secondary btn-full" onclick="mClosePoolFilters()">Schliessen</button>
+  </div>
 </div>
 
 <button id="edit-done-fab" class="edit-done-fab" onclick="exitEditMode()">Fertig</button>
@@ -2435,9 +2518,10 @@ function togglePoolFavorite(exId, ev){
 }
 function togglePoolFavOnly(checked){
   localStorage.setItem('ifl_pool_fav_only', checked ? '1' : '0');
+  mSyncPoolFilterSummary();
   renderMobilePoolSheet();
 }
-const BUILD_STAMP = '2026-04-30 11:39 MEZ';
+const BUILD_STAMP = '2026-04-30 12:07 MEZ';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -6059,7 +6143,7 @@ function switchMobileView(view){
   } else if(view === 'pool'){
     if(!TRAIN_TABS.includes(currentTab)) changeTab('push');
     renderMobileSession();
-    openMobilePool();
+    openMobilePool({ keepSwapTarget: mobileSwapTargetId != null });
   } else if(view === 'tools'){
     closeMobilePool();
     renderMobileTools();
@@ -6168,8 +6252,8 @@ function renderMobileSession(){
       <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:30px 0">
         <div style="font-size:36px">💪</div>
         <div style="font-size:14px;color:var(--muted);font-weight:700;text-align:center">Keine Übungen in dieser Session</div>
-        <div style="font-size:12px;color:var(--soft);text-align:center">Pool &amp; Katalog öffnen und Übungen hinzufügen.</div>
-        <button type="button" onclick="openMobilePool()" class="btn btn-primary btn-sm" style="margin-top:6px">Pool &amp; Katalog</button>
+        <div style="font-size:12px;color:var(--soft);text-align:center">Wechsle in den Pool-Tab und füge Übungen hinzu.</div>
+        <button type="button" onclick="switchMobileView('pool')" class="btn btn-primary btn-sm" style="margin-top:6px">Zum Pool</button>
       </div>`;
     document.getElementById('m-log-btn').style.opacity = '.3';
     document.getElementById('m-log-btn').disabled = true;
@@ -6245,7 +6329,7 @@ function renderMobileSession(){
     </div>
     <div class="m-focus-quick">
       <button type="button" class="btn btn-secondary btn-sm" style="flex:1" onclick="openMobilePoolForSwap(${ex.id})">Tauschen</button>
-      <button type="button" class="btn btn-secondary btn-sm" style="flex:1" onclick="openMobilePool()">Pool</button>
+      <button type="button" class="btn btn-secondary btn-sm" style="flex:1" onclick="switchMobileView('pool')">Zum Pool</button>
     </div>
     <div>
       <div class="m-ex-hist-label">Letztes Mal</div>
@@ -6275,20 +6359,19 @@ function mOpenLogger(){
 
 // ── Pool Bottom Sheet ─────────────────────────────────────
 
-let mobilePoolCat = 'Alle';
+let mobilePoolSegment = 'exercises'; // exercises | catalog
 let mobileCatalogFilters = { brand: 'all', target: 'all', sType: 'all' };
 let mobileSwapTargetId = null;
 
-function openMobilePool(){
+function openMobilePool(opts = {}){
+  const keepSwapTarget = !!opts.keepSwapTarget;
   const backdrop = document.getElementById('m-pool-backdrop');
   const sheet    = document.getElementById('m-pool-sheet');
-  const tabLabel = document.getElementById('m-pool-sheet-tab');
   if(backdrop) backdrop.classList.add('open');
   if(sheet)    sheet.classList.add('open');
-  if(tabLabel) tabLabel.textContent = (currentTab||'Push').toUpperCase();
-  mobileSwapTargetId = null;
-  renderMobilePoolCatFilters();
-  renderMobileCatalogFilterChips();
+  if(!keepSwapTarget) mobileSwapTargetId = null;
+  mSyncPoolSegmentUI();
+  mSyncPoolFilterSummary();
   renderMobilePoolSheet();
   if(!deviceCatalogSnapRows.length){
     refreshDeviceCatalogImageCache().then(()=>{ renderMobilePoolSheet(); }).catch(()=>{});
@@ -6300,18 +6383,12 @@ function openMobilePool(){
 function openMobilePoolForSwap(exId){
   if(!exId) return openMobilePool();
   mobileSwapTargetId = exId;
+  mobilePoolSegment = 'catalog';
   const ex = db.find(x=>x.id===exId);
   const qInput = document.getElementById('m-pool-search');
   if(qInput && ex?.name) qInput.value = ex.name;
-  const backdrop = document.getElementById('m-pool-backdrop');
-  const sheet    = document.getElementById('m-pool-sheet');
-  const tabLabel = document.getElementById('m-pool-sheet-tab');
-  if(backdrop) backdrop.classList.add('open');
-  if(sheet) sheet.classList.add('open');
-  if(tabLabel) tabLabel.textContent = (currentTab||'Push').toUpperCase();
-  renderMobilePoolCatFilters();
-  renderMobileCatalogFilterChips();
-  renderMobilePoolSheet();
+  switchMobileView('pool');
+  openMobilePool({ keepSwapTarget: true });
 }
 
 function closeMobilePool(){
@@ -6320,61 +6397,76 @@ function closeMobilePool(){
   mobileSwapTargetId = null;
 }
 
-function renderMobilePoolCatFilters(){
-  const wrap = document.getElementById('m-pool-cat-filters');
+function mSetPoolSegment(segment){
+  mobilePoolSegment = segment === 'catalog' ? 'catalog' : 'exercises';
+  mSyncPoolSegmentUI();
+  renderMobilePoolSheet();
+}
+
+function mSyncPoolSegmentUI(){
+  document.getElementById('m-pool-seg-exercises')?.classList.toggle('active', mobilePoolSegment === 'exercises');
+  document.getElementById('m-pool-seg-catalog')?.classList.toggle('active', mobilePoolSegment === 'catalog');
+}
+
+function mSyncPoolFilterSummary(){
+  const wrap = document.getElementById('m-pool-filter-summary');
   if(!wrap) return;
-  wrap.innerHTML = `<button class="pill${mobilePoolCat==='Alle'?' active':''}" onclick="mFilterPoolCat('Alle')">Alle</button>` +
-    CATS.map(c=>`<button class="pill${c===mobilePoolCat?' active':''}" onclick="mFilterPoolCat('${c}')">${c}</button>`).join('');
+  const active = [];
+  if(localStorage.getItem('ifl_pool_fav_only') === '1') active.push('Favoriten');
+  if(localStorage.getItem('ifl_pool_studio_only') === '1') active.push('Studio');
+  if(mobileCatalogFilters.brand !== 'all') active.push('Marke');
+  if(mobileCatalogFilters.target !== 'all') active.push('Ziel');
+  if(mobileCatalogFilters.sType !== 'all') active.push('Typ');
+  if(!active.length){
+    wrap.style.display = 'none';
+    wrap.textContent = '';
+    return;
+  }
+  wrap.style.display = 'block';
+  wrap.textContent = `${active.length} Filter aktiv: ${active.join(', ')}`;
 }
 
-function mFilterPoolCat(cat){
-  mobilePoolCat = cat;
-  renderMobilePoolCatFilters();
+function mOpenPoolFilters(){
+  const modal = document.getElementById('m-pool-filter-modal');
+  if(!modal) return;
+  const fav = document.getElementById('m-filter-fav-only');
+  const studio = document.getElementById('m-filter-studio-only');
+  const brand = document.getElementById('m-filter-brand');
+  const target = document.getElementById('m-filter-target');
+  const stype = document.getElementById('m-filter-stype');
+  if(fav) fav.checked = localStorage.getItem('ifl_pool_fav_only') === '1';
+  if(studio) studio.checked = localStorage.getItem('ifl_pool_studio_only') === '1';
+  if(brand) brand.value = mobileCatalogFilters.brand;
+  if(target) target.value = mobileCatalogFilters.target;
+  if(stype) stype.value = mobileCatalogFilters.sType;
+  modal.style.display = 'flex';
+}
+
+function mClosePoolFilters(){
+  const modal = document.getElementById('m-pool-filter-modal');
+  if(modal) modal.style.display = 'none';
+}
+
+function mApplyPoolFilters(){
+  localStorage.setItem('ifl_pool_fav_only', document.getElementById('m-filter-fav-only')?.checked ? '1' : '0');
+  localStorage.setItem('ifl_pool_studio_only', document.getElementById('m-filter-studio-only')?.checked ? '1' : '0');
+  mobileCatalogFilters = {
+    brand: document.getElementById('m-filter-brand')?.value || 'all',
+    target: document.getElementById('m-filter-target')?.value || 'all',
+    sType: document.getElementById('m-filter-stype')?.value || 'all',
+  };
+  mSyncPoolFilterSummary();
   renderMobilePoolSheet();
+  mClosePoolFilters();
 }
 
-function renderMobileCatalogFilterChips(){
-  const wrap = document.getElementById('m-catalog-filter-chips');
-  if(!wrap) return;
-  const b = mobileCatalogFilters.brand;
-  const t = mobileCatalogFilters.target;
-  const s = mobileCatalogFilters.sType;
-  const chip = (label, active, onclick) => `<button class="pill${active?' active':''}" onclick="${onclick}">${label}</button>`;
-  wrap.innerHTML =
-    chip(`Marke: ${b==='all'?'Alle':b}`, b!=='all', "cycleMobileCatalogBrand()") +
-    chip(`Ziel: ${t==='all'?'Alle':t}`, t!=='all', "cycleMobileCatalogTarget()") +
-    chip(`Typ: ${s==='all'?'Alle':s}`, s!=='all', "cycleMobileCatalogSType()") +
-    chip("Filter reset", false, "resetMobileCatalogFilters()");
-}
-
-function cycleMobileCatalogBrand(){
-  const order = ['all','gym80','matrix','egym','freihantel'];
-  const idx = order.indexOf(mobileCatalogFilters.brand);
-  mobileCatalogFilters.brand = order[(idx + 1) % order.length];
-  renderMobileCatalogFilterChips();
-  renderMobilePoolSheet();
-}
-
-function cycleMobileCatalogTarget(){
-  const order = ['all','brust','rucken','beine','glutes','schulter','arme','core'];
-  const idx = order.indexOf(mobileCatalogFilters.target);
-  mobileCatalogFilters.target = order[(idx + 1) % order.length];
-  renderMobileCatalogFilterChips();
-  renderMobilePoolSheet();
-}
-
-function cycleMobileCatalogSType(){
-  const order = ['all','push','pull','legs','cardio','free'];
-  const idx = order.indexOf(mobileCatalogFilters.sType);
-  mobileCatalogFilters.sType = order[(idx + 1) % order.length];
-  renderMobileCatalogFilterChips();
-  renderMobilePoolSheet();
-}
-
-function resetMobileCatalogFilters(){
+function mResetPoolFilters(){
+  localStorage.setItem('ifl_pool_fav_only', '0');
+  localStorage.setItem('ifl_pool_studio_only', '0');
   mobileCatalogFilters = { brand: 'all', target: 'all', sType: 'all' };
-  renderMobileCatalogFilterChips();
+  mSyncPoolFilterSummary();
   renderMobilePoolSheet();
+  mOpenPoolFilters();
 }
 
 function mPoolSearchBlobRaw(ex){
@@ -6445,22 +6537,17 @@ function getMobileCatalogHits(qPoolRaw){
 function renderMobilePoolSheet(){
   const list = document.getElementById('m-pool-sheet-list');
   if(!list) return;
-  const cc = document.getElementById('m-pool-catalog-count');
-  if(cc){
-    const n = deviceCatalogSnapRows.length;
-    cc.textContent = n ? ` · ${n} Katalog` : (deviceCatalogImageLoading ? ' · Katalog …' : '');
-  }
   const studioLines = getStudioEquipmentList(currentStudio);
   const studioOnly = localStorage.getItem('ifl_pool_studio_only') === '1';
   const favOnly = localStorage.getItem('ifl_pool_fav_only') === '1';
-  const rankMode = localStorage.getItem(IFL_POOL_RANK_MODE) || 'split';
   const favSet = loadPoolFavoriteSet();
   const qPoolRaw = (document.getElementById('m-pool-search')?.value || '').trim();
   const qPoolActive = qPoolRaw.length > 0;
-  /* Mit Suchtext: ganzen Pool durchsuchen (Kategorie-Pille sonst zu restriktiv, z. B. nur wenige „Brust“-Pool-Einträge). */
+  mSyncPoolSegmentUI();
+  mSyncPoolFilterSummary();
+
   let items = db
     .filter(x=>x.status==='pool')
-    .filter(x=> qPoolActive ? true : (mobilePoolCat==='Alle' || x.cat===mobilePoolCat))
     .sort((a,b)=>a.order-b.order);
   if(studioOnly && studioLines.length){
     items = items.filter(ex => exerciseMatchesStudioList(ex, studioLines));
@@ -6477,131 +6564,55 @@ function renderMobilePoolSheet(){
     items = sortPoolItemsByFrequencyThenOrder(items, freqOrderMap);
   }
 
-  const searchHint = (qPoolActive && mobilePoolCat !== 'Alle')
-    ? `<div class="m-tools-muted" style="font-size:10px;width:100%;margin:0 0 8px;line-height:1.35">Suche aktiv: <strong>alle Kategorien</strong> im Pool (Pille „${mEsc(mobilePoolCat)}“ greift nur ohne Suchtext).</div>`
-    : '';
-
-  const toolbar = `<div class="m-pool-toolbar" style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap">
-    <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;background:rgba(255,255,255,.03);padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.08)">
-      <input type="checkbox" ${studioOnly ? 'checked' : ''} onchange="togglePoolStudioOnly(this.checked)">
-      Nur Studio-Liste (${studioLines.length})
-    </label>
-    <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;background:rgba(255,255,255,.03);padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.08)">
-      <input type="checkbox" ${favOnly ? 'checked' : ''} onchange="togglePoolFavOnly(this.checked)">
-      Nur Favoriten (${favSet.size})
-    </label>
-    <div style="display:flex;gap:6px;flex-wrap:wrap">
-      <button type="button" class="pill ${rankMode==='frequent'?'active':''}" onclick="setPoolRankMode('frequent')">Haeufig</button>
-      <button type="button" class="pill ${rankMode==='recent'?'active':''}" onclick="setPoolRankMode('recent')">Zuletzt</button>
-      <button type="button" class="pill ${rankMode==='split'?'active':''}" onclick="setPoolRankMode('split')">Split</button>
-    </div>
-  </div>`;
-
-  const idInList = new Set(items.map(x => x.id));
-  const freqRows = [];
-  const recentRows = [];
-  const freqIds = new Set();
-  const recentIds = new Set();
-  if(!qPoolActive && rankMode !== 'recent') for(const rec of getFrequentExerciseRecords(16)){
-    const ex = db.find(x => x.id === rec.id);
-    if(!ex || ex.status !== 'pool' || !idInList.has(ex.id)) continue;
-    freqIds.add(ex.id);
-    const hist = ex.history[currentStudio] || [];
-    const rm = maxRM(hist);
-    const lastSet = hist.length ? `${hist[hist.length - 1].w}×${hist[hist.length - 1].r}` : '–';
-    const starH = isPoolFavorite(ex.id) ? '★' : '☆';
-    freqRows.push(`<div class="m-pool-item" style="border-color:rgba(208,163,90,.35);background:rgba(208,163,90,.06)">
-      ${mPoolThumbHTML(ex)}
-      <div class="m-pool-item-text">
-        <div class="m-pool-item-name">${mEsc(ex.name)} <span class="pill pill-gold" style="font-size:8px;padding:1px 6px">oft</span></div>
-        <div class="m-pool-item-meta">${mEsc(ex.group || ex.cat || '')} · Letztes Mal: ${lastSet}${rm > 0 ? ' · 1RM ~' + rm + 'kg' : ''}</div>
-      </div>
-      <button type="button" class="m-pool-star" onclick="togglePoolFavorite(${ex.id},event)" aria-label="Favorit">${starH}</button>
-      <button class="m-pool-add-btn" onclick="mAddToSession(${ex.id})">+ Session</button>
-    </div>`);
-  }
-  if(!qPoolActive && rankMode !== 'frequent') for(const rec of getRecentExerciseRecords(16)){
-    const ex = db.find(x => x.id === rec.id);
-    if(!ex || ex.status !== 'pool' || !idInList.has(ex.id) || freqIds.has(ex.id)) continue;
-    recentIds.add(ex.id);
-    const hist = ex.history[currentStudio] || [];
-    const rm = maxRM(hist);
-    const lastSet = hist.length ? `${hist[hist.length - 1].w}×${hist[hist.length - 1].r}` : '–';
-    const starH = isPoolFavorite(ex.id) ? '★' : '☆';
-    recentRows.push(`<div class="m-pool-item" style="border-color:rgba(88,185,176,.34);background:rgba(88,185,176,.08)">
-      ${mPoolThumbHTML(ex)}
-      <div class="m-pool-item-text">
-        <div class="m-pool-item-name">${mEsc(ex.name)} <span class="pill pill-teal" style="font-size:8px;padding:1px 6px">zuletzt</span></div>
-        <div class="m-pool-item-meta">${mEsc(ex.group || ex.cat || '')} · Letztes Mal: ${lastSet}${rm > 0 ? ' · 1RM ~' + rm + 'kg' : ''}</div>
-      </div>
-      <button type="button" class="m-pool-star" onclick="togglePoolFavorite(${ex.id},event)" aria-label="Favorit">${starH}</button>
-      <button class="m-pool-add-btn" onclick="mAddToSession(${ex.id})">+ Session</button>
-    </div>`);
-  }
-  const freqBlock = freqRows.length
-    ? `<div class="m-tools-h" style="margin-bottom:8px;letter-spacing:.16em">Häufig genutzt</div>${freqRows.join('')}`
-    : '';
-  const recentBlock = recentRows.length
-    ? `<div class="m-tools-h" style="margin:${freqRows.length ? '12px' : '0'} 0 8px;letter-spacing:.16em">Zuletzt trainiert</div>${recentRows.join('')}`
-    : '';
-  const rest = items.filter(ex => !freqIds.has(ex.id) && !recentIds.has(ex.id));
-
-  let catalogPoolHtml = '';
-  const showCatalogBlock = qPoolActive || mobileCatalogHasActiveFilter() || !!mobileSwapTargetId;
-  if(showCatalogBlock){
-    const rawCat = getMobileCatalogHits(qPoolRaw);
-    const catHits = rawCat.filter(r => String(r.name || '').trim());
-    window.__iflCatHits = catHits;
-    if(catHits.length){
-      catalogPoolHtml = `<div class="m-tools-h" style="margin:16px 0 8px;letter-spacing:.16em">Cloud/DB Suche (Supabase)</div>` +
-        catHits.map((row, i)=>{
-          const meta = [row.brand, row.cat, row.group].filter(Boolean).join(' · ') || '–';
-          const ph = { name: row.name, brand: row.brand, art: row.art, img: row.img, cat: row.cat || 'Brust' };
-          const actionButtons = mobileSwapTargetId
-            ? `<button type="button" class="btn btn-primary btn-sm" style="padding:6px 8px;font-size:10px;white-space:nowrap" onclick="mSwapSessionCatalogIdx(${i})">Swap</button>`
-            : `<button type="button" class="btn btn-teal btn-sm" style="padding:6px 8px;font-size:10px;white-space:nowrap" onclick="mAddSessionCatalogIdx(${i})">Session</button>
-               <button type="button" class="btn btn-secondary btn-sm" style="padding:6px 8px;font-size:10px;white-space:nowrap" onclick="mAddPoolCatalogIdx(${i})">+ Pool</button>`;
-          return `<div class="m-pool-item m-pool-item--catalog">
-            ${mPoolThumbHTML(ph)}
-            <div class="m-pool-item-text">
-              <div class="m-pool-item-name">${mEsc(row.name)}</div>
-              <div class="m-pool-item-meta">${mEsc(meta)}</div>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;align-items:stretch">
-              ${actionButtons}
-            </div>
-          </div>`;
-        }).join('');
-    } else if(!deviceCatalogSnapRows.length){
-      catalogPoolHtml = `<div class="m-tools-muted" style="padding:8px 0 4px">Gerätekatalog: noch nicht geladen (kurz warten oder Netz prüfen).</div>`;
-    }
-  }
-
   const localBlock = items.length
-    ? rest.map(ex=>{
+    ? items.map(ex=>{
         const hist = ex.history[currentStudio]||[];
         const rm   = maxRM(hist);
         const lastSet = hist.length ? `${hist[hist.length-1].w}×${hist[hist.length-1].r}` : '–';
         const star = isPoolFavorite(ex.id) ? '★' : '☆';
-        const oftPill = (qPoolActive && freqOrderMap.has(ex.id))
-          ? ' <span class="pill pill-gold" style="font-size:8px;padding:1px 6px">oft</span>'
-          : '';
         return `<div class="m-pool-item">
           ${mPoolThumbHTML(ex)}
           <div class="m-pool-item-text">
-            <div class="m-pool-item-name">${mEsc(ex.name)}${oftPill}</div>
+            <div class="m-pool-item-name">${mEsc(ex.name)}</div>
             <div class="m-pool-item-meta">${mEsc(ex.group||ex.cat||'')} · Letztes Mal: ${lastSet}${rm>0?' · 1RM ~'+rm+'kg':''}</div>
           </div>
           <button type="button" class="m-pool-star" onclick="togglePoolFavorite(${ex.id},event)" aria-label="Favorit">${star}</button>
           <button class="m-pool-add-btn" onclick="mAddToSession(${ex.id})">+ Session</button>
         </div>`;
       }).join('')
-    : (qPoolActive ? '' : '<div style="padding:20px;text-align:center;color:var(--soft);font-size:13px">Kein Pool für diesen Tab</div>');
+    : '';
 
-  list.innerHTML = searchHint + toolbar + freqBlock + recentBlock + localBlock + catalogPoolHtml +
-    (!items.length && !catalogPoolHtml && qPoolActive
-      ? '<div style="padding:16px;text-align:center;color:var(--soft);font-size:13px">Keine lokalen Pool-Treffer</div>'
-      : '');
+  const rawCat = getMobileCatalogHits(qPoolRaw);
+  const catHits = rawCat.filter(r => String(r.name || '').trim());
+  window.__iflCatHits = catHits;
+  const catalogPoolHtml = catHits.length
+    ? catHits.map((row, i)=>{
+        const meta = [row.brand, row.cat, row.group].filter(Boolean).join(' · ') || '–';
+        const ph = { name: row.name, brand: row.brand, art: row.art, img: row.img, cat: row.cat || 'Brust' };
+        const actionButtons = mobileSwapTargetId
+          ? `<button type="button" class="btn btn-primary btn-sm" style="padding:6px 8px;font-size:10px;white-space:nowrap" onclick="mSwapSessionCatalogIdx(${i})">Swap</button>`
+          : `<button type="button" class="btn btn-teal btn-sm" style="padding:6px 8px;font-size:10px;white-space:nowrap" onclick="mAddSessionCatalogIdx(${i})">Session</button>
+             <button type="button" class="btn btn-secondary btn-sm" style="padding:6px 8px;font-size:10px;white-space:nowrap" onclick="mAddPoolCatalogIdx(${i})">+ Pool</button>`;
+        return `<div class="m-pool-item m-pool-item--catalog">
+          ${mPoolThumbHTML(ph)}
+          <div class="m-pool-item-text">
+            <div class="m-pool-item-name">${mEsc(row.name)}</div>
+            <div class="m-pool-item-meta">${mEsc(meta)}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;align-items:stretch">
+            ${actionButtons}
+          </div>
+        </div>`;
+      }).join('')
+    : (!deviceCatalogSnapRows.length
+        ? '<div style="padding:16px;text-align:center;color:var(--soft);font-size:13px">Gerätekatalog wird geladen ...</div>'
+        : '');
+
+  if(mobilePoolSegment === 'catalog'){
+    list.innerHTML = catalogPoolHtml || '<div style="padding:16px;text-align:center;color:var(--soft);font-size:13px">Keine Katalog-Treffer</div>';
+    return;
+  }
+  list.innerHTML = localBlock || '<div style="padding:16px;text-align:center;color:var(--soft);font-size:13px">Keine Pool-Treffer</div>';
 }
 
 function mAddToSession(id){
@@ -7035,6 +7046,7 @@ function mEditStat(type){
 
 function togglePoolStudioOnly(checked){
   localStorage.setItem('ifl_pool_studio_only', checked ? '1' : '0');
+  mSyncPoolFilterSummary();
   renderMobilePoolSheet();
 }
 
