@@ -463,7 +463,7 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
   /* ── BOTTOM NAV ────────────────────────────────────── */
   .mobile-bottom-nav{
     display:grid !important;
-    grid-template-columns:repeat(4,1fr);
+    grid-template-columns:repeat(5,1fr);
     position:fixed;bottom:0;left:0;right:0;
     height:68px;z-index:100;
     background:var(--panel);
@@ -2051,9 +2051,13 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
 </div>
 <!-- Mobile-App-Shell (≤640px): Standard an; Aus mit localStorage ifl_app_shell=0 -->
 <div id="ifl-shell-root" class="ifl-shell-root" aria-hidden="true">
-<!-- MOBILE BOTTOM NAV: Focus / Plan / Pool / Tools -->
+<!-- MOBILE BOTTOM NAV: Home / Focus / Plan / Pool / Tools -->
 <nav class="mobile-bottom-nav" id="mobile-bottom-nav">
-  <button class="m5-tab active" id="m5-focus" onclick="switchMobileView('focus')">
+  <button class="m5-tab active" id="m5-home" onclick="switchMobileView('home')">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1z"></path></svg>
+    <span>Home</span>
+  </button>
+  <button class="m5-tab" id="m5-focus" onclick="switchMobileView('focus')">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"></circle><path d="M12 9v6M9 12h6"></path></svg>
     <span>Focus</span>
   </button>
@@ -2433,7 +2437,7 @@ function togglePoolFavOnly(checked){
   localStorage.setItem('ifl_pool_fav_only', checked ? '1' : '0');
   renderMobilePoolSheet();
 }
-const BUILD_STAMP = '2026-04-30 11:31 MEZ';
+const BUILD_STAMP = '2026-04-30 11:39 MEZ';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -6001,16 +6005,17 @@ function markSyncPending(){
 // MOBILE APP – View-System, Session-Navigator, Pool-Sheet
 // ════════════════════════════════════════════════════════════
 
-let mobileView  = 'focus'; // focus | plan | pool | tools
+let mobileView  = 'home'; // home | focus | plan | pool | tools
 let mobileExIdx = 0;         // current exercise index in session navigator
 
 const M_HEADER_TITLES = {
+  home:  'Home',
   focus: 'Focus',
   plan:  'Plan',
   pool:  'Pool',
   tools: 'Tools',
 };
-const MOBILE_NAV_ORDER = ['focus', 'plan', 'pool', 'tools'];
+const MOBILE_NAV_ORDER = ['home', 'focus', 'plan', 'pool', 'tools'];
 let _swipeSX = 0, _swipeSY = 0, _swipeTrack = false, _swipeEdge = false;
 
 function isMobile(){ return window.matchMedia('(max-width:640px)').matches; }
@@ -6019,7 +6024,7 @@ function switchMobileView(view){
   if(!isMobile() || !document.body.classList.contains('ifl-mobile-app')) return;
   mobileView = view;
 
-  ['focus', 'plan', 'pool', 'tools'].forEach(v=>{
+  ['home', 'focus', 'plan', 'pool', 'tools'].forEach(v=>{
     document.getElementById('m5-'+v)?.classList.toggle('active', v === view);
   });
 
@@ -6027,16 +6032,21 @@ function switchMobileView(view){
   if(titleEl) titleEl.textContent = M_HEADER_TITLES[view] || 'Iron Forge';
   _updateMobileHeader();
 
-  const useSessionOverlay = view === 'focus' || view === 'plan' || view === 'pool';
+  const useSessionOverlay = view === 'home' || view === 'focus' || view === 'plan' || view === 'pool';
   document.getElementById('m-session-overlay')?.classList.toggle('active', useSessionOverlay);
   document.getElementById('m-tools-view')?.classList.toggle('active', view === 'tools');
-  document.getElementById('m-plan-view')?.classList.toggle('active', view === 'plan' || view === 'pool');
+  document.getElementById('m-plan-view')?.classList.toggle('active', view === 'home' || view === 'plan' || view === 'pool');
   document.getElementById('m-focus-view')?.classList.toggle('active', view === 'focus');
 
   const backBtn = document.getElementById('m-header-back');
   if(backBtn) backBtn.style.display = 'none';
 
-  if(view === 'focus'){
+  if(view === 'home'){
+    if(!TRAIN_TABS.includes(currentTab)) changeTab('push');
+    renderMobileSession();
+    syncMobileRestTimer();
+    closeMobilePool();
+  } else if(view === 'focus'){
     if(!TRAIN_TABS.includes(currentTab)) changeTab('push');
     mobileExIdx = 0;
     renderMobileSession();
