@@ -1184,7 +1184,35 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
   body.ifl-mobile-app .m-ex-big-name{
     font-family:'Space Grotesk','Manrope',sans-serif !important;
     text-transform:uppercase;
-    letter-spacing:-.02em !important;
+    letter-spacing:-.015em !important;
+    font-size:clamp(28px,7.8vw,38px) !important;
+    line-height:1.08 !important;
+  }
+  body.ifl-mobile-app .m-focus-meta{
+    margin-top:7px;
+    font-size:11px;
+    color:#9fd8b2;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    font-weight:700;
+  }
+  body.ifl-mobile-app .m-focus-sub{
+    margin-top:4px;
+    font-size:10px;
+    color:#8f9a8f;
+    font-family:'JetBrains Mono',monospace;
+  }
+  body.ifl-mobile-app .m-focus-quick{
+    display:flex;
+    gap:8px;
+    margin:4px 0 2px;
+  }
+  body.ifl-mobile-app .m-focus-quick .btn{
+    border-radius:999px !important;
+    padding:9px 10px !important;
+    font-size:10px !important;
+    letter-spacing:.08em !important;
+    text-transform:uppercase !important;
   }
   body.ifl-mobile-app #m-rest-bar,
   body.ifl-mobile-app .m-rest-bar{
@@ -1504,6 +1532,13 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
   @keyframes emeraldSheetIn{
     from{transform:translateY(12%);opacity:.72}
     to{transform:translateY(0);opacity:1}
+  }
+  body.ifl-mobile-app .m-view-enter{
+    animation:mViewSlideUp .4s cubic-bezier(.2,.8,.2,1);
+  }
+  @keyframes mViewSlideUp{
+    from{opacity:.0;transform:translateY(14px)}
+    to{opacity:1;transform:translateY(0)}
   }
 }
 </style>
@@ -2337,7 +2372,7 @@ function togglePoolFavOnly(checked){
   localStorage.setItem('ifl_pool_fav_only', checked ? '1' : '0');
   renderMobilePoolSheet();
 }
-const BUILD_STAMP = '2026-04-29 20:49 MEZ';
+const BUILD_STAMP = '2026-04-30 11:25 MEZ';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -5958,6 +5993,17 @@ function switchMobileView(view){
     closeMobilePool();
     renderMobileTools();
   }
+
+  const enterEl = view === 'tools'
+    ? document.getElementById('m-tools-view')
+    : (view === 'focus'
+        ? document.getElementById('m-focus-view')
+        : document.getElementById('m-plan-view'));
+  if(enterEl){
+    enterEl.classList.remove('m-view-enter');
+    void enterEl.offsetWidth;
+    enterEl.classList.add('m-view-enter');
+  }
 }
 
 function mHeaderBack(){
@@ -6067,7 +6113,8 @@ function renderMobileSession(){
 
   // 1RM
   const rm = maxRM(hist);
-  const catColor = CAT_COLOR[ex.cat]||'var(--soft)';
+  const metaParts = [ex.cat, ex.group, rm > 0 ? `1RM ~${rm}kg` : ''].filter(Boolean);
+  const cleanMeta = metaParts.join(' · ');
 
   // Dots
   const dotsHTML = items.map((_,i)=>{
@@ -6088,21 +6135,17 @@ function renderMobileSession(){
       <span class="m-ex-counter">${mobileExIdx+1} / ${items.length}</span>
       <div class="m-ex-dots">${dotsHTML}</div>
     </div>
-    <div class="m-ex-badges-row">
-      <span class="pill" style="font-size:9px;padding:2px 8px;color:${catColor};background:rgba(255,255,255,.04)">${ex.cat}</span>
-      ${ex.group ? `<span class="pill pill-teal" style="font-size:9px;padding:2px 8px">${ex.group}</span>` : ''}
-      ${rm>0 ? `<span class="pill" style="font-size:9px;padding:2px 8px;color:var(--gold)">1RM ~${rm}kg</span>` : ''}
-    </div>
     <div class="m-ex-head">
       <img class="m-ex-head-img" src="${attrUrl(mImgSrc)}" alt="" loading="lazy" onerror="this.onerror=null;this.src='${attrUrl(mImgFb)}'">
       <div class="m-ex-head-text">
         <div class="m-ex-big-name">${ex.name}</div>
-        ${ex.brand||ex.art ? `<div style="font-size:10px;color:var(--soft);font-family:'JetBrains Mono',monospace">${[ex.brand,ex.art].filter(Boolean).join(' · ')}</div>` : ''}
+        ${cleanMeta ? `<div class="m-focus-meta">${mEsc(cleanMeta)}</div>` : ''}
+        ${ex.brand||ex.art ? `<div class="m-focus-sub">${mEsc([ex.brand,ex.art].filter(Boolean).join(' · '))}</div>` : ''}
       </div>
     </div>
-    <div style="display:flex;gap:8px;margin:2px 0 4px">
-      <button type="button" class="btn btn-secondary btn-sm" style="flex:1" onclick="openMobilePoolForSwap(${ex.id})">Übung tauschen</button>
-      <button type="button" class="btn btn-secondary btn-sm" style="flex:1" onclick="openMobilePool()">Pool/Katalog</button>
+    <div class="m-focus-quick">
+      <button type="button" class="btn btn-secondary btn-sm" style="flex:1" onclick="openMobilePoolForSwap(${ex.id})">Tauschen</button>
+      <button type="button" class="btn btn-secondary btn-sm" style="flex:1" onclick="openMobilePool()">Pool</button>
     </div>
     <div>
       <div class="m-ex-hist-label">Letztes Mal</div>
@@ -6126,6 +6169,7 @@ function mNavEx(dir){
 function mOpenLogger(){
   const items = getMobileSessionItems();
   const ex = items[mobileExIdx];
+  if(navigator.vibrate) navigator.vibrate(12);
   if(ex) openLogger(ex);
 }
 
