@@ -1256,13 +1256,26 @@ body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;fon
     box-shadow:0 0 22px rgba(80,200,120,.4), inset 0 1px 1px rgba(255,255,255,.33) !important;
   }
   body.ifl-mobile-app #m-pool-sheet{
+    display:none !important;
+    position:fixed !important;
+    top:calc(54px + env(safe-area-inset-top, 0px)) !important;
+    left:max(10px, env(safe-area-inset-left, 0px)) !important;
+    right:max(10px, env(safe-area-inset-right, 0px)) !important;
+    bottom:calc(68px + env(safe-area-inset-bottom, 0px) + 8px) !important;
+    z-index:58 !important;
+    transform:none !important;
     background:rgba(10,14,11,.94) !important;
     backdrop-filter:blur(24px) saturate(140%) !important;
     -webkit-backdrop-filter:blur(24px) saturate(140%) !important;
-    border-top:1px solid rgba(255,255,255,.1) !important;
-    box-shadow:0 -8px 48px rgba(0,0,0,.68) !important;
-    padding:14px 16px 90px !important;
+    border:1px solid rgba(255,255,255,.1) !important;
+    box-shadow:0 8px 48px rgba(0,0,0,.68) !important;
+    border-radius:22px !important;
+    padding:14px 16px 12px !important;
   }
+  body.ifl-mobile-app.mobile-view-pool #m-pool-sheet{display:flex !important}
+  body.ifl-mobile-app #m-pool-backdrop{display:none !important}
+  body.ifl-mobile-app.mobile-view-pool .m-sheet-handle{display:none !important}
+  body.ifl-mobile-app.mobile-view-pool #m-pool-sheet .sh button{display:none !important}
   body.ifl-mobile-app #m-pool-sheet .sh{
     margin-bottom:12px !important;
     align-items:center !important;
@@ -2523,7 +2536,7 @@ function togglePoolFavOnly(checked){
   mSyncPoolFilterSummary();
   renderMobilePoolSheet();
 }
-const BUILD_STAMP = '2026-04-30 12:15 MEZ';
+const BUILD_STAMP = '2026-04-30 12:24 MEZ';
 
 const CATS = ['Brust','Rücken','Beine','Glutes','Schulter','Arme','Core'];
 const CAT_COLOR = {Brust:'var(--gold)',Rücken:'var(--teal)',Beine:'var(--red)',Glutes:'#c084fc',Schulter:'var(--warn)',Arme:'#a78bfa',Core:'var(--soft)'};
@@ -6109,6 +6122,7 @@ function isMobile(){ return window.matchMedia('(max-width:640px)').matches; }
 function switchMobileView(view){
   if(!isMobile() || !document.body.classList.contains('ifl-mobile-app')) return;
   mobileView = view;
+  syncMobileViewBodyClass(view);
 
   ['home', 'focus', 'plan', 'pool', 'tools'].forEach(v=>{
     document.getElementById('m5-'+v)?.classList.toggle('active', v === view);
@@ -6164,18 +6178,28 @@ function switchMobileView(view){
   }
 }
 
+function syncMobileViewBodyClass(view){
+  const b = document.body;
+  if(!b) return;
+  ['home','focus','plan','pool','tools'].forEach(v=>b.classList.remove(`mobile-view-${v}`));
+  b.classList.add(`mobile-view-${view}`);
+}
+
 function syncMobilePlanHomeSections(view){
   const quick = document.getElementById('m-home-quick-wrap');
   const hint = document.getElementById('m-start-flow-hint');
   const swipeHint = document.getElementById('m-home-swipe-hint');
   const planList = document.getElementById('m-plan-list');
+  const subtabs = document.getElementById('m-subtab-bar');
   if(!quick || !hint || !planList) return;
   const isHome = view === 'home';
   const isPlan = view === 'plan';
+  const isPool = view === 'pool';
   quick.style.display = isHome ? '' : 'none';
   hint.style.display = isHome ? '' : 'none';
   if(swipeHint) swipeHint.style.display = isHome ? '' : 'none';
-  planList.style.display = isHome || isPlan ? '' : 'none';
+  if(subtabs) subtabs.style.display = isPool ? 'none' : '';
+  planList.style.display = isPlan ? '' : 'none';
 }
 
 function mHeaderBack(){
@@ -6382,6 +6406,19 @@ let mobileSwapTargetId = null;
 
 function openMobilePool(opts = {}){
   const keepSwapTarget = !!opts.keepSwapTarget;
+  const inMobileApp = isMobile() && document.body.classList.contains('ifl-mobile-app');
+  if(inMobileApp){
+    if(!keepSwapTarget) mobileSwapTargetId = null;
+    mSyncPoolSegmentUI();
+    mSyncPoolFilterSummary();
+    renderMobilePoolSheet();
+    if(!deviceCatalogSnapRows.length){
+      refreshDeviceCatalogImageCache().then(()=>{ renderMobilePoolSheet(); }).catch(()=>{});
+    }
+    const inpApp = document.getElementById('m-pool-search');
+    if(inpApp) setTimeout(()=>{ try{ inpApp.focus(); inpApp.select(); }catch(_){} }, 120);
+    return;
+  }
   const backdrop = document.getElementById('m-pool-backdrop');
   const sheet    = document.getElementById('m-pool-sheet');
   if(backdrop) backdrop.classList.add('open');
@@ -6409,6 +6446,8 @@ function openMobilePoolForSwap(exId){
 }
 
 function closeMobilePool(){
+  const inMobileApp = isMobile() && document.body.classList.contains('ifl-mobile-app');
+  if(inMobileApp) return;
   document.getElementById('m-pool-backdrop')?.classList.remove('open');
   document.getElementById('m-pool-sheet')?.classList.remove('open');
   mobileSwapTargetId = null;
