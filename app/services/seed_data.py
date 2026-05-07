@@ -24,6 +24,7 @@ def seed_all(db: Session):
         db.commit()
         print("Seed-Daten geladen: Stack, Blutbilder, Garmin-Verlauf")
     _update_stack_april_2026(db)
+    _update_stack_may_2026(db)
 
 
 # ─── Substanzen ───────────────────────────────────────────────────────────────
@@ -50,6 +51,7 @@ def _seed_substances(db: Session):
         {"name": "Cialis (Tadalafil)", "category": "Medikament", "route": "oral", "default_unit": "mg", "description": "Vasodilatation, Blutdruck, kardioprotektiv"},
         {"name": "Clenbuterol", "category": "Medikament", "route": "oral", "default_unit": "mcg", "description": "β2-Thermogenese + Lipolyse"},
         {"name": "T3 (Liothyronin)", "category": "Hormon", "route": "oral", "default_unit": "mcg", "description": "Stoffwechsel aktiv halten, Fettabbau"},
+        {"name": "L-Thyroxin (Levothyroxin)", "category": "Hormon", "route": "oral", "default_unit": "mcg", "description": "T4-Reserve für kombinierte SD-Unterstützung"},
         {"name": "Yohimbin", "category": "Medikament", "route": "oral", "default_unit": "mg", "description": "α2-Blockade hartnäckiges Fett nüchtern"},
         {"name": "Trazodon", "category": "Medikament", "route": "oral", "default_unit": "mg", "description": "Tiefschlaf ↑, HGH-Effizienz, Tren-Schlafstörung"},
         {"name": "Ketotifen", "category": "Medikament", "route": "oral", "default_unit": "mg", "description": "β2-Upregulation, Clen dauerhaft wirksam"},
@@ -445,3 +447,86 @@ def _update_stack_april_2026(db: Session):
 
     db.commit()
     print("Stack-Update 02.04.2026 angewendet")
+
+
+# ─── Stack-Update 07.05.2026 ──────────────────────────────────────────────────
+
+def _update_stack_may_2026(db: Session):
+    """
+    Stack-Änderungen ab 07.05.2026 nach Blutbild 06.05.2026.
+    Sentinel: DoseEvent.change_reason == 'Stack-Update 07.05.2026'
+
+    Änderungen:
+    - HGH: 4IU → 3IU (IGF-1 bei 488, Tren raus → kein IGF-1-Druck mehr)
+    - T3: 37,5mcg (25+12,5) → 37,5mcg (25+12,5) – nur Timing-Präzisierung
+    - T4: NEU 12,5mcg morgens (fT4 bei 3,8 ng/L – Reserve auffüllen)
+    - Exemestan: 12,5mg ED → 2 Tage Pause, dann 12,5mg EoD (E2 bei 10 ng/L)
+    """
+    from app.models import DoseEvent as DE
+    if db.query(DE).filter(DE.change_reason == "Stack-Update 07.05.2026").first():
+        return  # Bereits angewendet
+
+    stack = db.query(Stack).filter(Stack.name == "16 Wochen Recomp-Blast").first()
+    if not stack:
+        return
+
+    upd = date(2026, 5, 7)
+    end_old = date(2026, 5, 6)
+
+    def sub(name):
+        return db.query(Substance).filter(Substance.name == name).first()
+
+    def add(substance_name, dose_amount, dose_unit, frequency, timing, notes=None, substance_category="Hormon", substance_route="oral"):
+        s = sub(substance_name)
+        if not s:
+            s = Substance(name=substance_name, category=substance_category, route=substance_route, default_unit=dose_unit)
+            db.add(s)
+            db.flush()
+        if s:
+            db.add(DoseEvent(
+                stack_id=stack.id, substance_id=s.id,
+                dose_amount=dose_amount, dose_unit=dose_unit,
+                frequency=frequency, timing=timing,
+                start_date=upd, change_reason="Stack-Update 07.05.2026",
+                notes=notes,
+            ))
+
+    # 1. HGH: 4IU → 3IU (IGF-1 bei 488 – ohne Tren kein IGF-1-Druck mehr)
+    _close_active_dose_events(db, stack.id, "HGH (Wachstumshormon)", end_old)
+    add("HGH (Wachstumshormon)", 3, "IU", "täglich",
+        "21-22 Uhr subkutan",
+        "IGF-1 488 µg/L – von 4IU auf 3IU reduziert (Tren raus, IGF-1 ohne Druck)")
+
+    # 2. T3: Dosis-Split präzisieren auf 25+12,5 (altes DoseEvent schließen, neues anlegen)
+    _close_active_dose_events(db, stack.id, "T3 (Liothyronin)", end_old)
+    # Morgendosis 25mcg
+    s_t3 = sub("T3 (Liothyronin)")
+    if s_t3:
+        db.add(DoseEvent(
+            stack_id=stack.id, substance_id=s_t3.id,
+            dose_amount=25, dose_unit="mcg", frequency="täglich",
+            timing="07:00 nüchtern (1. Dosis)",
+            start_date=upd, change_reason="Stack-Update 07.05.2026",
+            notes="T3 25mcg morgens",
+        ))
+        db.add(DoseEvent(
+            stack_id=stack.id, substance_id=s_t3.id,
+            dose_amount=12.5, dose_unit="mcg", frequency="täglich",
+            timing="17-18 Uhr (2. Dosis)",
+            start_date=upd, change_reason="Stack-Update 07.05.2026",
+            notes="T3 12,5mcg nachmittags. Gesamt: 37,5mcg/Tag",
+        ))
+
+    # 3. L-Thyroxin NEU: 12,5mcg morgens (fT4-Reserve auffüllen)
+    add("L-Thyroxin (Levothyroxin)", 12.5, "mcg", "täglich",
+        "07:00 nüchtern",
+        "fT4 3,8 ng/L (Referenz 9,2-16,8) – Reserve auffüllen für bessere Zellversorgung")
+
+    # 4. Exemestan: 12,5mg ED → 2 Tage Pause → 12,5mg EoD
+    _close_active_dose_events(db, stack.id, "Exemestan", end_old)
+    add("Exemestan", 12.5, "mg", "jeden 2. Tag (EoD)",
+        "10-11 Uhr mit Essen",
+        "E2 bei 10 ng/L (zu niedrig). 07.05-08.05: Pause. Ab 09.05: 12,5mg EoD. Ziel E2 20-30 ng/L.")
+
+    db.commit()
+    print("Stack-Update 07.05.2026 angewendet")
