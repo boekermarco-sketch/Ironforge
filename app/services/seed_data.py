@@ -25,7 +25,6 @@ def seed_all(db: Session):
         print("Seed-Daten geladen: Stack, Blutbilder, Garmin-Verlauf")
     _update_stack_april_2026(db)
     _update_stack_may_2026(db)
-    _update_stack_may_2026_phase2(db)
 
 
 # ─── Substanzen ───────────────────────────────────────────────────────────────
