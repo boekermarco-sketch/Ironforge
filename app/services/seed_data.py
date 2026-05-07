@@ -25,6 +25,7 @@ def seed_all(db: Session):
         print("Seed-Daten geladen: Stack, Blutbilder, Garmin-Verlauf")
     _update_stack_april_2026(db)
     _update_stack_may_2026(db)
+    _update_stack_may_2026_phase2(db)
 
 
 # ─── Substanzen ───────────────────────────────────────────────────────────────
@@ -530,3 +531,67 @@ def _update_stack_may_2026(db: Session):
 
     db.commit()
     print("Stack-Update 07.05.2026 angewendet")
+
+
+def _update_stack_may_2026_phase2(db: Session):
+    """
+    Stack-Update Phase 2 (07.05.2026): Anavar, TUDCA, D3+K2.
+    Sentinel: DoseEvent.change_reason == 'Stack-Update 07.05.2026 Phase2'
+    """
+    from app.models import DoseEvent as DE
+    if db.query(DE).filter(DE.change_reason == "Stack-Update 07.05.2026 Phase2").first():
+        return
+
+    stack = db.query(Stack).filter(Stack.name == "16 Wochen Recomp-Blast").first()
+    if not stack:
+        return
+
+    upd = date(2026, 5, 7)
+
+    def sub(name):
+        return db.query(Substance).filter(Substance.name == name).first()
+
+    def add(substance_name, dose_amount, dose_unit, frequency, timing, notes=None, substance_category="Steroid", substance_route="oral"):
+        s = sub(substance_name)
+        if not s:
+            s = Substance(name=substance_name, category=substance_category, route=substance_route, default_unit=dose_unit)
+            db.add(s)
+            db.flush()
+        if s:
+            db.add(DoseEvent(
+                stack_id=stack.id, substance_id=s.id,
+                dose_amount=dose_amount, dose_unit=dose_unit,
+                frequency=frequency, timing=timing,
+                start_date=upd, change_reason="Stack-Update 07.05.2026 Phase2",
+                notes=notes,
+            ))
+
+    # 1. Anavar (Oxandrolon) NEU: 50mg/Tag (25+25 Split)
+    add("Anavar (Oxandrolon)", 25, "mg", "täglich",
+        "07:00 nüchtern (1. Dosis)",
+        "Anavar 25mg morgens. Split: 25+25 = 50mg/Tag. Für Härte, Cortisol ↓, Muskelerhalt in den letzten 5 Wochen.",
+        substance_category="Steroid")
+    s_anavar = sub("Anavar (Oxandrolon)")
+    if s_anavar:
+        db.add(DoseEvent(
+            stack_id=stack.id, substance_id=s_anavar.id,
+            dose_amount=25, dose_unit="mg", frequency="täglich",
+            timing="17-18 Uhr (2. Dosis, vor Training oder abends)",
+            start_date=upd, change_reason="Stack-Update 07.05.2026 Phase2",
+            notes="Anavar 25mg nachmittags. 2. Tagesdosis.",
+        ))
+
+    # 2. TUDCA: 375mg → 500mg (Leberschutz durch Anavar oral)
+    _close_active_dose_events(db, stack.id, "TUDCA", date(2026, 5, 6))
+    add("TUDCA", 500, "mg", "täglich",
+        "17-18 Uhr mit Essen",
+        "Erhöht von 375mg auf 500mg – Leberschutz für Anavar (orales Steroid)")
+
+    # 3. Vitamin D3 + K2 NEU aktiv setzen
+    add("Vitamin D3 + K2", 2000, "IU", "täglich",
+        "10-11 Uhr mit Essen (fettlöslich)",
+        "Knochen-/Gelenkschutz unter T3 + Stack. K2 für Arterienverkalkung.",
+        substance_category="Supplement")
+
+    db.commit()
+    print("Stack-Update 07.05.2026 Phase2 angewendet (Anavar, TUDCA von 375 auf 500 mg, D3+K2)")
